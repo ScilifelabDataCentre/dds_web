@@ -2093,19 +2093,36 @@ def test_send_usage_error_csv(client, cli_runner, capfd: LogCaptureFixture):
 
 
 ## run-worker
-def test_restart_redis__worker(client, cli_runner, mock_queue_redis):
-    """Test that starts the redis workers"""
+def test_restart_redis_worker_confirm(client, cli_runner, mock_queue_redis):
+    """Test that restarts the redis workers - yes confirmation"""
 
     with patch("dds_web.commands.Worker") as mock_worker:
         with patch("dds_web.commands.Worker.all") as mock_get_all:
             with patch("dds_web.commands.send_shutdown_command") as mock_send_shutdown_command:
+                with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
 
-                mock_worker_instance = MagicMock()
-                mock_worker.return_value = mock_worker_instance
-                mock_send_shutdown_command.return_value = MagicMock()
+                    mock_worker_instance = MagicMock()
+                    mock_worker.return_value = mock_worker_instance
+                    mock_send_shutdown_command.return_value = MagicMock()
 
-                mock_get_all.return_value = [MagicMock(name="worker1"), MagicMock(name="worker2")]
+                    mock_get_all.return_value = [
+                        MagicMock(name="worker1"),
+                        MagicMock(name="worker2"),
+                    ]
 
-                cli_runner.invoke(restart_redis_worker)
+                    cli_runner.invoke(restart_redis_worker)
 
-                mock_worker_instance.work.assert_called_once()  # work method called
+                    mock_worker_instance.work.assert_called_once()  # work method called
+                mock_ask.assert_called_once
+
+
+def test_restart_redis_worker_no_confirm(client, cli_runner, mock_queue_redis):
+    """Test that restarts the redis workers - no confirmation"""
+
+    with patch.object(rich.prompt.Confirm, "ask", return_value=False) as mock_ask:
+
+        result: click.testing.Result = cli_runner.invoke(restart_redis_worker)
+        assert result.exit_code == 0
+        assert not result.output
+
+    mock_ask.assert_called_once
