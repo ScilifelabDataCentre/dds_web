@@ -585,27 +585,12 @@ class ProjectStatus(flask_restful.Resource):
         self, project: models.Project, new_status_row: models.ProjectStatuses
     ):
         """Update the project status in the database."""
-        try:
-            project.project_statuses.append(new_status_row)
-            project.busy = False  # TODO: Use set_busy instead?
-            db.session.commit()
-            flask.current_app.logger.info(
-                f"Busy status set. Project: '{project.public_id}', Busy: False"
-            )
-        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DatabaseError(
-                message=str(err),
-                alt_message=(
-                    "Status was not updated"
-                    + (
-                        ": Database malfunction."
-                        if isinstance(err, sqlalchemy.exc.OperationalError)
-                        else ": Server Error."
-                    )
-                ),
-            ) from err
+        project.project_statuses.append(new_status_row)
+        project.busy = False  # TODO: Use set_busy instead?
+        db.session.commit()
+        flask.current_app.logger.info(
+            f"Busy status set. Project: '{project.public_id}', Busy: False"
+        )
 
     def rm_project_user_keys(self, project):
         """Remove ProjectUserKey rows for specified project."""
