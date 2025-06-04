@@ -1,5 +1,21 @@
 Changelog
 ==========
+.. _2.11.0:
+
+2.11.0 - 2025-06-05
+~~~~~~~~~~~~~~~~~~~~
+
+- 🚀 Features
+    - Change RQ worker config to keep one worker per pod and increase default timeout
+    - Enqueue Message Of the Day
+
+- 🐛 Bug Fixes
+
+    - Move project inactivation to after data-removal in order to ensure projects cannot be inactive while still containing data (#1605)
+
+- 🛡️ Dependencies
+
+    - Bump jinja2 from 3.1.3 to 3.1.6 (#1606)
 
 .. _2.10.0:
 

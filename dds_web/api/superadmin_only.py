@@ -14,6 +14,8 @@ from flask_restful import inputs
 import flask
 import structlog
 import flask_mail
+from rq import Queue
+from redis import Redis
 
 # Own modules
 from dds_web import auth, db, mail
@@ -168,51 +170,32 @@ class SendMOTD(flask_restful.Resource):
         unit_only: bool = request_json.get("unit_only", False)
         if not isinstance(unit_only, bool):
             raise ddserr.DDSArgumentError(message="The 'unit_only' argument must be a boolean.")
-        if unit_only:
-            users_to_send = db.session.query(models.UnitUser)
-        else:
-            users_to_send = db.session.query(models.User)
+
+        BaseUser = models.UnitUser if unit_only else models.User
+        users_to_send = (
+            db.session.query(BaseUser.username, models.Email.email)
+            .outerjoin(models.Email)
+            .filter(models.Email.primary == True)
+            .all()
+        )
+
+        # Get redis connection to add a job to delete project contents
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
 
         # Create email content
-        # put motd_obj.message etc in there etc
+        # This attributes cannot be generated in the enqueued function, because they require an active request context
         subject: str = "Important Information: Data Delivery System"
         body: str = flask.render_template(f"mail/motd.txt", motd=motd_obj.message)
         html = flask.render_template(f"mail/motd.html", motd=motd_obj.message)
 
-        # Setup email connection
-        with mail.connect() as conn:
-            # Email users
-            for user in utils.page_query(users_to_send):
-                primary_email = user.primary_email
-                if not primary_email:
-                    flask.current_app.logger.warning(
-                        f"No primary email found for user '{user.username}'."
-                    )
-                    continue
-                msg = flask_mail.Message(
-                    subject=subject, recipients=[primary_email], body=body, html=html
-                )
-                msg.attach(
-                    "scilifelab_logo.png",
-                    "image/png",
-                    open(
-                        os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
-                        "rb",
-                    ).read(),
-                    "inline",
-                    headers=[
-                        ["Content-ID", "<Logo>"],
-                    ],
-                )
+        # Possible improvement: Divide the users into smaller chunks to avoid sending too many emails at once
+        job = q.enqueue(utils.send_motd_to_user_list, users_to_send, subject, body, html)
 
-                # This funcion cannot be enqued because the connection object is not pickable
-                utils.send_email_with_retry(msg=msg, obj=conn)
+        recipients = "unit personnel" if unit_only else "all users"
 
-        return_msg = f"MOTD '{motd_id}' has been "
-        if unit_only:
-            return_msg += "sent to unit personnel only."
-        else:
-            return_msg += "sent to all users."
+        return_msg = f"MOTD #{motd_id} is scheduled for delivery to {recipients}"
         return {"message": return_msg}
 
 
