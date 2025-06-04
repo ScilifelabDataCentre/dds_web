@@ -165,6 +165,7 @@ class ProjectStatus(flask_restful.Resource):
                     project=project, current_time=curr_date, deadline_in=deadline_in
                 )
             elif new_status == "Deleted":
+                is_queue_operation = True
                 new_status_row, delete_message = self.delete_project(
                     project=project, current_time=curr_date
                 )
