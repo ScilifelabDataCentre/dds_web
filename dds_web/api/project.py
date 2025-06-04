@@ -518,7 +518,7 @@ class ProjectStatus(flask_restful.Resource):
         job_delete_contents = q.enqueue(
             self.queue_helper_fun_delete_contents,
             project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
-            clear_proj_info=aborted,
+            clear_proj_info=aborted, # If aborted, clear project info
         )
 
         job_update_db = q.enqueue(
@@ -526,6 +526,7 @@ class ProjectStatus(flask_restful.Resource):
             project_id=project.public_id,
             current_time=current_time,
             new_status="Archived",
+            aborted=aborted,
             depends_on=job_delete_contents,  # This job is only executed after success of delete contents
         )
 
@@ -562,7 +563,7 @@ class ProjectStatus(flask_restful.Resource):
 
     @dbsession
     def queue_helper_fun_update_db(
-        self, project_id: int, current_time: datetime.datetime, new_status: str
+        self, project_id: int, current_time: datetime.datetime, new_status: str, aborted: bool = False
     ):
         """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
         Function to be called by the queue.
