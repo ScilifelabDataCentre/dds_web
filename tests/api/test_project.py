@@ -397,7 +397,7 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     assert "No status transition provided. Specify the new status." in response.json["message"]
 
 
-def test_projectstatus_post_operationalerror(module_client, boto3_session):
+def test_projectstatus_post_operationalerror(module_client, boto3_session, mock_queue_redis):
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -427,7 +427,9 @@ def test_projectstatus_post_operationalerror(module_client, boto3_session):
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session):
+def test_projectstatus_set_project_to_deleted_from_in_progress(
+    module_client, boto3_session, mock_queue_redis
+):
     """Create project and set status to deleted"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -890,7 +892,9 @@ def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_ses
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
-def test_projectstatus_set_project_to_deleted_from_available(module_client, test_project):
+def test_projectstatus_set_project_to_deleted_from_available(
+    module_client, test_project, mock_queue_redis
+):
     """Try to set status to Deleted for test project in Available"""
 
     new_status = {"new_status": "Deleted"}
@@ -910,7 +914,7 @@ def test_projectstatus_set_project_to_deleted_from_available(module_client, test
 
 
 def test_projectstatus_check_deadline_remains_same_when_made_available_again_after_going_to_in_progress(
-    module_client, test_project
+    module_client, test_project, mock_queue_redis
 ):
     """Check deadline remains same when an available project goes to In Progress and is made available again"""
     project_id = test_project
@@ -1575,7 +1579,9 @@ def test_extend_deadline_mock_database_error(
     assert "Failed to extend deadline" in err
 
 
-def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_post_deletion_and_archivation_errors(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1605,7 +1611,9 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             assert project.is_active
 
 
-def test_projectstatus_failed_delete_project_content(module_client, boto3_session):
+def test_projectstatus_failed_delete_project_content(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1642,7 +1650,7 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
             assert project.is_active
 
 
-def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session):
+def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session, mock_queue_redis):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
