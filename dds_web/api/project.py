@@ -193,7 +193,7 @@ class ProjectStatus(flask_restful.Resource):
 
             # Return messages to user
             if is_queue_operation:
-                return_message = f"{project.public_id} has started, in the background, the process of being updated to {new_status} "
+                return_message = f"{project.public_id} has started, in the background, the process of being updated to {new_status}"
                 return_message += " (Aborted)" if new_status == "Archived" and is_aborted else ""
                 return_message += ". It may take some time to complete "
             else:
