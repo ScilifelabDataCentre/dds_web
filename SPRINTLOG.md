@@ -500,3 +500,4 @@ _Nothing merged during this sprint_
 - Bump jinja2 from 3.1.3 to 3.1.6 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
 - Bump werkzeug from 3.0.3 to 3.0.6 ([#1607](https://github.com/ScilifelabDataCentre/dds_web/pull/1607))
 - Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+- Add queuing for deleting projects([#1610](https://github.com/ScilifelabDataCentre/dds_web/pull/1610))
