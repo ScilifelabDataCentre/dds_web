@@ -491,9 +491,6 @@ _Nothing merged during this sprint_
 
 - Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
-
-# 2025-05-12 - 2025-05-23
-
 - New Github Action for automatically creating release draft: Release Drafter ([#1604](https://github.com/ScilifelabDataCentre/dds_web/pull/1604))
 - Improve set-expired-to-archived command to insure project are not inactivated without being deleted ([#1605](https://github.com/ScilifelabDataCentre/dds_web/pull/1605))
 - Fix RQ worker missconfigurations([#1603](https://github.com/ScilifelabDataCentre/dds_web/pull/1603))
@@ -501,3 +498,4 @@ _Nothing merged during this sprint_
 # 2025-05-26 - 2025-06-06
 
 - Bump jinja2 from 3.1.3 to 3.1.6 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
+- Bump werkzeug from 3.0.3 to 3.0.6 ([#1607](https://github.com/ScilifelabDataCentre/dds_web/pull/1607))
