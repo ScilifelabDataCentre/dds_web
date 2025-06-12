@@ -180,9 +180,20 @@ class ProjectStatus(flask_restful.Resource):
             else:
                 raise DDSArgumentError(message="Invalid status")
 
-            # If operations was not handled by a queue, commit the changes
+            return_message = ""
+
             if not is_queue_operation:
+                # If operations was not handled by a queue, commit the changes
                 self.update_status_project(project=project, new_status_row=new_status_row)
+                return_message += f"Project {project.public_id} updated to status {new_status}" + (
+                    " (Aborted)" if is_aborted else ""
+                )
+            else:
+                return_message += (
+                    f"Project {project.public_id} has started, in the background, the process of being updated to {new_status}"
+                    + (" (Aborted)" if is_aborted else "")
+                    + ". It may take some time to complete"
+                )
 
             # Mail users once project is made available
             if new_status == "Available" and send_email:
@@ -190,15 +201,6 @@ class ProjectStatus(flask_restful.Resource):
                     AddUser.compose_and_send_email_to_user(
                         userobj=user.researchuser, mail_type="project_release", project=project
                     )
-
-            # Return messages to user
-            if is_queue_operation:
-                return_message = f"{project.public_id} has started, in the background, the process of being updated to {new_status}"
-                return_message += " (Aborted)" if new_status == "Archived" and is_aborted else ""
-                return_message += ". It may take some time to complete"
-            else:
-                return_message = f"{project.public_id} updated to status {new_status}"
-                return_message += " (Aborted)" if new_status == "Archived" and is_aborted else ""
 
             if new_status != "Available":
                 return_message += delete_message + "."
