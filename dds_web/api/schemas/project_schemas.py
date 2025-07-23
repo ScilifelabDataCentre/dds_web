@@ -145,7 +145,9 @@ class CreateProjectSchema(marshmallow.Schema):
                 .one_or_none()
             )
             if not unit_row:
-                raise ddserr.AccessDeniedError(message="Error: Your user is not associated to a unit.")
+                raise ddserr.AccessDeniedError(
+                    message="Error: Your user is not associated to a unit."
+                )
 
             unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
             data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
