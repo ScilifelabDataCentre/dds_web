@@ -83,6 +83,20 @@ class ApiS3Connector:
         # Get bucket object
         bucket = self.resource.Bucket(self.project.bucket)
 
+        # Use S3 client to handle incomplete uploads
+        s3_client = self.resource.meta.client
+
+        # List and abort incomplete multipart uploads
+        try:
+            response = s3_client.list_multipart_uploads(Bucket=self.project.bucket)
+
+            for upload in response.get("Uploads", []):
+                s3_client.abort_multipart_upload(
+                    Bucket=self.project.bucket, Key=upload["Key"], UploadId=upload["UploadId"]
+                )
+        except Exception as e:
+            log.warning(f"Could not clean multipart uploads: {e}")
+
         # Delete objects first
         bucket.objects.all().delete()
 
