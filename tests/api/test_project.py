@@ -577,6 +577,8 @@ def test_projectstatus_archived_project_new_row_fail(
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
+    # Fails during the commit in update_project_status.
+    # So the DB is not updated with the new status.
     _, err = capfd.readouterr()
     assert "DatabaseError" in err
 

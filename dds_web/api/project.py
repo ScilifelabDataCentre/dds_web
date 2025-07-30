@@ -184,9 +184,7 @@ class ProjectStatus(flask_restful.Resource):
             if not is_queue_operation:
                 # If operations was not handled by a queue, commit the changes
                 self.update_status_project(project=project, new_status_row=new_status_row)
-                return_message += f"Project {project.public_id} updated to status {new_status}" + (
-                    " (Aborted)" if is_aborted else ""
-                )
+                return_message += f"Project {project.public_id} updated to status {new_status}"
             else:
                 return_message += (
                     f"Project {project.public_id} has started, in the background, the process of being updated to {new_status}"
@@ -524,13 +522,13 @@ class ProjectStatus(flask_restful.Resource):
         q = Queue(connection=r)
 
         job_delete_contents = q.enqueue(
-            self.queue_helper_fun_delete_contents,
+            self.queue_helper_function_delete_contents,
             project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
             clear_proj_info=aborted,  # If aborted, clear project info
         )
 
         job_update_db = q.enqueue(
-            self.queue_helper_fun_update_db,
+            self.queue_helper_function_update_proj_status,
             project_id=project.public_id,
             current_time=current_time,
             new_status="Archived",
@@ -541,7 +539,7 @@ class ProjectStatus(flask_restful.Resource):
         return None, ""  # Dummy returns to not break the main function
 
     @dbsession
-    def queue_helper_fun_delete_contents(self, project_id: int, clear_proj_info: bool = False):
+    def queue_helper_function_delete_contents(self, project_id: int, clear_proj_info: bool = False):
         """Delete the project contents for the archiving operation.
         Function to be called by the queue."""
 
@@ -570,7 +568,7 @@ class ProjectStatus(flask_restful.Resource):
             ) from err
 
     @dbsession
-    def queue_helper_fun_update_db(
+    def queue_helper_function_update_proj_status(
         self,
         project_id: int,
         current_time: datetime.datetime,
@@ -578,7 +576,7 @@ class ProjectStatus(flask_restful.Resource):
         aborted: bool = False,
     ):
         """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
-        Function to be called by the queue.
+        Function ONLY to be called by the queue.
         """
 
         project = models.Project.query.filter_by(public_id=project_id).one_or_none()
@@ -586,10 +584,10 @@ class ProjectStatus(flask_restful.Resource):
         new_status_row = models.ProjectStatuses(
             status=new_status, date_created=current_time, is_aborted=aborted
         )
-        self.update_status_project(project=project, new_status_row=new_status_row)
+        self.update_project_status(project=project, new_status_row=new_status_row)
 
     @dbsession
-    def update_status_project(
+    def update_project_status(
         self, project: models.Project, new_status_row: models.ProjectStatuses
     ):
         """Update the project status in the database."""
