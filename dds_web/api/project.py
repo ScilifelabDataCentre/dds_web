@@ -187,9 +187,7 @@ class ProjectStatus(flask_restful.Resource):
                 return_message += f"Project {project.public_id} updated to status {new_status}"
             else:
                 return_message += (
-                    f"Project {project.public_id} has started, in the background, the process of being updated to {new_status}"
-                    + (" (Aborted)" if is_aborted else "")
-                    + ". It may take some time to complete"
+                    f"The status of project {project.public_id} is being updated to {new_status}. The DDS is handling this in the background.  It may take some time to complete."
                 )
 
             # Mail users once project is made available
