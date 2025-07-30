@@ -183,7 +183,7 @@ class ProjectStatus(flask_restful.Resource):
 
             if not is_queue_operation:
                 # If operations was not handled by a queue, commit the changes
-                self.update_status_project(project=project, new_status_row=new_status_row)
+                self.update_project_status(project=project, new_status_row=new_status_row)
                 return_message += f"Project {project.public_id} updated to status {new_status}"
             else:
                 return_message += (
