@@ -40,7 +40,7 @@ jobs:
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
-            doc/technical-overview.md
+            docs/technical-overview.md
             "
       - name: Upload technical overview PDF
         uses: actions/upload-artifact@v4
@@ -64,7 +64,7 @@ jobs:
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
-            doc/troubleshooting.md
+            docs/troubleshooting.md
             "
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v4
