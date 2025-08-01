@@ -14,19 +14,17 @@ Please go through the following checklist **before** requesting a review.
 
 - [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labeling_a_pull_request.md).
 - [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
-- [ ] My code follows the style guidelines
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
+- [ ] I have performed a self-review of this change
+- [ ] I have commented the code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
+- [ ] I have added tests that prove that the code works as expected
 - [ ] All checks / actions pass. Check out the relevant workflow file [in this location](./workflows/) for information on how to fix potential issues.
 
 **If this is a PR to the `master` branch**:
 
 - [ ] I have read the [the release instructions](../docs/procedures/new_release.md) and followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
-## Screenshots (if applicable)
-
 ## Additional Notes
+
+If there are any additional notes, add them here. Screenshots etc (if applicable) can also be placed here.
