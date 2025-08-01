@@ -10,7 +10,7 @@ Fixes #(issue) / HMS-(Jira Task)
 
 Please go through the following checklist **before** requesting a review.
 
-- [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labeling_a_pull_request.md).
+- [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labelling_a_pull_request.md).
 - [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
 - [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
 - [ ] I have performed a self-review of this change
