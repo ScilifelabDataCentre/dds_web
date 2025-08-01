@@ -15,16 +15,6 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 **Make sure that the following checks/actions have passed.**
 
-- **Black**
-<!--
-  What: Python code formatter.
-  How to fix: Run `black .` locally to execute formatting.
--->
-- **Prettier**
-<!--
-  What: General code formatter. Our use case: MD and yaml mainly.
-  How to fix: Run npx prettier --write . locally to execute formatting.
--->
 - **Yamllint**
 <!--
   What: Linting of yaml files.
