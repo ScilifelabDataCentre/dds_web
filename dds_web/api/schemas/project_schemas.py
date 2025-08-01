@@ -149,13 +149,21 @@ class CreateProjectSchema(marshmallow.Schema):
                     message="Error: Your user is not associated to a unit."
                 )
 
-            unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-            data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
+            if unit_row.counter is None:
+                unit_row.counter = 0
 
-            # Generate bucket name
-            data["bucket"] = self.generate_bucketname(
-                public_id=data["public_id"], created_time=data["date_created"]
-            )
+            # Check if public_id of the project already exists
+            duplicate_public_id = True
+            while duplicate_public_id:
+                unit_row.counter += 1
+                elected_public_id = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
+                if not models.Project.query.filter_by(public_id=elected_public_id).first():
+                    data["public_id"] = elected_public_id
+                    # Generate bucket name
+                    data["bucket"] = self.generate_bucketname(
+                        public_id=data["public_id"], created_time=data["date_created"]
+                    )
+                    duplicate_public_id = False
 
             # Create project
             current_user = auth.current_user()
@@ -172,6 +180,7 @@ class CreateProjectSchema(marshmallow.Schema):
             )
 
             generate_project_key_pair(current_user, new_project)
+            db.session.flush()
 
         return new_project
 
