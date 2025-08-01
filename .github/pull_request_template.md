@@ -23,7 +23,8 @@ Please go through the following checklist **before** requesting a review.
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] All checks / actions pass. Check out the relevant workflow file [in this location](./workflows/) for information on how to fix potential issues.
 
-**If this is a PR to the `master` branch**: 
+**If this is a PR to the `master` branch**:
+
 - [ ] I have read the [the release instructions](../docs/procedures/new_release.md) and followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
 ## Screenshots (if applicable)
