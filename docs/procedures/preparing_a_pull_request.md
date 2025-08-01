@@ -15,11 +15,7 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 **Make sure that the following checks/actions have passed.**
 
-- **Yamllint**
-<!--
-  What: Linting of yaml files.
-  How to fix: Manually fix any errors locally.
--->
+
 - **Tests**
 <!--
   What: Pytest to verify that functionality works as expected.
