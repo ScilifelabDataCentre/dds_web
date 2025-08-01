@@ -13,7 +13,7 @@ Fixes #(issue) / HMS-(Jira Task)
 Please go through the following checklist **before** requesting a review.
 
 - [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labeling_a_pull_request.md).
-- [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md) <!-- Add a row at the bottom of the SPRINTLOG.md file (not needed if PR contains only tests). Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row (follow the format of previous sprints). -->
+- [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
