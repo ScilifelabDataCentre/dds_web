@@ -2,12 +2,6 @@
 
 On the right hand side of your PR, there's a section called `Labels`. From the table below, choose the (**one**) label that describes the changes in your PR the best. You can use multiple labels, but only one of the labels mentioned in this file. For example, you can use `skip-changelog` and `tests`, but not `skip-changelog` and `type: breaking`.
 
-| Label    | Description |
-| -------- | ----------- |
-| January  | $250        |
-| February | $80         |
-| March    | $420        |
-
 | Label             | Description |
 | ----------------- |-------------|
 | `skip-changelog`  | The change is irrelevant for the end-users, e.g. the change includes changes in GitHub Actions, the PR contains tests _only_, etc. PRs with this label will not be displayed in release notes. |
