@@ -15,13 +15,6 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 **Make sure that the following checks/actions have passed.**
 
-
-- **Tests**
-<!--
-  What: Pytest to verify that functionality works as expected.
-  How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
-  Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%)
--->
 - **CodeQL**
 <!--
   What: Scan for security vulnerabilities, bugs, errors.
