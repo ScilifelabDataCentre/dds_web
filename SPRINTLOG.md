@@ -503,3 +503,4 @@ _Nothing merged during this sprint_
 # Summer 2025
 
 - Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
+- Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
