@@ -16,11 +16,6 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 **Make sure that the following checks/actions have passed.**
 
 
-- **Trivy**
-<!--
-  What: Security scanner.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
 - **Snyk**
 <!--
   What: Security scanner.
