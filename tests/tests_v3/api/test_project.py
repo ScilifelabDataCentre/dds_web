@@ -428,7 +428,9 @@ def test_projectstatus_post_operationalerror(module_client, boto3_session):
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, boto3_session, mock_queue_redis):
+def test_projectstatus_set_project_to_deleted_from_in_progress(
+    module_client, boto3_session, mock_queue_redis
+):
     """Create project and set status to deleted"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -485,7 +487,7 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(module_client, bo
         if field in fields_set_to_null:
             assert not value
     assert not project.project_user_keys
-    mock_queue_redis.assert_not_called() # No queue called for deleted projects
+    mock_queue_redis.assert_not_called()  # No queue called for deleted projects
 
 
 def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
@@ -527,7 +529,10 @@ def test_projectstatus_archived_project(module_client, boto3_session, mock_queue
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
-    assert "The DDS is handling this in the background.  It may take some time to complete." in response.json["message"]
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
 
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
@@ -538,7 +543,8 @@ def test_projectstatus_archived_project(module_client, boto3_session, mock_queue
             assert value
     assert project.researchusers
 
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
+
 
 def test_projectstatus_archived_project_db_fail(
     module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
@@ -583,7 +589,8 @@ def test_projectstatus_archived_project_db_fail(
         in err
     )
 
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
+
 
 def test_projectstatus_archived_project_db_fail(
     module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
@@ -626,7 +633,8 @@ def test_projectstatus_archived_project_db_fail(
         in err
     )
 
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
+
 
 def test_projectstatus_archived_project_new_row_fail(
     module_client, boto3_session, capfd: LogCaptureFixture, mock_queue_redis
@@ -672,7 +680,8 @@ def test_projectstatus_archived_project_new_row_fail(
     _, err = capfd.readouterr()
     assert "DatabaseError" in err
 
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
+
 
 def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_redis):
     """Create a project and try to abort it"""
@@ -719,7 +728,10 @@ def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert "The DDS is handling this in the background.  It may take some time to complete." in response.json["message"]
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     assert project.current_status == "Archived"
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
@@ -730,7 +742,7 @@ def test_projectstatus_aborted_project(module_client, boto3_session, mock_queue_
             assert not value
     assert len(project.researchusers) == 0
 
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
 
 
 def test_projectstatus_abort_from_in_progress_once_made_available(
@@ -817,10 +829,13 @@ def test_projectstatus_abort_from_in_progress_once_made_available(
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Archived"
-    assert "The DDS is handling this in the background.  It may take some time to complete." in response.json["message"]
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     assert max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
 
     for field, value in vars(project).items():
         if field in fields_set_to_null:
@@ -877,12 +892,17 @@ def test_projectstatus_check_invalid_transitions_from_in_progress(
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert "The DDS is handling this in the background.  It may take some time to complete." in response.json["message"]
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     assert project.current_status == "Archived"
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
 
 
-def test_projectstatus_set_project_to_available_valid_transition(module_client, test_project, mock_queue_redis):
+def test_projectstatus_set_project_to_available_valid_transition(
+    module_client, test_project, mock_queue_redis
+):
     """Set status to Available for test project"""
 
     new_status = {"new_status": "Available", "deadline": 10}
@@ -910,7 +930,9 @@ def test_projectstatus_set_project_to_available_valid_transition(module_client, 
     assert db_deadline == calc_deadline
 
 
-def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_session, mock_queue_redis):
+def test_projectstatus_set_project_to_available_no_mail(
+    module_client, boto3_session, mock_queue_redis
+):
     """Set status to Available for test project, but skip sending mails"""
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
@@ -952,7 +974,9 @@ def test_projectstatus_set_project_to_available_no_mail(module_client, boto3_ses
     assert "An e-mail notification has not been sent." in response.json["message"]
 
 
-def test_projectstatus_set_project_to_deleted_from_available(module_client, test_project, mock_queue_redis):
+def test_projectstatus_set_project_to_deleted_from_available(
+    module_client, test_project, mock_queue_redis
+):
     """Try to set status to Deleted for test project in Available"""
 
     new_status = {"new_status": "Deleted"}
@@ -1023,7 +1047,9 @@ def test_projectstatus_check_deadline_remains_same_when_made_available_again_aft
     assert project.current_deadline == deadline_initial
 
 
-def test_projectstatus_set_project_to_expired_from_available(module_client, test_project, mock_queue_redis):
+def test_projectstatus_set_project_to_expired_from_available(
+    module_client, test_project, mock_queue_redis
+):
     """Set status to Expired for test project"""
 
     new_status = {"new_status": "Expired", "deadline": 5}
@@ -1131,7 +1157,9 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert "Project cannot be made Available any more times" in response.json["message"]
 
 
-def test_projectstatus_invalid_transitions_from_expired(module_client, test_project, mock_queue_redis):
+def test_projectstatus_invalid_transitions_from_expired(
+    module_client, test_project, mock_queue_redis
+):
     """Check all invalid transitions from Expired"""
 
     # Expired to In progress
@@ -1189,9 +1217,12 @@ def test_projectstatus_set_project_to_archived(
     )
 
     assert response.status_code == http.HTTPStatus.OK
-    assert "The DDS is handling this in the background.  It may take some time to complete." in response.json["message"]
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     assert project.current_status == "Archived"
-    mock_queue_redis.assert_called() # Queue is called for archived projects
+    mock_queue_redis.assert_called()  # Queue is called for archived projects
     assert not max(project.project_statuses, key=lambda x: x.date_created).is_aborted
     assert not file_in_db(test_dict=FIRST_NEW_FILE, project=project.id)
     assert not project.project_user_keys

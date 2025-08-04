@@ -1493,7 +1493,9 @@ def test_set_available_to_expired(client, cli_runner):
 
 
 @mock.patch("boto3.session.Session")
-def test_set_expired_to_archived(_: MagicMock, client, cli_runner, mock_queue_redis, capfd: LogCaptureFixture):
+def test_set_expired_to_archived(
+    _: MagicMock, client, cli_runner, mock_queue_redis, capfd: LogCaptureFixture
+):
     units: List = db.session.query(models.Unit).all()
 
     for unit in units:
@@ -1523,6 +1525,7 @@ def test_set_expired_to_archived(_: MagicMock, client, cli_runner, mock_queue_re
     _, err = capfd.readouterr()
     assert "is being changed to Archived by the queue!" in err
     mock_queue_redis.assert_called()
+
 
 @mock.patch("boto3.session.Session")
 def test_set_expired_to_archived_db_failed(
