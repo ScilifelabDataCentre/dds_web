@@ -1555,6 +1555,7 @@ def test_set_expired_to_archived_db_failed(
     assert ("SQL: OperationalError") in err
     mock_queue_redis.assert_called()
 
+
 # delete invites
 
 
