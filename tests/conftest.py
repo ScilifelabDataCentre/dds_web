@@ -631,4 +631,4 @@ def mock_queue_redis(mock_enqueue):
 
                 # Mock the enqueue to call the function directly without actually enqueueing
                 mock_enqueue_func.side_effect = mock_enqueue
-                yield
+                yield mock_enqueue_func
