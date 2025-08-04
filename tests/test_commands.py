@@ -1553,6 +1553,7 @@ def test_set_expired_to_archived_db_failed(
         "Project bucket contents were deleted, but they were not deleted from the database. Please contact SciLifeLab Data Centre."
     ) in err
     assert ("SQL: OperationalError") in err
+    mock_queue_redis.assert_called()
 
 
 # delete invites
@@ -1589,7 +1590,7 @@ def test_monthly_usage_mark_as_done(client, cli_runner, capfd: LogCaptureFixture
         # Create new file in project
         new_file = models.File(
             name=f"filename_{project.public_id}",
-            name_in_bucket=f"name_in_bucket_{project.public_id}",
+            name_in_bucket=f"name_in_buccket_{project.public_id}",
             subpath=f"filename/subpath",
             size_original=15000,
             size_stored=10000,
