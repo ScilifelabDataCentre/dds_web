@@ -24,7 +24,6 @@ Both generating the checksum and signing the package needs to occur prior to pub
 ### Providing a checksum
 
 - Hashes are automatically generated and uploaded to PyPI upon publishing packages. These hashes are available on the ["Download files" page](https://pypi.org/project/dds-cli/#files)
-
   - You can view the hashes by clicking "view hashes", either in the _Source Distribution_ or _Built Distribution_ section
   - The hashes are also available via the PyPI API
 
@@ -70,7 +69,6 @@ Both generating the checksum and signing the package needs to occur prior to pub
   - Downloading the package (step 1) via the browser is possible, the following steps (2-4) are only possible via the terminal.
 
 - The main principal of adding the hashes is that we should not blindly trust third party software.
-
   - Regarding PyPI: We do not ourselves generate the hashes available on PyPI - PyPI does. Therefore, verifying the hashes cannot guarantee that what we intend to publish is installed by the users.
   - Regarding dependencies: If the CLI is installed via `pip install dds-cli`, there's a file with hashes for each package. If it's installed by first downloading with `pip download dds-cli`, all dependency `whl` distribution files are also downloaded. These package checksums could be verified by creating- and running a custom shell- or python script.
     - It's possible to require matching hashes from all dependencies. This blocks the installation if a package either does not have a hash, or the hash does not match.
