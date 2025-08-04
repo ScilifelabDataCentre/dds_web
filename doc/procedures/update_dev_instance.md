@@ -6,10 +6,8 @@ Redeployments of the development instance can be done at any time. No planning r
 
 1.  Merge change into `dev`. A GitHub action publishes the image to GHCR.
 2.  Perform redeployment of dev instance
-
     - A member of the team has access to the development deployment: They can do the redeployment themselves. This is only OK in the development instance.
     - No team members have access to the deployment / they are not available:
-
       1.  Go to the [sysadmin repository](https://github.com/ScilifelabDataCentre/sysadmin/issues)
       2.  Create a new issue and fill in the following information
 
