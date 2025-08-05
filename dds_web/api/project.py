@@ -149,6 +149,7 @@ class ProjectStatus(flask_restful.Resource):
             curr_date = dds_web.utils.current_time()
             delete_message = ""
             is_aborted = False
+            is_queue_operation = False
 
             # Moving to Available
             if new_status == "Available":
@@ -169,33 +170,23 @@ class ProjectStatus(flask_restful.Resource):
                 )
             elif new_status == "Archived":
                 is_aborted = json_input.get("is_aborted", False)
+                is_queue_operation = True
                 new_status_row, delete_message = self.archive_project(
-                    project=project, current_time=curr_date, aborted=is_aborted
+                    project=project,
+                    current_time=curr_date,
+                    aborted=is_aborted,
                 )
             else:
                 raise DDSArgumentError(message="Invalid status")
 
-            try:
-                project.project_statuses.append(new_status_row)
-                project.busy = False  # TODO: Use set_busy instead?
-                db.session.commit()
-                flask.current_app.logger.info(
-                    f"Busy status set. Project: '{project.public_id}', Busy: False"
-                )
-            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
-                flask.current_app.logger.exception(err)
-                db.session.rollback()
-                raise DatabaseError(
-                    message=str(err),
-                    alt_message=(
-                        "Status was not updated"
-                        + (
-                            ": Database malfunction."
-                            if isinstance(err, sqlalchemy.exc.OperationalError)
-                            else ": Server Error."
-                        )
-                    ),
-                ) from err
+            return_message = ""
+
+            if not is_queue_operation:
+                # If operations was not handled by a queue, commit the changes
+                self.update_project_status(project=project, new_status_row=new_status_row)
+                return_message += f"Project {project.public_id} updated to status {new_status}"
+            else:
+                return_message += f"The status of project {project.public_id} is being updated to {new_status}. The DDS is handling this in the background.  It may take some time to complete."
 
             # Mail users once project is made available
             if new_status == "Available" and send_email:
@@ -203,10 +194,6 @@ class ProjectStatus(flask_restful.Resource):
                     AddUser.compose_and_send_email_to_user(
                         userobj=user.researchuser, mail_type="project_release", project=project
                     )
-
-            return_message = f"{project.public_id} updated to status {new_status}" + (
-                " (aborted)" if new_status == "Archived" and is_aborted else ""
-            )
 
             if new_status != "Available":
                 return_message += delete_message + "."
@@ -506,7 +493,10 @@ class ProjectStatus(flask_restful.Resource):
         return models.ProjectStatuses(status="Deleted", date_created=current_time), delete_message
 
     def archive_project(
-        self, project: models.Project, current_time: datetime.datetime, aborted: bool = False
+        self,
+        project: models.Project,
+        current_time: datetime.datetime,
+        aborted: bool = False,
     ):
         """Archive project: Make status Archived.
 
@@ -522,20 +512,47 @@ class ProjectStatus(flask_restful.Resource):
                     "Please abort the project if you wish to proceed."
                 )
 
+        # Get redis connection to add a job if needed
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
+
+        job_delete_contents = q.enqueue(
+            self.queue_helper_function_delete_contents,
+            project_id=project.public_id,  # It is not possible to pass the project object directly to the queue
+            clear_proj_info=aborted,  # If aborted, clear project info
+        )
+
+        job_update_db = q.enqueue(
+            self.queue_helper_function_update_proj_status,
+            project_id=project.public_id,
+            current_time=current_time,
+            new_status="Archived",
+            aborted=aborted,
+            depends_on=job_delete_contents,  # This job is only executed after success of delete contents
+        )
+
+        return None, ""  # Dummy returns to not break the main function
+
+    @dbsession
+    def queue_helper_function_delete_contents(self, project_id: int, clear_proj_info: bool = False):
+        """Delete the project contents for the archiving operation.
+        Function to be called by the queue."""
+
+        project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+
         try:
             # Deletes files (also commits session in the function - possibly refactor later)
             RemoveContents().delete_project_contents(
                 project_id=project.public_id, delete_bucket=True
             )
-            delete_message = f"\nAll files in {project.public_id} deleted"
             self.rm_project_user_keys(project=project)
 
             # Only mark as inactive after all deletion operations succeed
             project.is_active = False
             # Delete metadata from project row
-            if aborted:
+            if clear_proj_info:
                 project = self.delete_project_info(project)
-                delete_message += " and project info cleared"
 
         except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
             flask.current_app.logger.exception(err)
@@ -546,11 +563,35 @@ class ProjectStatus(flask_restful.Resource):
                 pass_message=True,
             ) from err
 
-        return (
-            models.ProjectStatuses(
-                status="Archived", date_created=current_time, is_aborted=aborted
-            ),
-            delete_message,
+    @dbsession
+    def queue_helper_function_update_proj_status(
+        self,
+        project_id: int,
+        current_time: datetime.datetime,
+        new_status: str,
+        aborted: bool = False,
+    ):
+        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        Function ONLY to be called by the queue.
+        """
+
+        project = models.Project.query.filter_by(public_id=project_id).one_or_none()
+
+        new_status_row = models.ProjectStatuses(
+            status=new_status, date_created=current_time, is_aborted=aborted
+        )
+        self.update_project_status(project=project, new_status_row=new_status_row)
+
+    @dbsession
+    def update_project_status(
+        self, project: models.Project, new_status_row: models.ProjectStatuses
+    ):
+        """Update the project status in the database."""
+        project.project_statuses.append(new_status_row)
+        project.busy = False  # TODO: Use set_busy instead?
+        db.session.commit()
+        flask.current_app.logger.info(
+            f"Busy status set. Project: '{project.public_id}', Busy: False"
         )
 
     def rm_project_user_keys(self, project):
