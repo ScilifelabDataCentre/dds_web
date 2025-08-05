@@ -3,8 +3,9 @@
 # Trivy has scanners that look for security issues,
 # and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
-# ---------------------------------
-name: Trivy - ghcr image scan - master
+# ---
+# Action failing? Go through the alerts and either manually fix, dismiss or ignore. 
+#                 Add info on ignored or dismissed alerts.name: Trivy - ghcr image scan - master
 on:
   schedule:
     - cron: "0 7,15 * * *"
