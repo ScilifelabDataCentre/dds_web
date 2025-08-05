@@ -1449,8 +1449,8 @@ def test_extend_deadline_more_than_default(module_client, boto3_session):
     )
 
 
-def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_session):
-    """If the deadline has been extended more than 2 times it should not work"""
+def test_extend_deadline_maximum_number_available_exceeded(module_client, boto3_session):
+    """A project should be able to be released once and extenced twice, thus in expired 3 times."""
 
     # create project and release it
     project_id, project = create_and_release_project(
@@ -1460,7 +1460,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
     deadline = project.current_deadline  # current deadline
     new_deadline_in = 1  # small new deadline
 
-    for i in range(1, 4):
+    for i in range(1, 5):
         time.sleep(1)  # tests are too fast
 
         # extend deadline by a small new deadline so we can do it several times
@@ -1474,7 +1474,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
             query_string={"project": project_id},
             json=extend_deadline_data_small_deadline,
         )
-        if i < 3:
+        if i < 4:
             assert response.status_code == http.HTTPStatus.OK
             assert project.times_expired == i
             assert project.current_deadline == deadline + datetime.timedelta(days=new_deadline_in)
@@ -1488,7 +1488,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
         else:
             assert response.status_code == http.HTTPStatus.BAD_REQUEST
             assert (
-                "Project availability limit: The maximum number of changes in data availability has been reached."
+                "Project availability limit: Project cannot be made Available any more times"
                 in response.json["message"]
             )
 
