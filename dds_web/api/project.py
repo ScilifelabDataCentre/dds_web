@@ -472,13 +472,13 @@ class ProjectStatus(flask_restful.Resource):
         q = Queue(connection=r)
 
         job_delete_contents = q.enqueue(
-            self.queue_helper_fun_delete_contents,
+            self.queue_helper_function_delete_contents,
             project_id=project.public_id,  # It is not possible to pass the project
             clear_proj_info=True,
         )
 
         job_update_db = q.enqueue(
-            self.queue_helper_fun_update_db,
+            self.queue_helper_function_update_proj_status,
             project_id=project.public_id,
             current_time=current_time,
             new_status="Deleted",

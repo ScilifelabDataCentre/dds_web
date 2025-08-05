@@ -486,7 +486,7 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(
         if field in fields_set_to_null:
             assert not value
     assert not project.project_user_keys
-    mock_queue_redis.assert_not_called()  # No queue called for deleted projects
+    mock_queue_redis.assert_called()  # Queue called for deleted projects
 
 
 def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
@@ -1671,6 +1671,7 @@ def test_projectstatus_post_deletion_and_archivation_errors(
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
@@ -1710,6 +1711,7 @@ def test_projectstatus_failed_delete_project_content(
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
@@ -1740,6 +1742,7 @@ def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session,
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
