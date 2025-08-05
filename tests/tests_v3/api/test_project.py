@@ -941,8 +941,12 @@ def test_projectstatus_set_project_to_expired_from_available(module_client, test
 def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(
     module_client, test_project
 ):
-    """Try to set status to Available for test project after being in Expired 3 times"""
+    """Try to set status to Available for test project after being in Expired 3 times.
 
+    In Progress --> Available --> Expired --> Available --> Expired --> Available --> Expired --> Archived
+    """
+
+    # In Progress --> Available: Should succeed
     new_status = {"new_status": "Available", "deadline": 5}
 
     project_id = test_project
@@ -959,6 +963,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
 
+    # Available --> Expired: Should succeed
     new_status["new_status"] = "Expired"
     time.sleep(1)
 
@@ -972,6 +977,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Expired"
 
+    # Expired --> Available (1st time): Should succeed
     new_status["new_status"] = "Available"
     time.sleep(1)
 
@@ -985,6 +991,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Available"
 
+    # Available --> Expired: Should succeed
     new_status["new_status"] = "Expired"
     time.sleep(1)
 
@@ -998,6 +1005,35 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Expired"
 
+    # Expired --> Available (2nd time): Should succeed
+    new_status["new_status"] = "Available"
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=new_status,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Available"
+
+    # Available --> Expired: Should succeed
+    new_status["new_status"] = "Expired"
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=new_status,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Expired"
+
+    # Expired --> Available (3rd time): Should fail
     new_status["new_status"] = "Available"
     time.sleep(1)
 
