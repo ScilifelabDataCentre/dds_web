@@ -32,11 +32,6 @@ Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md
 
 **Make sure that the following checks/actions have passed.**
 
-- **CodeQL**
-<!--
-  What: Scan for security vulnerabilities, bugs, errors.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
 - **Trivy**
 <!--
   What: Security scanner.
