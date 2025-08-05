@@ -32,11 +32,6 @@ Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md
 
 **Make sure that the following checks/actions have passed.**
 
-- **Prettier**
-<!--
-  What: General code formatter. Our use case: MD and yaml mainly.
-  How to fix: Run npx prettier --write . locally to execute formatting.
--->
 - **Yamllint**
 <!--
   What: Linting of yaml files.
