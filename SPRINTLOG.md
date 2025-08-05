@@ -1,3 +1,5 @@
+<!-- Add a row at the bottom of this file when you make a new PR. This is not needed if the PR only contains tests. Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row; Follow the format of previous sprints. -->
+
 # Data Delivery System Web / API: Changelog
 
 Please add a _short_ line describing the PR you make, if the PR implements a specific feature or functionality, or refactor. Not needed if you add very small and unnoticable changes. Not needed when PR includes _only_ tests for already existing feature.
@@ -504,3 +506,7 @@ _Nothing merged during this sprint_
 
 - Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
 - Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+
+# 2025-08-04 - 2025-08-15
+
+- Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
