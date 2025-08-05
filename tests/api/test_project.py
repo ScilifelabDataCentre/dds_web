@@ -296,15 +296,6 @@ def test_set_busy_false(module_client):
 # post
 
 
-def test_full_natural_project_life_cycle(module_client, boto3_session):
-    """Verifies that the project status can do the following transitions:
-    In Progress -> Available -> Expired -> Available --> Expired --> Available --> Expired --> Archived
-
-    The project should be able to be extended twice, thus being in avaiable 3 times.
-    """
-    pass
-
-
 def test_projectstatus_when_busy(module_client):
     """Status change should not be possible when project is busy."""
     # Get user
