@@ -295,6 +295,7 @@ def test_set_busy_false(module_client):
 
 # post
 
+
 def test_full_natural_project_life_cycle(module_client, boto3_session):
     """Verifies that the project status can do the following transitions:
     In Progress -> Available -> Expired -> Available --> Expired --> Available --> Expired --> Archived
@@ -302,6 +303,7 @@ def test_full_natural_project_life_cycle(module_client, boto3_session):
     The project should be able to be extended twice, thus being in avaiable 3 times.
     """
     pass
+
 
 def test_projectstatus_when_busy(module_client):
     """Status change should not be possible when project is busy."""
@@ -950,10 +952,10 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     module_client, test_project
 ):
     """Try to set status to Available for test project after being in Expired 3 times.
-    
+
     In Progress --> Available --> Expired --> Available --> Expired --> Available --> Expired --> Archived
     """
-    
+
     # In Progress --> Available: Should succeed
     new_status = {"new_status": "Available", "deadline": 5}
 
@@ -1056,6 +1058,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert project.current_status == "Expired"
 
     assert "Project cannot be made Available any more times" in response.json["message"]
+
 
 def test_projectstatus_invalid_transitions_from_expired(module_client, test_project):
     """Check all invalid transitions from Expired"""
