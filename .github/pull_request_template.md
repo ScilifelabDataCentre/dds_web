@@ -32,11 +32,6 @@ Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md
 
 **Make sure that the following checks/actions have passed.**
 
-- **Black**
-<!--
-  What: Python code formatter.
-  How to fix: Run `black .` locally to execute formatting.
--->
 - **Prettier**
 <!--
   What: General code formatter. Our use case: MD and yaml mainly.
