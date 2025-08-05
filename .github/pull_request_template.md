@@ -1,10 +1,16 @@
 ## Description
 
-Please include a summary of the change and which issue is fixed. Also include relevant motivation and context.
-
 _If this PR makes changes to the database: Remember to include a new migration version **or** explain in the description/comments why it's not needed._
 
+### What? 
+
+Please include a summary of the change and which issue is fixed. 
+
 Fixes #(issue) / HMS-(Jira Task)
+
+### Why? 
+
+Also include relevant motivation and context.
 
 ## Checklist
 
