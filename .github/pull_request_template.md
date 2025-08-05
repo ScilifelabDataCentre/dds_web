@@ -32,10 +32,6 @@ Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md
 
 **Make sure that the following checks/actions have passed.**
 
-- **Snyk**
-<!--
-  What: Security scanner.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
+
 
 If an action does not pass and you need help with how to solve it, enter edit mode of this PR template or go to the [PR template](../.github/pull_request_template.md).
