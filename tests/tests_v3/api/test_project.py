@@ -483,11 +483,15 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Deleted"
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     for field, value in vars(project).items():
         if field in fields_set_to_null:
             assert not value
     assert not project.project_user_keys
-    mock_queue_redis.assert_called()  # No queue called for deleted projects
+    mock_queue_redis.assert_called()  # Queue called for deleted projects
 
 
 def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
