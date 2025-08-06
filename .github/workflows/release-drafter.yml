@@ -4,6 +4,7 @@
 name: Release Drafter
 
 on:
+  pull_request:
   # Run on push to dev and master
   push:
     branches:
