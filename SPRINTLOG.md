@@ -504,3 +504,7 @@ _Nothing merged during this sprint_
 
 - Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
 - Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+
+# 2025-08-04 - 2025-08-15
+
+- Fix bug: Users should be able to release the project once and extend / rerelease the project twice ([#1619](https://github.com/ScilifelabDataCentre/dds_web/pull/1619))
