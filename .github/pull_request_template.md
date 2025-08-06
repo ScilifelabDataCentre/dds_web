@@ -14,8 +14,12 @@ Also include relevant motivation and context.
 
 ## Checklist
 
-Please go through the following checklist **before** requesting a review.
+### Before marking this PR as "Ready for review"
 
+Please make sure all boxes in the checklist below are checked **before** marking the PR as "Ready for review" / requesting a review.
+
+- [ ] I have added a description of this PR in the [section above](#description) 
+- [ ] I have done a review of my own PR.
 - [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labelling_a_pull_request.md).
 - [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
 - [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
