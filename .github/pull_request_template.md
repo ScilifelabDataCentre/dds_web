@@ -1,82 +1,38 @@
-## Read this before submitting the PR
+## Description
 
-1. Always create a Draft PR first
-2. Go through sections 1-5 below, fill them in and check all the boxes
-3. Make sure that the branch is updated; if there's an "Update branch" button at the bottom of the PR, rebase or update branch.
-4. When all boxes are checked, information is filled in, and the branch is updated: mark as Ready For Review and tag reviewers (top right)
-5. Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and request an new review.
+_If this PR makes changes to the database: Remember to include a new migration version **or** explain in the description/comments why it's not needed._
 
-If there is a field which you are unsure about, enter the edit mode of this description or go to the [PR template](../.github/pull_request_template.md); There are invisible comments providing descriptions which may be of help.
+### What?
 
-## 1. Description / Summary
+Please include a summary of the change and which issue is fixed.
 
-**Add a summary here**: What does this PR add/change and why?
+Fixes #(issue) / HMS-(Jira Task)
 
-## 2. Jira task / GitHub issue
+### Why?
 
-**Is this a GitHub issue?** --> Add the link to the github issue
+Also include relevant motivation and context.
 
-**Is this from a Jira task?** --> If your branch does not contain info regarding the Jira task ID, put it here.
+## Checklist
 
-## 3. Type of change - Add label
+### Before marking this PR as "Ready for review"
 
-**What _type of change(s)_ does the PR contain? For an explanation of the different options below, enter edit mode of this PR description template.**
+Please make sure all boxes in the checklist below are checked **before** marking the PR as "Ready for review" / requesting a review.
 
-_If you do not want this change to be included in release notes, add the label `skip-changelog`._
+- [ ] I have added a description of this PR in the [section above](#description) 
+- [ ] I have done a review of my own PR.
+- [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labelling_a_pull_request.md).
+- [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
+- [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
+- [ ] I have performed a self-review of this change
+- [ ] I have commented the code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] I have added tests that prove that the code works as expected
+- [ ] All checks / actions pass. Check out the relevant workflow file [in this location](./workflows/) for information on how to fix potential issues.
 
-- `type: breaking`: Changes in this PR will cause existing functionality to not work as expected. The master branch of the API will no longer work with the CLI dev branch (and vice versa).
-- `type: feature`: You've added new functionality or updated an existing one. This includes database changes in most cases. Ask if you're unsure.
-  _Remember to include a new migration version **or** explain in the description/comments why it's not needed._
-- `type: bug`: The PR fixes a bug.
-- `type: docs`: The PR _only_ updates documentation.
-- `type: dependency`: You've updated a dependency version, e.g. a python package (in requirements.txt).
-- `skip-changelog`: None of the above mentioned labels fit in. E.g. a new GitHub Action, a PR containing _only_ tests, etc.
+**If this is a PR to the `master` branch**:
 
-## 4. Additional information
+- [ ] I have read the [the release instructions](../docs/procedures/new_release.md) and followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
-- [ ] I have added an entry to the [Sprintlog](../SPRINTLOG.md) <!-- Add a row at the bottom of the SPRINTLOG.md file (not needed if PR contains only tests). Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row (follow the format of previous sprints). -->
-- [ ] This is a PR to the `master` branch: _If checked, read [the release instructions](../docs/procedures/new_release.md)_ <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
-  - [ ] I have followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
+## Additional Notes
 
-## 5. Actions / Scans
-
-**Make sure that the following checks/actions have passed.**
-
-- **Black**
-<!--
-  What: Python code formatter.
-  How to fix: Run `black .` locally to execute formatting.
--->
-- **Prettier**
-<!--
-  What: General code formatter. Our use case: MD and yaml mainly.
-  How to fix: Run npx prettier --write . locally to execute formatting.
--->
-- **Yamllint**
-<!--
-  What: Linting of yaml files.
-  How to fix: Manually fix any errors locally.
--->
-- **Tests**
-<!--
-  What: Pytest to verify that functionality works as expected.
-  How to fix: Manually fix any errors locally. Follow the instructions in the "Run tests" section of the README.md to run the tests locally.
-  Additional info: The PR should ALWAYS include new tests or fixed tests when there are code changes. When pytest action has finished, it will post a codecov report; Look at this report and verify the files you have changed are listed. "90% <100.00%> (+0.8%)" means "Tests cover 90% of the changed file, <100 % of this PR's code changes are tested>, and (the code changes and added tests increased the overall test coverage with 0.8%)
--->
-- **CodeQL**
-<!--
-  What: Scan for security vulnerabilities, bugs, errors.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
-- **Trivy**
-<!--
-  What: Security scanner.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
-- **Snyk**
-<!--
-  What: Security scanner.
-  How to fix: Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
--->
-
-If an action does not pass and you need help with how to solve it, enter edit mode of this PR template or go to the [PR template](../.github/pull_request_template.md).
+If there are any additional notes, add them here. Screenshots etc (if applicable) can also be placed here.
