@@ -43,4 +43,4 @@ version-resolver:
       - "type: dependency"
   default: patch
 
-commitish: "master"
+# commitish: "master"
