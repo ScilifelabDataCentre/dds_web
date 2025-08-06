@@ -511,3 +511,4 @@ _Nothing merged during this sprint_
 
 - Fix bug: Users should be able to release the project once and extend / rerelease the project twice ([#1619](https://github.com/ScilifelabDataCentre/dds_web/pull/1619))
 - Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
+- Move sprintlog instructions to top of sprintlog ([#1617](https://github.com/ScilifelabDataCentre/dds_web/pull/1617))
