@@ -20,7 +20,7 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 ## 3. Type of change - Add label
 
-Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
+- [ ] Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
 
 ## 4. Additional information
 

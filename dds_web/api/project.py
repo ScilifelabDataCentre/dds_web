@@ -222,9 +222,11 @@ class ProjectStatus(flask_restful.Resource):
         # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
-        # the status has changed at least two times,
-        # next time the project expires it wont change again -> error
-        if project.times_expired >= 2:
+        # A project can have the expired status 3 times
+        # It can be released / extended 3 times
+        # If more attempts --> cannot be extended again
+        # will be automatically archived by the system
+        if project.times_expired > 3:
             raise DDSArgumentError(
                 "Project availability limit: The maximum number of changes in data availability has been reached."
             )
@@ -398,9 +400,10 @@ class ProjectStatus(flask_restful.Resource):
             days=deadline_in
         )
 
-        # Project can only move from Expired 2 times
+        # Project can only MOVE FROM Expired 2 times
+        # but can BE IN Exired 3 times
         if project.current_status == "Expired":
-            if project.times_expired > 2:
+            if project.times_expired > 3:
                 raise DDSArgumentError(
                     "Project availability limit: Project cannot be made Available any more times"
                 )
