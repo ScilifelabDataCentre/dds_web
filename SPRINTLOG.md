@@ -513,3 +513,5 @@ _Nothing merged during this sprint_
 - Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
 - Move sprintlog instructions to top of sprintlog ([#1617](https://github.com/ScilifelabDataCentre/dds_web/pull/1617))
 - New version: 2.12.0 ([#1624](https://github.com/ScilifelabDataCentre/dds_web/pull/1624))
+- Move instructions on how to solve failing actions / workflows to the workflow files ([#1620](https://github.com/ScilifelabDataCentre/dds_web/pull/1620/))
+
