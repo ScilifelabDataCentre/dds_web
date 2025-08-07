@@ -1,5 +1,20 @@
 Changelog
 ==========
+
+.. _2.12.0:
+
+2.12.0 - 2025-08-06
+~~~~~~~~~~~~~~~~~~~~
+
+- 🚀 Features
+    - Set project archivation as a background task
+
+- 🐛 Bug Fixes
+    - Fix bug: Users should be able to release the project once and extend / rerelease the project twice
+
+- 🛡️ Dependencies
+    - Bump werkzeug from 3.0.3 to 3.0.6
+
 .. _2.11.0:
 
 2.11.0 - 2025-06-05
