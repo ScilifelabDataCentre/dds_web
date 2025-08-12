@@ -1,3 +1,5 @@
+<!-- Add a row at the bottom of this file when you make a new PR. This is not needed if the PR only contains tests. Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row; Follow the format of previous sprints. -->
+
 # Data Delivery System Web / API: Changelog
 
 Please add a _short_ line describing the PR you make, if the PR implements a specific feature or functionality, or refactor. Not needed if you add very small and unnoticable changes. Not needed when PR includes _only_ tests for already existing feature.
@@ -491,9 +493,6 @@ _Nothing merged during this sprint_
 
 - Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
 - Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
-
-# 2025-05-12 - 2025-05-23
-
 - New Github Action for automatically creating release draft: Release Drafter ([#1604](https://github.com/ScilifelabDataCentre/dds_web/pull/1604))
 - Improve set-expired-to-archived command to insure project are not inactivated without being deleted ([#1605](https://github.com/ScilifelabDataCentre/dds_web/pull/1605))
 - Fix RQ worker missconfigurations([#1603](https://github.com/ScilifelabDataCentre/dds_web/pull/1603))
@@ -501,3 +500,16 @@ _Nothing merged during this sprint_
 # 2025-05-26 - 2025-06-06
 
 - Bump jinja2 from 3.1.3 to 3.1.6 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
+- Bump werkzeug from 3.0.3 to 3.0.6 ([#1607](https://github.com/ScilifelabDataCentre/dds_web/pull/1607))
+
+# Summer 2025
+
+- Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
+- Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+
+# 2025-08-04 - 2025-08-15
+
+- Fix bug: Users should be able to release the project once and extend / rerelease the project twice ([#1619](https://github.com/ScilifelabDataCentre/dds_web/pull/1619))
+- Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
+- Move sprintlog instructions to top of sprintlog ([#1617](https://github.com/ScilifelabDataCentre/dds_web/pull/1617))
+- New version: 2.12.0 ([#1624](https://github.com/ScilifelabDataCentre/dds_web/pull/1624))

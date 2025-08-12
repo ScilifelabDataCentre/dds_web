@@ -20,22 +20,12 @@ If there is a field which you are unsure about, enter the edit mode of this desc
 
 ## 3. Type of change - Add label
 
-**What _type of change(s)_ does the PR contain? For an explanation of the different options below, enter edit mode of this PR description template.**
-
-_If you do not want this change to be included in release notes, add the label `skip-changelog`._
-
-- `type: breaking`: Changes in this PR will cause existing functionality to not work as expected. The master branch of the API will no longer work with the CLI dev branch (and vice versa).
-- `type: feature`: You've added new functionality or updated an existing one. This includes database changes in most cases. Ask if you're unsure.
-  _Remember to include a new migration version **or** explain in the description/comments why it's not needed._
-- `type: bug`: The PR fixes a bug.
-- `type: docs`: The PR _only_ updates documentation.
-- `type: dependency`: You've updated a dependency version, e.g. a python package (in requirements.txt).
-- `skip-changelog`: None of the above mentioned labels fit in. E.g. a new GitHub Action, a PR containing _only_ tests, etc.
+- [ ] Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
 
 ## 4. Additional information
 
-- [ ] I have added an entry to the [Sprintlog](../SPRINTLOG.md) <!-- Add a row at the bottom of the SPRINTLOG.md file (not needed if PR contains only tests). Follow the format of previous rows. If the PR is the first in a new sprint, add a new sprint header row (follow the format of previous sprints). -->
-- [ ] This is a PR to the `master` branch: _If checked, read [the release instructions](../doc/procedures/new_release.md)_ <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
+- [ ] I have added an entry to the [Sprintlog](../SPRINTLOG.md)
+- [ ] This is a PR to the `master` branch: _If checked, read [the release instructions](../docs/procedures/new_release.md)_ <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
   - [ ] I have followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
 
 ## 5. Actions / Scans
