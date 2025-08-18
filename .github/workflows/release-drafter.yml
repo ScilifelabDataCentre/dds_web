@@ -4,6 +4,7 @@
 name: Release Drafter
 
 on:
+  workflow_dispatch: # Allows manual triggering of the workflow
   # Run on push to dev and master
   push:
     branches:
