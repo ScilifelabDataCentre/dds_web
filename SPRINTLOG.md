@@ -516,3 +516,4 @@ _Nothing merged during this sprint_
 # 2025-08-18 - 2025-08-29
 
 - Add queuing for deleting projects([#1610](https://github.com/ScilifelabDataCentre/dds_web/pull/1610))
+- Add style guidelines to the repository ([#1618](https://github.com/ScilifelabDataCentre/dds_web/pull/1618))
