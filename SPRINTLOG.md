@@ -518,3 +518,4 @@ _Nothing merged during this sprint_
 - Add queuing for deleting projects([#1610](https://github.com/ScilifelabDataCentre/dds_web/pull/1610))
 - Add style guidelines to the repository ([#1618](https://github.com/ScilifelabDataCentre/dds_web/pull/1618))
 - Move instructions on how to solve failing actions / workflows to the workflow files ([#1620](https://github.com/ScilifelabDataCentre/dds_web/pull/1620/))
+- Added ADR for Queue solution ([#1625](https://github.com/ScilifelabDataCentre/dds_web/pull/1625))
