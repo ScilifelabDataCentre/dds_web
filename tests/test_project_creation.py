@@ -656,6 +656,58 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
 
 
+def test_create_project_skips_duplicate_public_id(client, boto3_session):
+    """Attempt to create a project with the same public_id as an existing project."""
+    # Get unit users 
+    unituser = models.UnitUser.query.filter_by(username="unituser").one_or_none()
+    assert unituser
+
+    # Get unit counter
+    unit: models.Unit = models.Unit.query.filter_by(id=unituser.unit.id).first
+    assert unit and unit.counter_row is not None
+
+    # Get number of projects 
+    existing_projects = models.Project.query.filter_by(unit_id=unituser.unit.id).count()
+    next_public_id = unit.internal_ref + "0000" + str(existing_projects + 1)
+
+    # Manually create a project with a known public_id
+    first_project = models.Project(
+        title=proj_data["title"], 
+        pi=proj_data["pi"], 
+        description=proj_data["description"], 
+        created_by=unituser.username, 
+        unit_id=unituser.unit.id,
+        public_id=next_public_id,
+    )
+    db.session.add(first_project)
+    db.session.commit()
+
+    # Verify that the project was created
+    created_proj = models.Project.query.filter_by(public_id=next_public_id).one_or_none()
+    assert created_proj
+
+    # Create unit admins and verify there are 3
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Create another project, which should skip the existing public_id
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json and response_json.get("project_id")
+    assert response_json["project_id"] == unit.internal_ref + "0000" + str(existing_projects + 2)
+
+    # Verify that the new project 
+    created_proj = models.Project.query.filter_by(public_id=response_json["project_id"]).one_or_none()
+    assert created_proj
+
+
+
 def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
     create_unit_admins(num_admins=2)
