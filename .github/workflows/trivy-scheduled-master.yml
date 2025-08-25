@@ -6,6 +6,8 @@
 # ---
 # Action failing? Go through the alerts and either manually fix, dismiss or ignore.
 #                 Add info on ignored or dismissed alerts.name: Trivy - ghcr image scan - master
+---
+name: Trivy - ghcr image scan - master
 on:
   schedule:
     - cron: "0 7,15 * * *"
