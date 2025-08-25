@@ -6,6 +6,8 @@
 # ---
 # Action failing? Go through the alerts and either manually fix, dismiss or ignore.
 #                 Add info on ignored or dismissed alerts.name: Trivy - ghcr image scan - dev
+---
+name: Trivy - ghcr image scan - dev
 on:
   schedule: # Since dev is the default branch of the repo don't specify
     - cron: "0 9,12,15 * * *"
