@@ -624,7 +624,7 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     db.session.commit()
     assert unit.counter_row is None
 
-    # Create unit admins and verify there are 3 
+    # Create unit admins and verify there are 3
     create_unit_admins(num_admins=2)
 
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
