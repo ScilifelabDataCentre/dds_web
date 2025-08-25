@@ -145,8 +145,8 @@ class CreateProjectSchema(marshmallow.Schema):
                 .one_or_none()
             )
             if not unit_row:
-                raise ddserr.AccessDeniedError(
-                    message="Error: Your user is not associated to a unit."
+                raise ddserr.DatabaseError(
+                    message="Error: Your account is not associated to a unit. Contact the Data Centre."
                 )
 
             if unit_row.counter is None:

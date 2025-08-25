@@ -655,6 +655,26 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     # Verify that the project has a bucket
     assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
 
+def test_no_unit_row_found(client, boto3_session):
+    """Attempt to create a project, but no unit row is found."""
+    # Create unit admins and verify there are 3
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+    
+    # Patch the Unit query to return None
+    with unittest.mock.patch("dds_web.database.models.Unit.query.filter_by", tests.conftest.return_none):
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            json=proj_data,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        response_json = response.json
+        assert response_json
+        assert "Error: Your account is not associated to a unit. Contact the Data Centre." in response_json.get("message")
+
+
 
 def test_create_project_skips_duplicate_public_id(client, boto3_session):
     """Attempt to create a project with the same public_id as an existing project."""
@@ -705,7 +725,6 @@ def test_create_project_skips_duplicate_public_id(client, boto3_session):
     # Verify that the new project 
     created_proj = models.Project.query.filter_by(public_id=response_json["project_id"]).one_or_none()
     assert created_proj
-
 
 
 def test_create_project_with_users(client, boto3_session):
