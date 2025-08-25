@@ -614,6 +614,45 @@ def test_create_project_date_created_overridden(client, boto3_session):
     assert created_proj and created_proj.date_created != proj_data_date_created_own["date_created"]
 
 
+def test_create_project_unitrow_counter_none(client, boto3_session):
+    """Create project when unitrow counter is None."""
+    # Set unitrow counter to None
+    unit: models.Unit = models.Unit.query.first()
+    unit_id = unit.id
+    assert unit
+    unit.project_counter = None
+    db.session.commit()
+    assert unit.project_counter is None
+
+    # Create unit admins and verify there are 3 
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Create project
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that new project is created
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
+    assert created_proj and created_proj.unit_project_id == 1
+
+    # Verify that unitrow counter has been updated to 1
+    unit: models.Unit = models.Unit.query.filter_by(id=unit_id).first()
+    assert unit
+    assert unit.project_counter == 1
+
+
 def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
     create_unit_admins(num_admins=2)
