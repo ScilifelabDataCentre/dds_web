@@ -645,12 +645,12 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
         pi=proj_data["pi"],
         description=proj_data["description"],
     ).one_or_none()
-    assert created_proj and created_proj.unit_project_id == 1
+    assert created_proj and created_proj.public_id == unit.internal_ref + "0000" + str(1)
 
     # Verify that unitrow counter has been updated to 1
     unit: models.Unit = models.Unit.query.filter_by(id=unit_id).first()
     assert unit
-    assert unit.counter_row == 1
+    assert unit.counter == 1
 
     # Verify that the project has a bucket
     assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
