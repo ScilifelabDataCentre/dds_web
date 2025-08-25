@@ -1038,17 +1038,30 @@ def test_projectstatus_set_project_to_expired_from_available(
 
 
 def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(
-    module_client, test_project, mock_queue_redis
+    module_client, boto3_session, mock_queue_redis
 ):
     """Try to set status to Available for test project after being in Expired 3 times.
 
     In Progress --> Available --> Expired --> Available --> Expired --> Available --> Expired --> Archived
     """
+    # Create unit admins to allow project creation
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
 
     # In Progress --> Available: Should succeed
     new_status = {"new_status": "Available", "deadline": 5}
 
-    project_id = test_project
+    project_id = response.json.get("project_id")
     project = project_row(project_id=project_id)
     time.sleep(1)
 
@@ -1595,7 +1608,7 @@ def test_extend_deadline_maximum_number_available_exceeded(module_client, boto3_
             query_string={"project": project_id},
             json=extend_deadline_data_small_deadline,
         )
-        if i < 4:
+        if i < 3:  # first two times should work
             assert response.status_code == http.HTTPStatus.OK
             assert project.times_expired == i
             assert project.current_deadline == deadline + datetime.timedelta(days=new_deadline_in)
