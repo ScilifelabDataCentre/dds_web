@@ -652,6 +652,9 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     assert unit
     assert unit.counter_row == 1
 
+    # Verify that the project has a bucket
+    assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
+
 
 def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
