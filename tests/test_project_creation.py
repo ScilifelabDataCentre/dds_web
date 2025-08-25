@@ -620,9 +620,9 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     unit: models.Unit = models.Unit.query.first()
     unit_id = unit.id
     assert unit
-    unit.project_counter = None
+    unit.counter_row = None
     db.session.commit()
-    assert unit.project_counter is None
+    assert unit.counter_row is None
 
     # Create unit admins and verify there are 3 
     create_unit_admins(num_admins=2)
@@ -650,7 +650,7 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     # Verify that unitrow counter has been updated to 1
     unit: models.Unit = models.Unit.query.filter_by(id=unit_id).first()
     assert unit
-    assert unit.project_counter == 1
+    assert unit.counter_row == 1
 
 
 def test_create_project_with_users(client, boto3_session):
