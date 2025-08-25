@@ -398,7 +398,7 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     assert "No status transition provided. Specify the new status." in response.json["message"]
 
 
-def test_projectstatus_post_operationalerror(module_client, boto3_session):
+def test_projectstatus_post_operationalerror(module_client, boto3_session, mock_queue_redis):
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -483,11 +483,15 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Deleted"
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     for field, value in vars(project).items():
         if field in fields_set_to_null:
             assert not value
     assert not project.project_user_keys
-    mock_queue_redis.assert_not_called()  # No queue called for deleted projects
+    mock_queue_redis.assert_called()  # Queue called for deleted projects
 
 
 def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
@@ -1721,7 +1725,9 @@ def test_extend_deadline_mock_database_error(
     assert "Failed to extend deadline" in err
 
 
-def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_post_deletion_and_archivation_errors(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1748,10 +1754,13 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
-def test_projectstatus_failed_delete_project_content(module_client, boto3_session):
+def test_projectstatus_failed_delete_project_content(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1785,10 +1794,11 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
-def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session):
+def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session, mock_queue_redis):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1815,6 +1825,7 @@ def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session)
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 

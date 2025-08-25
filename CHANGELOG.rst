@@ -1,6 +1,14 @@
 Changelog
 ==========
 
+.. _2.13.0:
+
+2.13.0 - 2025-08-25
+~~~~~~~~~~~~~~~~~~~~
+
+- 🚀 Features
+    - Set project Deletion as a background task
+
 .. _2.12.0:
 
 2.12.0 - 2025-08-06
