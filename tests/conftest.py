@@ -633,6 +633,7 @@ def mock_queue_redis(mock_enqueue):
                 mock_enqueue_func.side_effect = mock_enqueue
                 yield mock_enqueue_func
 
+
 @pytest.fixture()
 def return_none():
     return None

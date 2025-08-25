@@ -655,15 +655,18 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     # Verify that the project has a bucket
     assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
 
+
 def test_no_unit_row_found(client, boto3_session):
     """Attempt to create a project, but no unit row is found."""
     # Create unit admins and verify there are 3
     create_unit_admins(num_admins=2)
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     assert current_unit_admins == 3
-    
+
     # Patch the Unit query to return None
-    with unittest.mock.patch("dds_web.database.models.Unit.query.filter_by", tests.conftest.return_none):
+    with unittest.mock.patch(
+        "dds_web.database.models.Unit.query.filter_by", tests.conftest.return_none
+    ):
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -672,13 +675,15 @@ def test_no_unit_row_found(client, boto3_session):
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
         response_json = response.json
         assert response_json
-        assert "Error: Your account is not associated to a unit. Contact the Data Centre." in response_json.get("message")
-
+        assert (
+            "Error: Your account is not associated to a unit. Contact the Data Centre."
+            in response_json.get("message")
+        )
 
 
 def test_create_project_skips_duplicate_public_id(client, boto3_session):
     """Attempt to create a project with the same public_id as an existing project."""
-    # Get unit users 
+    # Get unit users
     unituser = models.UnitUser.query.filter_by(username="unituser").one_or_none()
     assert unituser
 
@@ -686,16 +691,16 @@ def test_create_project_skips_duplicate_public_id(client, boto3_session):
     unit: models.Unit = models.Unit.query.filter_by(id=unituser.unit.id).first
     assert unit and unit.counter_row is not None
 
-    # Get number of projects 
+    # Get number of projects
     existing_projects = models.Project.query.filter_by(unit_id=unituser.unit.id).count()
     next_public_id = unit.internal_ref + "0000" + str(existing_projects + 1)
 
     # Manually create a project with a known public_id
     first_project = models.Project(
-        title=proj_data["title"], 
-        pi=proj_data["pi"], 
-        description=proj_data["description"], 
-        created_by=unituser.username, 
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+        created_by=unituser.username,
         unit_id=unituser.unit.id,
         public_id=next_public_id,
     )
@@ -722,8 +727,10 @@ def test_create_project_skips_duplicate_public_id(client, boto3_session):
     assert response_json and response_json.get("project_id")
     assert response_json["project_id"] == unit.internal_ref + "0000" + str(existing_projects + 2)
 
-    # Verify that the new project 
-    created_proj = models.Project.query.filter_by(public_id=response_json["project_id"]).one_or_none()
+    # Verify that the new project
+    created_proj = models.Project.query.filter_by(
+        public_id=response_json["project_id"]
+    ).one_or_none()
     assert created_proj
 
 
