@@ -147,7 +147,7 @@ def test_create_new_unit_incorrect_warning_level(client, runner, capfd: LogCaptu
     # Run command
     result: click.testing.Result = runner.invoke(create_new_unit, command_options)
 
-    assert result.exit_code != 0  # No sucess
+    assert result.exit_code != 0  # No success
     # Verify that unit doesn't exist
     assert (
         not db.session.query(models.Unit).filter(models.Unit.name == incorrect_unit["name"]).all()
