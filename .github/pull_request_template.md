@@ -21,7 +21,7 @@ _Link GitHub issue or provide Jira ID._
 
 ### Testing
 
-_How did you verify the change? Include commands, data, or screenshots._
+_If applicable: How did you verify the change? Include commands, data, or screenshots._
 
 ### Reviewer Notes
 
