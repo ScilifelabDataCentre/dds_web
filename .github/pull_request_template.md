@@ -5,7 +5,7 @@
 - [ ] Rebase or merge the latest `dev` (or other targeted branch)
 - [ ] If the targeted branch is `master`: Read and follow [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
 - [ ] Update documentation if needed
-- [ ] Add an entry to the [`SPRINTLOG`](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/SPRINTLOG.md) if needed
+- [ ] Add an entry to the [`SPRINTLOG.md`](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/SPRINTLOG.md) if needed
 - [ ] Choose an appropriate label. See [here](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
 - [ ] Perform a self-review: read the diff as if reviewing someone else's code, remove dead code, and comment on complex sections
 - [ ] Verify that all checks and tests have passed 
