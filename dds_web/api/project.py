@@ -611,7 +611,7 @@ class ProjectStatus(flask_restful.Resource):
 
 
 class GetPublic(flask_restful.Resource):
-    """Gets the public key beloning to the current project."""
+    """Gets the public key belonging to the current project."""
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
