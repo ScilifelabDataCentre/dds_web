@@ -1,29 +1,26 @@
-## Read this before submitting the PR
+## Pull Request Template
 
-1. Always create a Draft PR first
-2. Go through sections 1-5 below, fill them in and check all the boxes
-3. Make sure that the branch is updated; if there's an "Update branch" button at the bottom of the PR, rebase or update branch.
-4. When all boxes are checked, information is filled in, and the branch is updated: mark as Ready For Review and tag reviewers (top right)
-5. Once there is a submitted review, implement the suggestions (if reasonable, otherwise discuss) and request an new review.
+### Before Marking as Ready for Review
+- [ ] Add relevant informations to the sections below ([Summary](#summary) etc)
+- [ ] Rebase or merge the latest `dev` (or other targeted branch)
+- [ ] If the targeted branch is `master`: Read and follow [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
+- [ ] Update documentation if needed
+- [ ] Add an entry to the [`SPRINTLOG`](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/SPRINTLOG.md) if needed
+- [ ] Choose an appropriate label. See [here](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
+- [ ] Perform a self-review: read the diff as if reviewing someone else's code, remove dead code, and comment on complex sections
+- [ ] Verify that all checks and tests have passed 
 
-If there is a field which you are unsure about, enter the edit mode of this description or go to the [PR template](../.github/pull_request_template.md); There are invisible comments providing descriptions which may be of help.
+### Summary
+_Describe what the PR changes and why._
 
-## 1. Description / Summary
+### Related Issue/Ticket
+_Link GitHub issue or provide Jira ID._
 
-**Add a summary here**: What does this PR add/change and why?
+### Testing
+_How did you verify the change? Include commands, data, or screenshots._
 
-## 2. Jira task / GitHub issue
+### Reviewer Notes
+_Anything that helps reviewers (e.g., areas needing close attention)._
 
-**Is this a GitHub issue?** --> Add the link to the github issue
-
-**Is this from a Jira task?** --> If your branch does not contain info regarding the Jira task ID, put it here.
-
-## 3. Type of change - Add label
-
-- [ ] Add a label to the PR. See [here](../docs/procedures/labelling_a_pull_request.md) for information on the labelling options.
-
-## 4. Additional information
-
-- [ ] I have added an entry to the [Sprintlog](../SPRINTLOG.md)
-- [ ] This is a PR to the `master` branch: _If checked, read [the release instructions](../docs/procedures/new_release.md)_ <!-- Check this if the PR is made to the `master` branch. Only the `dev` branch should be doing this. -->
-  - [ ] I have followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
+---
+Once all boxes are checked, mark the PR as **Ready for Review** and tag at least one team member as the initial reviewer.
