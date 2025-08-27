@@ -88,7 +88,7 @@ class AddUser(flask_restful.Resource):
             db.session.rollback()
             raise ddserr.DatabaseError(
                 message=str(err),
-                alt_message="Something happened while checking for existig account / active invite.",
+                alt_message="Something happened while checking for existing account / active invite.",
                 pass_message=False,
             )
 
