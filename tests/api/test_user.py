@@ -430,7 +430,7 @@ def test_invite_user_expired_sqlalchemyerror(client):
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
         assert (
             response.json.get("message")
-            == "Something happened while checking for existig account / active invite."
+            == "Something happened while checking for existing account / active invite."
         )
 
     # Get invite again
