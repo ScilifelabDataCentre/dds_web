@@ -135,7 +135,7 @@ def register():
             new_user = user_schemas.NewUserSchema().load(form.data)
         except Exception as err:
             # This should never happen since the form is validated
-            # Any error catched here is likely a bug/issue
+            # Any error caught here is likely a bug/issue
             flask.current_app.logger.warning(err)
             flask.flash("Error in registration process, please try again.", "danger")
             return flask.redirect(flask.url_for("pages.home"))

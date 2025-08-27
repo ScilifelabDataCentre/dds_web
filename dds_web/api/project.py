@@ -569,7 +569,7 @@ class ProjectStatus(flask_restful.Resource):
         new_status: str,
         aborted: bool = False,
     ):
-        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        """When the delete contents operation has been successfully executed, perform the update in the DB.
         Function ONLY to be called by the queue.
         """
 
