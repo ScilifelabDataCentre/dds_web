@@ -64,7 +64,7 @@ class AddUser(flask_restful.Resource):
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
 
-        # Unit only changable for Super Admin invites
+        # Unit only changeable for Super Admin invites
         unit = json_info.get("unit") if auth.current_user().role == "Super Admin" else None
 
         # A project may or may not be specified
