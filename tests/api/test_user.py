@@ -1073,7 +1073,7 @@ def test_invite_unituser_as_superadmin_incorrect_unit(client):
         )
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert "Invalid unit publid id." in response.json["message"]
+        assert "Invalid unit public id." in response.json["message"]
 
 
 def test_invite_unituser_with_valid_unit_as_superadmin(client):
