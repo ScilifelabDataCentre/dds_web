@@ -4,12 +4,17 @@
 
 - [ ] Add relevant information to the sections below ([Summary](#summary) etc)
 - [ ] Rebase or merge the latest `dev` (or other targeted branch)
-- [ ] If the targeted branch is `master`: Read and follow [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
 - [ ] Update documentation if needed
 - [ ] Add an entry to the [`SPRINTLOG.md`](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/SPRINTLOG.md) if needed
 - [ ] Choose an appropriate label. See [here](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/labelling_a_pull_request.md) for information on the labelling options
-- [ ] Perform a self-review: read the diff as if reviewing someone else's code, remove dead code, and comment on complex sections
+- [ ] The code follows the [style guidelines](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/style_guidelines.md)
+- [ ] Perform a self-review: read the diff as if reviewing someone else's code
+- [ ] I have commented the code, particularly in hard-to-understand areas
 - [ ] Verify that all checks and tests have passed
+
+**If the target branch is `master`**:
+
+- [ ] Read and follow [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
 
 ### Summary
 
