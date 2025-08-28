@@ -14,6 +14,7 @@
 - [ ] All checks / actions pass. Check out the relevant workflow file [in this location](./workflows/) for information on how to fix potential issues.
 
 **If this is a PR targetting the `master` branch**:
+
 - [ ] I have read and followed [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
 
 ### Summary
