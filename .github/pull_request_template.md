@@ -1,38 +1,37 @@
-## Description
+## Pull Request Template
 
-_If this PR makes changes to the database: Remember to include a new migration version **or** explain in the description/comments why it's not needed._
+### Before Marking as Ready for Review
 
-### What?
-
-Please include a summary of the change and which issue is fixed.
-
-Fixes #(issue) / HMS-(Jira Task)
-
-### Why?
-
-Also include relevant motivation and context.
-
-## Checklist
-
-### Before marking this PR as "Ready for review"
-
-Please make sure all boxes in the checklist below are checked **before** marking the PR as "Ready for review" / requesting a review.
-
-- [ ] I have added a description of this PR in the [section above](#description) 
-- [ ] I have done a review of my own PR.
-- [ ] I have added a label to this PR. See the [instructions](../docs/procedures/labelling_a_pull_request.md).
-- [ ] I have added an entry to the [sprintlog](../SPRINTLOG.md)
-- [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
-- [ ] I have performed a self-review of this change
+- [ ] I have added relevant information to the sections below ([Summary](#summary) etc)
+- [ ] I have rebased / merged the latest `dev` (or other targeted branch)
+- [ ] I have updated any outdated documentation (related to this change)
+- [ ] I have added an entry to the [`SPRINTLOG.md`](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/SPRINTLOG.md) if needed
+- [ ] I have added an appropriate label to this PR. See [here](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/labelling_a_pull_request.md) for information on the labelling options
+- [ ] I have done a self-review: read the diff as if reviewing someone else's code
 - [ ] I have commented the code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
+- [ ] The code follows the [style guidelines](../docs/procedures/style_guidelines.md)
 - [ ] I have added tests that prove that the code works as expected
 - [ ] All checks / actions pass. Check out the relevant workflow file [in this location](./workflows/) for information on how to fix potential issues.
 
-**If this is a PR to the `master` branch**:
+**If this is a PR targetting the `master` branch**:
+- [ ] I have read and followed [the release instructions](https://github.com/ScilifelabDataCentre/dds_web/blob/dev/docs/procedures/new_release.md)
 
-- [ ] I have read the [the release instructions](../docs/procedures/new_release.md) and followed steps 1-9. <!-- Should be checked if the "PR to `master` branch" box is checked AND the specified steps in the release instructions have been followed. -->
+### Summary
 
-## Additional Notes
+_Describe what the PR changes and why._
 
-If there are any additional notes, add them here. Screenshots etc (if applicable) can also be placed here.
+### Related Issue/Ticket
+
+_Link GitHub issue or provide Jira ID._
+
+### Testing
+
+_If applicable: How did you verify the change? Include commands, data, or screenshots._
+
+### Reviewer Notes
+
+_Anything that helps reviewers (e.g. areas needing close attention)._
+
+---
+
+Once all boxes are checked, mark the PR as **Ready for Review** and tag at least one team member as the initial reviewer.

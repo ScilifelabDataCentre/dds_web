@@ -398,7 +398,7 @@ def test_projectstatus_submit_request_with_invalid_args(module_client, boto3_ses
     assert "No status transition provided. Specify the new status." in response.json["message"]
 
 
-def test_projectstatus_post_operationalerror(module_client, boto3_session):
+def test_projectstatus_post_operationalerror(module_client, boto3_session, mock_queue_redis):
     # Create unit admins to allow project creation
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -483,11 +483,15 @@ def test_projectstatus_set_project_to_deleted_from_in_progress(
 
     assert response.status_code == http.HTTPStatus.OK
     assert project.current_status == "Deleted"
+    assert (
+        "The DDS is handling this in the background.  It may take some time to complete."
+        in response.json["message"]
+    )
     for field, value in vars(project).items():
         if field in fields_set_to_null:
             assert not value
     assert not project.project_user_keys
-    mock_queue_redis.assert_not_called()  # No queue called for deleted projects
+    mock_queue_redis.assert_called()  # Queue called for deleted projects
 
 
 def test_projectstatus_archived_project(module_client, boto3_session, mock_queue_redis):
@@ -1080,8 +1084,12 @@ def test_projectstatus_set_project_to_expired_from_available(
 def test_projectstatus_project_availability_after_set_to_expired_more_than_twice(
     module_client, test_project, mock_queue_redis
 ):
-    """Try to set status to Available for test project after being in Expired 3 times"""
+    """Try to set status to Available for test project after being in Expired 3 times.
 
+    In Progress --> Available --> Expired --> Available --> Expired --> Available --> Expired --> Archived
+    """
+
+    # In Progress --> Available: Should succeed
     new_status = {"new_status": "Available", "deadline": 5}
 
     project_id = test_project
@@ -1099,6 +1107,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert project.current_status == "Available"
     mock_queue_redis.assert_not_called()  # No queue called for available projects
 
+    # Available --> Expired: Should succeed
     new_status["new_status"] = "Expired"
     time.sleep(1)
 
@@ -1113,6 +1122,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert project.current_status == "Expired"
     mock_queue_redis.assert_not_called()  # No queue called for expired projects
 
+    # Expired --> Available (1st time): Should succeed
     new_status["new_status"] = "Available"
     time.sleep(1)
 
@@ -1127,6 +1137,7 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert project.current_status == "Available"
     mock_queue_redis.assert_not_called()  # No queue called for available projects
 
+    # Available --> Expired: Should succeed
     new_status["new_status"] = "Expired"
     time.sleep(1)
 
@@ -1141,6 +1152,35 @@ def test_projectstatus_project_availability_after_set_to_expired_more_than_twice
     assert project.current_status == "Expired"
     mock_queue_redis.assert_not_called()  # No queue called for expired projects
 
+    # Expired --> Available (2nd time): Should succeed
+    new_status["new_status"] = "Available"
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=new_status,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Available"
+
+    # Available --> Expired: Should succeed
+    new_status["new_status"] = "Expired"
+    time.sleep(1)
+
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json=new_status,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert project.current_status == "Expired"
+
+    # Expired --> Available (3rd time): Should fail
     new_status["new_status"] = "Available"
     time.sleep(1)
 
@@ -1573,8 +1613,8 @@ def test_extend_deadline_more_than_default(module_client, boto3_session):
     )
 
 
-def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_session):
-    """If the deadline has been extended more than 2 times it should not work"""
+def test_extend_deadline_maximum_number_available_exceeded(module_client, boto3_session):
+    """A project should be able to be released once and extenced twice, thus in expired 3 times."""
 
     # create project and release it
     project_id, project = create_and_release_project(
@@ -1584,7 +1624,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
     deadline = project.current_deadline  # current deadline
     new_deadline_in = 1  # small new deadline
 
-    for i in range(1, 4):
+    for i in range(1, 5):
         time.sleep(1)  # tests are too fast
 
         # extend deadline by a small new deadline so we can do it several times
@@ -1598,7 +1638,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
             query_string={"project": project_id},
             json=extend_deadline_data_small_deadline,
         )
-        if i < 3:
+        if i < 4:
             assert response.status_code == http.HTTPStatus.OK
             assert project.times_expired == i
             assert project.current_deadline == deadline + datetime.timedelta(days=new_deadline_in)
@@ -1612,7 +1652,7 @@ def test_extend_deadline_maxium_number_available_exceded(module_client, boto3_se
         else:
             assert response.status_code == http.HTTPStatus.BAD_REQUEST
             assert (
-                "Project availability limit: The maximum number of changes in data availability has been reached."
+                "Project availability limit: Project cannot be made Available any more times"
                 in response.json["message"]
             )
 
@@ -1685,7 +1725,9 @@ def test_extend_deadline_mock_database_error(
     assert "Failed to extend deadline" in err
 
 
-def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3_session):
+def test_projectstatus_post_deletion_and_archivation_errors(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1712,10 +1754,13 @@ def test_projectstatus_post_deletion_and_archivation_errors(module_client, boto3
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
-def test_projectstatus_failed_delete_project_content(module_client, boto3_session):
+def test_projectstatus_failed_delete_project_content(
+    module_client, boto3_session, mock_queue_redis
+):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1749,10 +1794,11 @@ def test_projectstatus_failed_delete_project_content(module_client, boto3_sessio
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 
-def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session):
+def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session, mock_queue_redis):
     """Mock the different expections that can occur when deleting project."""
     current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
     if current_unit_admins < 3:
@@ -1779,6 +1825,7 @@ def test_projectstatus_failed_rm_project_user_keys(module_client, boto3_session)
             )
             assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
             assert "Server Error: Status was not updated" in response.json["message"]
+            mock_queue_redis.assert_called()  # Queue called for deleted projects
             assert project.is_active
 
 

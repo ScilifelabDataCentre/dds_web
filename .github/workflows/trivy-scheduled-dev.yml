@@ -4,8 +4,9 @@
 # and targets where it can find those issues.
 # https://github.com/aquasecurity/trivy
 # ---
-# Action failing? Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
-# ---------------------------------
+# Action failing? Go through the alerts and either manually fix, dismiss or ignore.
+#                 Add info on ignored or dismissed alerts.name: Trivy - ghcr image scan - dev
+---
 name: Trivy - ghcr image scan - dev
 on:
   schedule: # Since dev is the default branch of the repo don't specify

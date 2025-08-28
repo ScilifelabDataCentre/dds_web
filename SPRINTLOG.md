@@ -506,3 +506,17 @@ _Nothing merged during this sprint_
 
 - Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
 - Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+
+# 2025-08-04 - 2025-08-15
+
+- Fix bug: Users should be able to release the project once and extend / rerelease the project twice ([#1619](https://github.com/ScilifelabDataCentre/dds_web/pull/1619))
+- Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
+- New version: 2.12.0 ([#1624](https://github.com/ScilifelabDataCentre/dds_web/pull/1624))
+
+# 2025-08-18 - 2025-08-29
+
+- Add queuing for deleting projects([#1610](https://github.com/ScilifelabDataCentre/dds_web/pull/1610))
+- Add style guidelines to the repository ([#1618](https://github.com/ScilifelabDataCentre/dds_web/pull/1618))
+- Move instructions on how to solve failing actions / workflows to the workflow files ([#1620](https://github.com/ScilifelabDataCentre/dds_web/pull/1620/))
+- Added ADR for Queue solution ([#1625](https://github.com/ScilifelabDataCentre/dds_web/pull/1625))
+- New version: 2.13.0 ([#1627](https://github.com/ScilifelabDataCentre/dds_web/pull/1627))

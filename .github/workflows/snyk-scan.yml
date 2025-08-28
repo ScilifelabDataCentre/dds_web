@@ -2,7 +2,8 @@
 # The results are then uploaded to GitHub Security Code Scanning
 # https://github.com/snyk/actions/
 # ---
-# Action failing? Go through the alerts and either manually fix, dismiss or ignore. Add info on ignored or dismissed alerts.
+# Action failing? Go through the alerts and either manually fix, dismiss or ignore.
+#                 Add info on ignored or dismissed alerts.
 ---
 name: Snyk
 

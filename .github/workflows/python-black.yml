@@ -2,8 +2,9 @@
 # This action lints python using black - a python code formatter.
 # https://github.com/psf/black
 # This does not format the code, this only detects and informs on issues.
+# To format with black, run `black .` locally in the repository.
 # ---
-# Action failing? Run `black .` locally to execute formatting.
+# Action failing? Run `black .` locally in the repository to fix issues.
 ---
 name: Black
 

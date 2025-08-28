@@ -165,6 +165,7 @@ class ProjectStatus(flask_restful.Resource):
                     project=project, current_time=curr_date, deadline_in=deadline_in
                 )
             elif new_status == "Deleted":
+                is_queue_operation = True
                 new_status_row, delete_message = self.delete_project(
                     project=project, current_time=curr_date
                 )
@@ -222,9 +223,11 @@ class ProjectStatus(flask_restful.Resource):
         # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
-        # the status has changed at least two times,
-        # next time the project expires it wont change again -> error
-        if project.times_expired >= 2:
+        # A project can have the expired status 3 times
+        # It can be released / extended 3 times
+        # If more attempts --> cannot be extended again
+        # will be automatically archived by the system
+        if project.times_expired > 3:
             raise DDSArgumentError(
                 "Project availability limit: The maximum number of changes in data availability has been reached."
             )
@@ -398,9 +401,10 @@ class ProjectStatus(flask_restful.Resource):
             days=deadline_in
         )
 
-        # Project can only move from Expired 2 times
+        # Project can only MOVE FROM Expired 2 times
+        # but can BE IN Exired 3 times
         if project.current_status == "Expired":
-            if project.times_expired > 2:
+            if project.times_expired > 3:
                 raise DDSArgumentError(
                     "Project availability limit: Project cannot be made Available any more times"
                 )
@@ -465,32 +469,26 @@ class ProjectStatus(flask_restful.Resource):
                 "Please abort the project if you wish to proceed."
             )
 
-        try:
-            # Deletes files (also commits session in the function - possibly refactor later)
-            RemoveContents().delete_project_contents(
-                project_id=project.public_id, delete_bucket=True
-            )
-            self.rm_project_user_keys(project=project)
+        # Get redis connection to add a job if needed
+        redis_url = flask.current_app.config.get("REDIS_URL")
+        r = Redis.from_url(redis_url)
+        q = Queue(connection=r)
 
-            # Only mark as inactive after all deletion operations succeed
-            project.is_active = False
-            # Delete metadata from project row
-            self.delete_project_info(proj=project)
-
-        except (TypeError, DatabaseError, DeletionError, BucketNotFoundError) as err:
-            flask.current_app.logger.exception(err)
-            db.session.rollback()
-            raise DeletionError(
-                project=project.public_id,
-                message="Server Error: Status was not updated",
-                pass_message=True,
-            ) from err
-
-        delete_message = (
-            f"\nAll files in project '{project.public_id}' deleted and project info cleared"
+        job_delete_contents = q.enqueue(
+            self.queue_helper_function_delete_contents,
+            project_id=project.public_id,  # It is not possible to pass the project
+            clear_proj_info=True,
         )
 
-        return models.ProjectStatuses(status="Deleted", date_created=current_time), delete_message
+        job_update_db = q.enqueue(
+            self.queue_helper_function_update_proj_status,
+            project_id=project.public_id,
+            current_time=current_time,
+            new_status="Deleted",
+            depends_on=job_delete_contents,  # This job is only executed after success of delete contents
+        )
+
+        return None, ""  # Dummy returns to not break the main function
 
     def archive_project(
         self,
@@ -571,7 +569,7 @@ class ProjectStatus(flask_restful.Resource):
         new_status: str,
         aborted: bool = False,
     ):
-        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        """When the delete contents operation has been successfully executed, perform the update in the DB.
         Function ONLY to be called by the queue.
         """
 
@@ -613,7 +611,7 @@ class ProjectStatus(flask_restful.Resource):
 
 
 class GetPublic(flask_restful.Resource):
-    """Gets the public key beloning to the current project."""
+    """Gets the public key belonging to the current project."""
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request
