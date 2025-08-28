@@ -25,7 +25,7 @@ _If applicable: How did you verify the change? Include commands, data, or screen
 
 ### Reviewer Notes
 
-_Anything that helps reviewers (e.g., areas needing close attention)._
+_Anything that helps reviewers (e.g. areas needing close attention)._
 
 ---
 
