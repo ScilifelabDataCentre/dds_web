@@ -585,7 +585,7 @@ class ProjectStatus(flask_restful.Resource):
         new_status: str,
         aborted: bool = False,
     ):
-        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        """When the delete contents operation has been successfully executed, perform the update in the DB.
         Function ONLY to be called by the queue.
         """
 
@@ -627,7 +627,7 @@ class ProjectStatus(flask_restful.Resource):
 
 
 class GetPublic(flask_restful.Resource):
-    """Gets the public key beloning to the current project."""
+    """Gets the public key belonging to the current project."""
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request

@@ -193,7 +193,7 @@ def email_not_taken(indata):
     """Validator - verify that email is not taken.
 
     If used by marshmallow Schema, this validator should never raise an error since the email
-    field should not be changable and if it is the form validator should catch it.
+    field should not be changeable and if it is the form validator should catch it.
     """
     if email_in_db(email=indata):
         raise marshmallow.validate.ValidationError("The email is already taken by another user.")

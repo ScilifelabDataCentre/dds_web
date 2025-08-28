@@ -64,7 +64,7 @@ class AddUser(flask_restful.Resource):
         if not dds_web.utils.valid_user_role(specified_role=role):
             raise ddserr.DDSArgumentError(message="Invalid user role.")
 
-        # Unit only changable for Super Admin invites
+        # Unit only changeable for Super Admin invites
         unit = json_info.get("unit") if auth.current_user().role == "Super Admin" else None
 
         # A project may or may not be specified
@@ -88,7 +88,7 @@ class AddUser(flask_restful.Resource):
             db.session.rollback()
             raise ddserr.DatabaseError(
                 message=str(err),
-                alt_message="Something happened while checking for existig account / active invite.",
+                alt_message="Something happened while checking for existing account / active invite.",
                 pass_message=False,
             )
 
@@ -211,7 +211,7 @@ class AddUser(flask_restful.Resource):
                 if unit:
                     unit_row = models.Unit.query.filter_by(public_id=unit).one_or_none()
                     if not unit_row:
-                        raise ddserr.DDSArgumentError(message="Invalid unit publid id.")
+                        raise ddserr.DDSArgumentError(message="Invalid unit public id.")
 
                     unit_row.invites.append(new_invite)
                     goahead = True

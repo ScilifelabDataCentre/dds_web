@@ -73,7 +73,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -99,7 +99,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -129,7 +129,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -162,7 +162,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -217,7 +217,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: Successful operation, this means that the backend didn't encounted
             any errors. But the file may not have been deleted from the database. If this happens, it will
@@ -264,7 +264,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: Successful operation, this means that the backend didn't encounted
             any errors. But the file may not have been deleted from the database. If this happens, it will
@@ -311,7 +311,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -340,7 +340,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -425,7 +425,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -467,7 +467,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -493,7 +493,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -521,7 +521,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -543,7 +543,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -586,7 +586,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -609,7 +609,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -633,7 +633,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -665,7 +665,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -701,7 +701,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -725,7 +725,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -751,7 +751,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -776,7 +776,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -809,7 +809,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: successful operation
           content:
@@ -854,7 +854,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -884,7 +884,7 @@ paths:
                     type: string
                     example: There are no project contents to delete.
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -901,7 +901,7 @@ paths:
     get:
       tags:
         - project
-      summary: Gets the public key beloning to the current project
+      summary: Gets the public key belonging to the current project
       operationId: getPublic
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -912,9 +912,9 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
-          description: succesful operation
+          description: successful operation
           content:
             application/json:
               schema:
@@ -927,7 +927,7 @@ paths:
     get:
       tags:
         - project
-      summary: Gets the private key beloning to the current project
+      summary: Gets the private key belonging to the current project
       operationId: getPrivateKey
       parameters:
         - $ref: "#/components/parameters/defaultHeader"
@@ -938,9 +938,9 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
-          description: succesful operation
+          description: successful operation
           content:
             application/json:
               schema:
@@ -963,7 +963,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1042,7 +1042,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1088,7 +1088,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1113,7 +1113,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1156,7 +1156,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1188,7 +1188,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1209,7 +1209,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1257,7 +1257,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1287,7 +1287,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1309,7 +1309,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1350,7 +1350,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1381,7 +1381,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1411,7 +1411,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1443,7 +1443,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1482,7 +1482,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1504,7 +1504,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1548,7 +1548,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1573,7 +1573,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1621,7 +1621,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1658,7 +1658,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerlError"
+          $ref: "#/components/responses/InternalServerError"
         "200":
           description: succesful operation
           content:
@@ -1770,7 +1770,7 @@ components:
             properties:
               message:
                 type: string
-    InternalServerlError:
+    InternalServerError:
       description: Something wrong in the server side
       content:
         application/json:
