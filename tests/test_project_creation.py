@@ -667,7 +667,7 @@ def test_no_unit_row_found(client, boto3_session):
     with unittest.mock.patch(
         "dds_web.database.models.Unit.query.filter_by", tests.conftest.return_none
     ):
-        assert models.Unit.query.filter_by(id=1).first() is None # Verify patch worked
+        assert models.Unit.query.filter_by(id=1).first() is None  # Verify patch worked
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
