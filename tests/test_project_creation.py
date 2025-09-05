@@ -614,6 +614,131 @@ def test_create_project_date_created_overridden(client, boto3_session):
     assert created_proj and created_proj.date_created != proj_data_date_created_own["date_created"]
 
 
+def test_create_project_unitrow_counter_none(client, boto3_session):
+    """Create project when unitrow counter is None."""
+    # Set unitrow counter to None
+    unit: models.Unit = models.Unit.query.first()
+    unit_id = unit.id
+    assert unit
+    unit.counter = None
+    db.session.commit()
+    assert unit.counter is None
+
+    # Create unit admins and verify there are 3
+    create_unit_admins(num_admins=2)
+
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Create project
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Verify that new project is created
+    created_proj = models.Project.query.filter_by(
+        created_by="unituser",
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+    ).one_or_none()
+    assert created_proj and created_proj.public_id == unit.internal_ref + "0000" + str(1)
+
+    # Verify that unitrow counter has been updated to 1
+    unit: models.Unit = models.Unit.query.filter_by(id=unit_id).first()
+    assert unit
+    assert unit.counter == 1
+
+    # Verify that the project has a bucket
+    assert boto3_session.meta.client.head_bucket(Bucket=created_proj.bucket)
+
+
+def test_no_unit_row_found(client, boto3_session):
+    """Attempt to create a project, but no unit row is found."""
+    # Create unit admins and verify there are 3
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Patch the Unit query to return None
+    mock_query = unittest.mock.MagicMock()
+    mock_query.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = None
+
+    with unittest.mock.patch.object(models.Unit, "query", mock_query):
+        assert models.Unit.query.filter_by(id=1).with_for_update().one_or_none() is None
+        response = client.post(
+            tests.DDSEndpoint.PROJECT_CREATE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+            json=proj_data,
+        )
+        assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+        response_json = response.json
+        assert response_json
+        assert (
+            "Error: Your account is not associated to a unit. Contact the Data Centre."
+            in response_json.get("message")
+        )
+
+
+def test_create_project_skips_duplicate_public_id(client, boto3_session):
+    """Attempt to create a project with the same public_id as an existing project."""
+    # Get unit users
+    unituser = models.UnitUser.query.filter_by(username="unituser").one_or_none()
+    assert unituser
+
+    # Make sure there is a unit connected to user
+    unit: models.Unit = models.Unit.query.filter_by(id=unituser.unit.id).first()
+    assert unit
+
+    # Get number of projects
+    existing_projects = models.Project.query.filter_by(unit_id=unituser.unit.id).count()
+    unit.counter = existing_projects
+    db.session.commit()
+    next_public_id = unit.internal_ref + "0000" + str(existing_projects + 1)
+
+    # Manually create a project with a known public_id
+    first_project = models.Project(
+        title=proj_data["title"],
+        pi=proj_data["pi"],
+        description=proj_data["description"],
+        created_by=unituser.username,
+        unit_id=unituser.unit.id,
+        public_id=next_public_id,
+        bucket=next_public_id.lower() + "-bucket",
+    )
+    db.session.add(first_project)
+    db.session.commit()
+
+    # Verify that the project was created
+    created_proj = models.Project.query.filter_by(public_id=next_public_id).one_or_none()
+    assert created_proj
+
+    # Create unit admins and verify there are 3
+    create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins == 3
+
+    # Create another project, which should skip the existing public_id
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    response_json = response.json
+    assert response_json and response_json.get("project_id")
+    assert response_json["project_id"] == unit.internal_ref + "0000" + str(existing_projects + 2)
+
+    # Verify that the new project
+    created_proj = models.Project.query.filter_by(
+        public_id=response_json["project_id"]
+    ).one_or_none()
+    assert created_proj
+
+
 def test_create_project_with_users(client, boto3_session):
     """Create project and add users to the project."""
     create_unit_admins(num_admins=2)
