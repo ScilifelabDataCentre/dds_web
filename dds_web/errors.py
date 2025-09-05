@@ -151,10 +151,11 @@ class DatabaseError(LoggedHTTPException):
     """Baseclass for database related issues."""
 
     code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+    description = "The system encountered an error in the database."
 
     def __init__(
         self,
-        message,
+        message=description,
         alt_message=None,
         pass_message=False,
         project=None,
@@ -164,11 +165,7 @@ class DatabaseError(LoggedHTTPException):
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
-        super().__init__(
-            (alt_message or "The system encountered an error in the database.")
-            if not pass_message
-            else message
-        )
+        super().__init__((alt_message or message) if not pass_message else message)
 
 
 class EmptyProjectException(LoggedHTTPException):

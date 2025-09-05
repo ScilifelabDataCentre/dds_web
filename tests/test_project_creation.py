@@ -664,10 +664,11 @@ def test_no_unit_row_found(client, boto3_session):
     assert current_unit_admins == 3
 
     # Patch the Unit query to return None
-    with unittest.mock.patch(
-        "dds_web.database.models.Unit.query.filter_by", return_value=None
-    ):
-        assert models.Unit.query.filter_by(id=1) is None  # Verify patch worked
+    mock_query = unittest.mock.MagicMock()
+    mock_query.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = None
+
+    with unittest.mock.patch.object(models.Unit, "query", mock_query):
+        assert models.Unit.query.filter_by(id=1).with_for_update().one_or_none() is None
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
