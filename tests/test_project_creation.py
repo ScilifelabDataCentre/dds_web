@@ -620,9 +620,9 @@ def test_create_project_unitrow_counter_none(client, boto3_session):
     unit: models.Unit = models.Unit.query.first()
     unit_id = unit.id
     assert unit
-    unit.counter_row = None
+    unit.counter = None
     db.session.commit()
-    assert unit.counter_row is None
+    assert unit.counter is None
 
     # Create unit admins and verify there are 3
     create_unit_admins(num_admins=2)
@@ -667,6 +667,7 @@ def test_no_unit_row_found(client, boto3_session):
     with unittest.mock.patch(
         "dds_web.database.models.Unit.query.filter_by", tests.conftest.return_none
     ):
+        assert models.Unit.query.filter_by(id=1).first() is None # Verify patch worked
         response = client.post(
             tests.DDSEndpoint.PROJECT_CREATE,
             headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
@@ -688,8 +689,8 @@ def test_create_project_skips_duplicate_public_id(client, boto3_session):
     assert unituser
 
     # Get unit counter
-    unit: models.Unit = models.Unit.query.filter_by(id=unituser.unit.id).first
-    assert unit and unit.counter_row is not None
+    unit: models.Unit = models.Unit.query.filter_by(id=unituser.unit.id).first()
+    assert unit and unit.counter is not None
 
     # Get number of projects
     existing_projects = models.Project.query.filter_by(unit_id=unituser.unit.id).count()
