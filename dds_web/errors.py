@@ -155,7 +155,7 @@ class DatabaseError(LoggedHTTPException):
 
     def __init__(
         self,
-        message=description,
+        message,
         alt_message=None,
         pass_message=False,
         project=None,
@@ -165,7 +165,7 @@ class DatabaseError(LoggedHTTPException):
         if project:
             structlog.threadlocal.bind_threadlocal(project=project)
 
-        super().__init__((alt_message or message) if not pass_message else message)
+        super().__init__((alt_message or self.description) if not pass_message else message)
 
 
 class EmptyProjectException(LoggedHTTPException):
