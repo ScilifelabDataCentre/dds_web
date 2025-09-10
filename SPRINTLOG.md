@@ -524,4 +524,4 @@ _Nothing merged during this sprint_
 
 # 2025-09-01 - 2025-09-12
 
-- Security: Bump libraries with minor updates to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
+- Bump libraries with minor updates to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
