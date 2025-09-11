@@ -1067,6 +1067,12 @@ class EncryptedToken(flask_restful.Resource):
     @basic_auth.login_required
     @logging_bind_request
     def get(self):
+        """Return the encrypted token for the user."""
+        # Raise error if no authorization data provided
+        authorization = flask.request.authorization
+        if not authorization:
+            raise ddserr.AuthenticationError()
+        
         secondfactor_method = "TOTP" if auth.current_user().totp_enabled else "HOTP"
         return {
             "message": "Please take this token to /user/second_factor to authenticate with MFA!",
