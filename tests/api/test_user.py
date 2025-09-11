@@ -1522,3 +1522,21 @@ def test_invite_unit_user(client):
         "Cannot remove a Unit Admin / Unit Personnel from individual projects"
         in response.json["message"]
     )
+
+
+# EncryptedToken ############################################################# EncryptedToken #
+
+
+def test_encrypted_token_without_authorization_header(client):
+    """Calling the endpoint without auth header should return 401."""
+    # Call API without auth header
+    response = client.get(
+        tests.DDSEndpoint.ENCRYPTED_TOKEN,
+        headers=tests.DEFAULT_HEADER,
+    )
+
+    # Verify correct error message
+    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    response_json = response.json
+    assert response_json.get("message")
+    assert "Missing or incorrect credentials" in response_json.get("message")
