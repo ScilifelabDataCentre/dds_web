@@ -524,4 +524,4 @@ _Nothing merged during this sprint_
 
 # 2025-09-01 - 2025-09-12
 
--  Raise AuthenticationError if authorization information is missing ([#1642](https://github.com/ScilifelabDataCentre/dds_web/pull/1642))
+- Raise AuthenticationError if authorization information is missing ([#1642](https://github.com/ScilifelabDataCentre/dds_web/pull/1642))
