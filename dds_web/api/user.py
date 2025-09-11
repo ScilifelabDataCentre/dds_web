@@ -1072,7 +1072,7 @@ class EncryptedToken(flask_restful.Resource):
         authorization = flask.request.authorization
         if not authorization:
             raise ddserr.AuthenticationError()
-        
+
         secondfactor_method = "TOTP" if auth.current_user().totp_enabled else "HOTP"
         return {
             "message": "Please take this token to /user/second_factor to authenticate with MFA!",
