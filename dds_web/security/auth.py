@@ -402,9 +402,11 @@ def verify_token_signature(token):
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     if not username or not password:
-        flask.current_app.logger.warning("No username or password provided. Something wrong. This shouldn't happen.")
+        flask.current_app.logger.warning(
+            "No username or password provided. Something wrong. This shouldn't happen."
+        )
         return None
-    
+
     user = models.User.query.get(username)
 
     if user and user.is_active and user.verify_password(input_password=password):
