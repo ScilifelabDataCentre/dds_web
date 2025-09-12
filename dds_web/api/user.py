@@ -1071,6 +1071,7 @@ class EncryptedToken(flask_restful.Resource):
         # Raise error if no authorization data provided
         authorization = flask.request.authorization
         if not authorization:
+            flask.current_app.logger.warning("No authorization data provided.")
             raise ddserr.AuthenticationError()
 
         secondfactor_method = "TOTP" if auth.current_user().totp_enabled else "HOTP"

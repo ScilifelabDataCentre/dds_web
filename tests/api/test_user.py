@@ -1540,3 +1540,4 @@ def test_encrypted_token_without_authorization_header(client):
     response_json = response.json
     assert response_json.get("message")
     assert "Missing or incorrect credentials" in response_json.get("message")
+
