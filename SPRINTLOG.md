@@ -524,4 +524,8 @@ _Nothing merged during this sprint_
 
 # 2025-09-01 - 2025-09-12
 
-- Bump libraries with minor updates to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
+- Bump node libraries and python dependencies to solve vulnerabilities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640)): 
+    - `dnspython` from 2.2.0 to 2.6.1 
+    - `idna` from 3.3 to 3.7
+    - `Pillow` from 10.2.0 to 10.3.0
+    - `requests` from 2.32.0 to 2.32.4
