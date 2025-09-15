@@ -522,6 +522,6 @@ _Nothing merged during this sprint_
 - New version: 2.13.0 ([#1627](https://github.com/ScilifelabDataCentre/dds_web/pull/1627))
 - Bug: Users should be able to release once and extend twice ([#1630](https://github.com/ScilifelabDataCentre/dds_web/pull/1630))
 
-# 2025-09-01 - 2025-09-12
+## 2025-09-15 - 2025-09-26
 
-- Bump Cryprography library to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
+- Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
