@@ -10,10 +10,11 @@ from dds_web import create_app, db
 
 ALEMBIC_CFG_PATH = pathlib.Path("migrations") / "alembic.ini"
 
+
 @pytest.fixture
 def migration_app():
     """Fixture to create a fresh database for migration tests.
-    
+
     1. Spin up empty database
     2. Run migrations
     3. Drop database again
@@ -49,6 +50,7 @@ def test_full_upgrade_and_downgrade(migration_app):
 
     # upgrade again to ensure reversibility
     command.upgrade(cfg, "head")
+
 
 def test_models_match_schema(migration_app):
     """Verify that no changes are detected between models and no migration is needed."""
