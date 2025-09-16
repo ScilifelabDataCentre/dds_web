@@ -45,7 +45,9 @@ from dds_web.version import __version__
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
-
+SCHEMA_ONLY_DATABASE_URI = (
+    f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"
+)
 
 def fill_basic_db(db):
     """
@@ -99,6 +101,56 @@ def fill_basic_db(db):
     )
 
     db.session.commit()
+
+def upgrade_database(database_uri: str) -> bool:
+    """Create the database if needed and run migrations."""
+
+    created = False
+
+    # Create database if it does not exist
+    if not database_exists(database_uri):
+        create_database(database_uri)
+        created = True
+
+    # Create app to run migrations in the context of the app
+    app = create_app(testing=True, database_uri=database_uri)
+
+    # Run migrations
+    with app.test_request_context():
+        with app.test_client():
+            try:
+                flask_migrate.upgrade()
+            finally:
+                db.session.remove()
+                db.engine.dispose()
+
+    return created
+
+def seed_database(database_uri: str) -> None:
+    """Populate the database with baseline data needed for tests."""
+    # Create app to run migrations in the context of the app
+    app = create_app(testing=True, database_uri=database_uri)
+
+    # Fill database
+    with app.test_request_context():
+        with app.test_client():
+            try:
+                fill_basic_db(db)
+            finally:
+                db.session.remove()
+                db.engine.dispose()
+
+@pytest.fixture(scope="session")
+def schema_only_database(mock_redis_init):
+    """Provide an upgraded database without applying seed data."""
+
+    upgrade_database(SCHEMA_ONLY_DATABASE_URI)
+
+    try:
+        yield SCHEMA_ONLY_DATABASE_URI
+    finally:
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(SCHEMA_ONLY_DATABASE_URI)
 
 
 def new_test_db(uri):
@@ -487,28 +539,25 @@ def mock_redis_init():
                     yield
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def setup_database(mock_redis_init):
-    print("setup_database is called")
-    # Create database specific for tests
-    if not database_exists(DATABASE_URI_BASE):
-        create_database(DATABASE_URI_BASE)
-        app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
-        with app.test_request_context():
-            with app.test_client():
-                flask_migrate.upgrade()
-                fill_basic_db(db)
-                db.engine.dispose()
+    """Ensure an upgraded and seeded database template is available."""
+
+    base_created = upgrade_database(DATABASE_URI_BASE)
+
+    if base_created:
+        seed_database(DATABASE_URI_BASE)
 
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+
     try:
         yield None
     finally:
-        # Drop database to save container space
         if not os.environ.get("SAVE_DB", False):
             drop_database(DATABASE_URI)
             drop_database(DATABASE_URI_BASE)
+
 
 
 @pytest.fixture(scope="function")
@@ -578,7 +627,7 @@ def runner() -> click.testing.CliRunner:
 
 
 @pytest.fixture()
-def cli_test_app():
+def cli_test_app(setup_database):
     from dds_web import create_app
     from tests import conftest
 
