@@ -530,3 +530,7 @@ _Nothing merged during this sprint_
   - `idna` from 3.3 to 3.7
   - `Pillow` from 10.2.0 to 10.3.0
   - `requests` from 2.32.0 to 2.32.4
+
+## 2025-09-15 - 2025-09-26
+
+- Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
