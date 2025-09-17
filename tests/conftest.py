@@ -704,13 +704,16 @@ def mock_queue_redis(mock_enqueue):
 def migrated_database(mock_redis_init):
     """Provide a throwaway database upgraded to the latest head."""
 
+    # Unique URI for throwaway db
     unique_suffix = uuid.uuid4().hex
     database_uri = (
         f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestTemp_{unique_suffix}"
     )
 
+    # Create throwaway database
     create_database(database_uri)
 
+    # Upgrade database to latest version and make availble to tests
     try:
         upgrade_database(database_uri)
         yield database_uri
