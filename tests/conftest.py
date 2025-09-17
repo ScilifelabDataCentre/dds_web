@@ -47,7 +47,7 @@ DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySyst
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
 SCHEMA_ONLY_DATABASE_URI = (
     f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"
-)
+) # A completely empty database, only schema, no data
 
 def fill_basic_db(db):
     """
@@ -103,8 +103,8 @@ def fill_basic_db(db):
     db.session.commit()
 
 def upgrade_database(database_uri: str) -> bool:
-    """Create the database if needed and run migrations."""
-
+    """Create the database if needed and run migrations to upgrade to the latest schema."""
+    # Keep track if we created the database
     created = False
 
     # Create database if it does not exist
@@ -115,7 +115,7 @@ def upgrade_database(database_uri: str) -> bool:
     # Create app to run migrations in the context of the app
     app = create_app(testing=True, database_uri=database_uri)
 
-    # Run migrations
+    # Run migrations -- upgrade to latest version
     with app.test_request_context():
         with app.test_client():
             try:
