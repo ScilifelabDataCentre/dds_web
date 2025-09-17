@@ -151,7 +151,7 @@ def schema_only_database(mock_redis_init):
     # Provide the database to the tests
     try:
         yield SCHEMA_ONLY_DATABASE_URI
-    finally: # Cleanup the database after tests are done
+    finally:  # Cleanup the database after tests are done
         if not os.environ.get("SAVE_DB", False):
             drop_database(SCHEMA_ONLY_DATABASE_URI)
 
