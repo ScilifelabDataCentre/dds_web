@@ -45,9 +45,8 @@ from dds_web.version import __version__
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
-SCHEMA_ONLY_DATABASE_URI = (
-    f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"
-) # A completely empty database, only schema, no data
+SCHEMA_ONLY_DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"  # A completely empty database, only schema, no data
+
 
 def fill_basic_db(db):
     """
@@ -102,6 +101,7 @@ def fill_basic_db(db):
 
     db.session.commit()
 
+
 def upgrade_database(database_uri: str) -> bool:
     """Create the database if needed and run migrations to upgrade to the latest schema."""
     # Keep track if we created the database
@@ -126,6 +126,7 @@ def upgrade_database(database_uri: str) -> bool:
 
     return created
 
+
 def seed_database(database_uri: str) -> None:
     """Populate the database with baseline data needed for tests."""
     # Create app to run migrations in the context of the app
@@ -139,6 +140,7 @@ def seed_database(database_uri: str) -> None:
             finally:
                 db.session.remove()
                 db.engine.dispose()
+
 
 @pytest.fixture(scope="session")
 def schema_only_database(mock_redis_init):
@@ -557,7 +559,6 @@ def setup_database(mock_redis_init):
         if not os.environ.get("SAVE_DB", False):
             drop_database(DATABASE_URI)
             drop_database(DATABASE_URI_BASE)
-
 
 
 @pytest.fixture(scope="function")
