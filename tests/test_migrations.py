@@ -100,7 +100,7 @@ def test_migrations_can_downgrade_to_base(migrated_database):
 
         # Upgrade back to head to confirm we can recover the schema.
         app = create_app(testing=True, database_uri=migrated_database)
-        
+
         with app.test_request_context():
             with app.test_client():
                 try:
