@@ -10,6 +10,7 @@ from dds_web.database import models
 from dds_web import db
 from dds_web.api import api_s3_connector
 
+
 def test_get_s3_info_unauthorized(client: flask.testing.FlaskClient) -> None:
     """Only Unit Admin and Unit Personnel can get this info."""
     # Get project
@@ -169,6 +170,7 @@ def test_get_s3_empty_response(client):
         )
         assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
         assert "No s3 info returned!" in response.json["message"]
+
 
 def test_connect_cloud_decorator_initializes_resource(client):
     """Verify that the connect_cloud decorator creates an s3 resource."""
