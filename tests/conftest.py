@@ -145,12 +145,13 @@ def seed_database(database_uri: str) -> None:
 @pytest.fixture(scope="session")
 def schema_only_database(mock_redis_init):
     """Provide an upgraded database without applying seed data."""
-
+    # Create a database and upgrade to the latest schema
     upgrade_database(SCHEMA_ONLY_DATABASE_URI)
 
+    # Provide the database to the tests
     try:
         yield SCHEMA_ONLY_DATABASE_URI
-    finally:
+    finally: # Cleanup the database after tests are done
         if not os.environ.get("SAVE_DB", False):
             drop_database(SCHEMA_ONLY_DATABASE_URI)
 
@@ -544,12 +545,14 @@ def mock_redis_init():
 @pytest.fixture(scope="session")
 def setup_database(mock_redis_init):
     """Ensure an upgraded and seeded database template is available."""
-
+    # Create database and upgrade to latest schema
     base_created = upgrade_database(DATABASE_URI_BASE)
 
+    # Add data to the created database
     if base_created:
         seed_database(DATABASE_URI_BASE)
 
+    # Create a separate database for tests
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
 
