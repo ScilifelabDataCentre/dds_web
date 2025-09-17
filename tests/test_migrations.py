@@ -82,13 +82,13 @@ def test_migrations_can_downgrade_to_base(migrated_database):
 
         # Downgrade all migrations to the base revision.
         app = create_app(testing=True, database_uri=migrated_database)
-        try:
-            with app.test_request_context():
-                with app.test_client():
-                    flask_migrate.downgrade("base")
-        finally:
-            db.session.remove()
-            db.engine.dispose()
+        with app.test_request_context():
+            with app.test_client():
+                try:
+                    flask_migrate.downgrade(revision="base")
+                finally:
+                    db.session.remove()
+                    db.engine.dispose()
 
         # Verify that the downgrade removed all tables and that the current version is none
         with engine.connect() as connection:
@@ -100,13 +100,14 @@ def test_migrations_can_downgrade_to_base(migrated_database):
 
         # Upgrade back to head to confirm we can recover the schema.
         app = create_app(testing=True, database_uri=migrated_database)
-        try:
-            with app.test_request_context():
-                with app.test_client():
+        
+        with app.test_request_context():
+            with app.test_client():
+                try:
                     flask_migrate.upgrade()
-        finally:
-            db.session.remove()
-            db.engine.dispose()
+                finally:
+                    db.session.remove()
+                    db.engine.dispose()
 
         with engine.connect() as connection:
             context = MigrationContext.configure(connection)
