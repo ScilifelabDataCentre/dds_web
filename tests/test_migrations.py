@@ -90,7 +90,7 @@ def test_migrations_can_downgrade_to_base(migrated_database):
             db.session.remove()
             db.engine.dispose()
 
-        # The downgrade removes both the revision marker and the tables.
+        # Verify that the downgrade removed all tables and that the current version is none
         with engine.connect() as connection:
             context = MigrationContext.configure(connection)
             assert context.get_current_revision() is None
