@@ -1,4 +1,8 @@
-# Standard Library
+"""Configurations required for tests to run."""
+
+# IMPORTS ##########################################################################
+
+# Standard
 import os
 import unittest.mock
 import datetime
@@ -42,10 +46,16 @@ from dds_web.security.project_user_keys import (
 from dds_web.security.tokens import encrypted_jwt_token
 from dds_web.version import __version__
 
+# VARIABLES ##########################################################################
+
+
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
 SCHEMA_ONLY_DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"  # A completely empty database, only schema, no data
+
+
+# HELPERS ##########################################################################
 
 
 def fill_basic_db(db):
@@ -140,20 +150,6 @@ def seed_database(database_uri: str) -> None:
             finally:
                 db.session.remove()
                 db.engine.dispose()
-
-
-@pytest.fixture(scope="session")
-def schema_only_database(mock_redis_init):
-    """Provide an upgraded database without applying seed data."""
-    # Create a database and upgrade to the latest schema
-    upgrade_database(SCHEMA_ONLY_DATABASE_URI)
-
-    # Provide the database to the tests
-    try:
-        yield SCHEMA_ONLY_DATABASE_URI
-    finally:  # Cleanup the database after tests are done
-        if not os.environ.get("SAVE_DB", False):
-            drop_database(SCHEMA_ONLY_DATABASE_URI)
 
 
 def new_test_db(uri):
@@ -530,6 +526,23 @@ def add_data_to_db():
     return units, users, projects
 
 
+# FIXTURES ##########################################################################
+
+
+@pytest.fixture(scope="session")
+def schema_only_database(mock_redis_init):
+    """Provide an upgraded database without applying seed data."""
+    # Create a database and upgrade to the latest schema
+    upgrade_database(SCHEMA_ONLY_DATABASE_URI)
+
+    # Provide the database to the tests
+    try:
+        yield SCHEMA_ONLY_DATABASE_URI
+    finally:  # Cleanup the database after tests are done
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(SCHEMA_ONLY_DATABASE_URI)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def mock_redis_init():
     """Fixture to mock the starting of Redis Queue Worker when initializing the app."""
@@ -685,3 +698,22 @@ def mock_queue_redis(mock_enqueue):
                 # Mock the enqueue to call the function directly without actually enqueueing
                 mock_enqueue_func.side_effect = mock_enqueue
                 yield mock_enqueue_func
+
+
+@pytest.fixture()
+def migrated_database(mock_redis_init):
+    """Provide a throwaway database upgraded to the latest head."""
+
+    unique_suffix = uuid.uuid4().hex
+    database_uri = (
+        f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestTemp_{unique_suffix}"
+    )
+
+    create_database(database_uri)
+
+    try:
+        upgrade_database(database_uri)
+        yield database_uri
+    finally:
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(database_uri)
