@@ -33,9 +33,9 @@ def test_migrations_apply_latest_schema(schema_only_database):
     engine = create_engine(schema_only_database)
     try:
         inspector = inspect(engine)
-        # ``researchuser`` is created by the migrations and should remain empty until
+        # ``researchusers`` is created by the migrations and should remain empty until
         # filling the database --> good test for the expected schema.
-        assert inspector.has_table("researchuser")
+        assert inspector.has_table("researchusers")
 
         with engine.connect() as connection:
             # Compare correct latest version
@@ -48,9 +48,9 @@ def test_migrations_apply_latest_schema(schema_only_database):
             # spin up a Flask application context etc
             # This way --> test talks directly to the fixture database and
             # keep the focus on verifying the migrations in isolation.
-            researchuser = Table("researchuser", MetaData(), autoload_with=connection)
+            researchusers = Table("researchusers", MetaData(), autoload_with=connection)
             user_count = connection.execute(
-                select(func.count()).select_from(researchuser)
+                select(func.count()).select_from(researchusers)
             ).scalar_one()
             assert user_count == 0
     finally:
@@ -96,7 +96,7 @@ def test_migrations_can_downgrade_to_base(migrated_database):
             assert context.get_current_revision() is None
 
         inspector = inspect(engine)
-        assert not inspector.has_table("researchuser")
+        assert not inspector.has_table("researchusers")
 
         # Upgrade back to head to confirm we can recover the schema.
         app = create_app(testing=True, database_uri=migrated_database)
@@ -113,6 +113,6 @@ def test_migrations_can_downgrade_to_base(migrated_database):
             assert context.get_current_revision() == head_revision
 
         inspector = inspect(engine)
-        assert inspector.has_table("researchuser")
+        assert inspector.has_table("researchusers")
     finally:
         engine.dispose()
