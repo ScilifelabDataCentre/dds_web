@@ -743,7 +743,9 @@ def test_list_lost_files_uses_create_s3_resource(client, cli_runner):
     )
 
     # Verify that list_lost_files_in_project was called with the project and the mocked s3 resource
-    mock_list.assert_called_once_with(project=project, s3_resource=mock_create_resource.return_value)
+    mock_list.assert_called_once_with(
+        project=project, s3_resource=mock_create_resource.return_value
+    )
 
 
 def test_list_lost_files_no_lost_files_in_project(
