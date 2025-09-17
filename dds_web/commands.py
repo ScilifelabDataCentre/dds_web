@@ -24,7 +24,7 @@ from rq.command import send_shutdown_command
 
 # Own
 from dds_web import db
-from dds_web import constants
+from dds_web.utils import create_s3_resource
 
 
 @click.command("init-db")
@@ -316,31 +316,23 @@ def list_lost_files(project_id: str):
             sys.exit(1)
 
         # Connect to S3
-        resource = session.resource(
-            service_name="s3",
+        resource = create_s3_resource(
             endpoint_url=(
                 project.responsible_unit.sto4_endpoint
                 if sto4
                 else project.responsible_unit.sto2_endpoint
             ),
-            aws_access_key_id=(
+            access_key=(
                 project.responsible_unit.sto4_access
                 if sto4
                 else project.responsible_unit.sto2_access
             ),
-            aws_secret_access_key=(
+            secret_key=(
                 project.responsible_unit.sto4_secret
                 if sto4
                 else project.responsible_unit.sto2_secret
             ),
-            config=botocore.client.Config(
-                read_timeout=constants.READ_TIMEOUT,
-                connect_timeout=constants.CONNECT_TIMEOUT,
-                retries={
-                    "max_attempts": 10,
-                    # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
-                },
-            ),
+            session=session,
         )
 
         # List the lost files
@@ -393,31 +385,23 @@ def list_lost_files(project_id: str):
                     continue
 
                 # Connect to S3
-                resource_unit = session.resource(
-                    service_name="s3",
+                resource_unit = create_s3_resource(
                     endpoint_url=(
                         proj.responsible_unit.sto4_endpoint
                         if sto4
                         else proj.responsible_unit.sto2_endpoint
                     ),
-                    aws_access_key_id=(
+                    access_key=(
                         proj.responsible_unit.sto4_access
                         if sto4
                         else proj.responsible_unit.sto2_access
                     ),
-                    aws_secret_access_key=(
+                    secret_key=(
                         proj.responsible_unit.sto4_secret
                         if sto4
                         else proj.responsible_unit.sto2_secret
                     ),
-                    config=botocore.client.Config(
-                        read_timeout=constants.READ_TIMEOUT,
-                        connect_timeout=constants.CONNECT_TIMEOUT,
-                        retries={
-                            "max_attempts": 10,
-                            # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
-                        },
-                    ),
+                    session=session,
                 )
 
                 # List the lost files
@@ -478,27 +462,19 @@ def add_missing_bucket(project_id: str):
         sys.exit(1)
 
     # Connect to S3
-    resource = session.resource(
-        service_name="s3",
+    resource = create_s3_resource(
         endpoint_url=(
             project.responsible_unit.sto4_endpoint
             if sto4
             else project.responsible_unit.sto2_endpoint
         ),
-        aws_access_key_id=(
+        access_key=(
             project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
         ),
-        aws_secret_access_key=(
+        secret_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
         ),
-        config=botocore.client.Config(
-            read_timeout=constants.READ_TIMEOUT,
-            connect_timeout=constants.CONNECT_TIMEOUT,
-            retries={
-                "max_attempts": 10,
-                # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
-            },
-        ),
+        session=session,
     )
 
     # Check if bucket exists
@@ -551,27 +527,19 @@ def delete_lost_files(project_id: str):
         sys.exit(1)
 
     # Connect to S3
-    resource = session.resource(
-        service_name="s3",
+    resource = create_s3_resource(
         endpoint_url=(
             project.responsible_unit.sto4_endpoint
             if sto4
             else project.responsible_unit.sto2_endpoint
         ),
-        aws_access_key_id=(
+        access_key=(
             project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
         ),
-        aws_secret_access_key=(
+        secret_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
         ),
-        config=botocore.client.Config(
-            read_timeout=constants.READ_TIMEOUT,
-            connect_timeout=constants.CONNECT_TIMEOUT,
-            retries={
-                "max_attempts": 10,
-                # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
-            },
-        ),
+        session=session,
     )
 
     # Get list of lost files
