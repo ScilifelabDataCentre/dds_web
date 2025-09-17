@@ -235,7 +235,7 @@ def downgrade():
     op.drop_table("projectstatuses")
     op.drop_table("projectinvites")
     op.drop_table("projectinvitekeys")
-    op.drop_index(op.f("ix_files_project_id"), table_name="files")
+    # op.drop_index(op.f("ix_files_project_id"), table_name="files") # Redundant -- dropped automatically with the files table.
     op.drop_table("files")
     op.drop_table("unitusers")
     op.drop_table("superadmins")
