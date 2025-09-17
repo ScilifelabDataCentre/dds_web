@@ -976,9 +976,10 @@ def create_s3_resource(
     session: typing.Optional[boto3.session.Session] = None,
 ):
     """Create an S3 resource with the standard DDS configuration."""
-
+    # Create a new session if one is not provided
     session = session or boto3.session.Session()
 
+    # Create the S3 resource
     return session.resource(
         service_name="s3",
         endpoint_url=endpoint_url,
