@@ -11,6 +11,7 @@ from .conftest import schema_only_database
 
 # TESTS ############################################################################
 
+
 def test_migrations_apply_latest_schema(schema_only_database):
     """Verify migrations upgraded the schema-only database to the latest head."""
     migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
