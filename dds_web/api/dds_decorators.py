@@ -17,6 +17,7 @@ import marshmallow
 
 # Own modules
 from dds_web import db
+from dds_web.api import constants
 from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,
@@ -138,6 +139,14 @@ def connect_cloud(func):
                 endpoint_url=self.url,
                 aws_access_key_id=self.keys["access_key"],
                 aws_secret_access_key=self.keys["secret_key"],
+                config=botocore.client.Config(
+                    read_timeout=constants.READ_TIMEOUT,
+                    connect_timeout=constants.CONNECT_TIMEOUT,
+                    retries={
+                        "max_attempts": 10,
+                        # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+                    },
+                ),
             )
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
             raise DatabaseError(
