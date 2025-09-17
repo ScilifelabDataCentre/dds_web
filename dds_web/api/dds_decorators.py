@@ -17,7 +17,7 @@ import marshmallow
 
 # Own modules
 from dds_web import db
-from dds_web.api import constants
+from dds_web import constants
 from dds_web.errors import (
     BucketNotFoundError,
     DatabaseError,

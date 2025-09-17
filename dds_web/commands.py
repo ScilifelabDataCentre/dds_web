@@ -24,6 +24,7 @@ from rq.command import send_shutdown_command
 
 # Own
 from dds_web import db
+from dds_web import constants
 
 
 @click.command("init-db")
@@ -332,6 +333,14 @@ def list_lost_files(project_id: str):
                 if sto4
                 else project.responsible_unit.sto2_secret
             ),
+            config=botocore.client.Config(
+                read_timeout=constants.READ_TIMEOUT,
+                connect_timeout=constants.CONNECT_TIMEOUT,
+                retries={
+                    "max_attempts": 10,
+                    # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+                },
+            ),
         )
 
         # List the lost files
@@ -400,6 +409,14 @@ def list_lost_files(project_id: str):
                         proj.responsible_unit.sto4_secret
                         if sto4
                         else proj.responsible_unit.sto2_secret
+                    ),
+                    config=botocore.client.Config(
+                        read_timeout=constants.READ_TIMEOUT,
+                        connect_timeout=constants.CONNECT_TIMEOUT,
+                        retries={
+                            "max_attempts": 10,
+                            # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+                        },
                     ),
                 )
 
@@ -474,6 +491,14 @@ def add_missing_bucket(project_id: str):
         aws_secret_access_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
         ),
+        config=botocore.client.Config(
+            read_timeout=constants.READ_TIMEOUT,
+            connect_timeout=constants.CONNECT_TIMEOUT,
+            retries={
+                "max_attempts": 10,
+                # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+            },
+        ),
     )
 
     # Check if bucket exists
@@ -538,6 +563,14 @@ def delete_lost_files(project_id: str):
         ),
         aws_secret_access_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
+        ),
+        config=botocore.client.Config(
+            read_timeout=constants.READ_TIMEOUT,
+            connect_timeout=constants.CONNECT_TIMEOUT,
+            retries={
+                "max_attempts": 10,
+                # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+            },
         ),
     )
 
