@@ -64,7 +64,7 @@ def _assert_projects_after_upgrade(connection, context):
 def _assert_unit_contact_email_after_downgrade(connection, context):
     """Verify that a downgrade has set the unit contact_email as the correct type,
     and filled it with the correct values.
-    
+
     The context in this case is the data before downgrade.
     Needs to be called context in order for rollbacks to work,
     and for the updates to the shared contects object to stay.
