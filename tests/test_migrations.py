@@ -103,7 +103,7 @@ def _assert_unit_contact_email_after_upgrade(connection, context):
 
 def _assert_unit_quota_after_downgrade(connection, context):
     """Verify that a downgrade has removed the unit table columns quota and warning_level."""
-    _ = context # context is intentionally unused, but want keyword argument in function calls
+    _ = context  # context is intentionally unused, but want keyword argument in function calls
 
     table = _get_table(connection=connection, name="units")
 
