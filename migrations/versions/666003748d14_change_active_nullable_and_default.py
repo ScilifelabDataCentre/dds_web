@@ -25,7 +25,7 @@ def upgrade():
     op.alter_column(
         "users",
         "active",
-        existing_type=sa.Boolean(),
+        existing_type=mysql.TINYINT(display_width=1),
         type_=sa.Boolean(),
         nullable=False,
     )
@@ -37,7 +37,7 @@ def downgrade():
     op.alter_column(
         "users",
         "active",
-        existing_type=sa.Boolean(),
+        existing_type=mysql.TINYINT(display_width=1),
         type_=sa.Boolean(),
         nullable=True,
     )
