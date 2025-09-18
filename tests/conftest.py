@@ -1,4 +1,8 @@
-# Standard Library
+"""Configurations required for tests to run."""
+
+# IMPORTS ##########################################################################
+
+# Standard
 import os
 import unittest.mock
 import datetime
@@ -42,9 +46,16 @@ from dds_web.security.project_user_keys import (
 from dds_web.security.tokens import encrypted_jwt_token
 from dds_web.version import __version__
 
+# VARIABLES ##########################################################################
+
+
 mysql_root_password = os.getenv("MYSQL_ROOT_PASSWORD")
 DATABASE_URI_BASE = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestBase"
 DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTest"
+SCHEMA_ONLY_DATABASE_URI = f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestSchema"  # A completely empty database, only schema, no data
+
+
+# HELPERS ##########################################################################
 
 
 def fill_basic_db(db):
@@ -99,6 +110,46 @@ def fill_basic_db(db):
     )
 
     db.session.commit()
+
+
+def upgrade_database(database_uri: str) -> bool:
+    """Create the database if needed and run migrations to upgrade to the latest schema."""
+    # Keep track if we created the database
+    created = False
+
+    # Create database if it does not exist
+    if not database_exists(database_uri):
+        create_database(database_uri)
+        created = True
+
+    # Create app to run migrations in the context of the app
+    app = create_app(testing=True, database_uri=database_uri)
+
+    # Run migrations -- upgrade to latest version
+    with app.test_request_context():
+        with app.test_client():
+            try:
+                flask_migrate.upgrade()
+            finally:
+                db.session.remove()
+                db.engine.dispose()
+
+    return created
+
+
+def seed_database(database_uri: str) -> None:
+    """Populate the database with baseline data needed for tests."""
+    # Create app to run migrations in the context of the app
+    app = create_app(testing=True, database_uri=database_uri)
+
+    # Fill database
+    with app.test_request_context():
+        with app.test_client():
+            try:
+                fill_basic_db(db)
+            finally:
+                db.session.remove()
+                db.engine.dispose()
 
 
 def new_test_db(uri):
@@ -475,6 +526,23 @@ def add_data_to_db():
     return units, users, projects
 
 
+# FIXTURES ##########################################################################
+
+
+@pytest.fixture(scope="session")
+def schema_only_database(mock_redis_init):
+    """Provide an upgraded database without applying seed data."""
+    # Create a database and upgrade to the latest schema
+    upgrade_database(SCHEMA_ONLY_DATABASE_URI)
+
+    # Provide the database to the tests
+    try:
+        yield SCHEMA_ONLY_DATABASE_URI
+    finally:  # Cleanup the database after tests are done
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(SCHEMA_ONLY_DATABASE_URI)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def mock_redis_init():
     """Fixture to mock the starting of Redis Queue Worker when initializing the app."""
@@ -487,25 +555,23 @@ def mock_redis_init():
                     yield
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def setup_database(mock_redis_init):
-    print("setup_database is called")
-    # Create database specific for tests
-    if not database_exists(DATABASE_URI_BASE):
-        create_database(DATABASE_URI_BASE)
-        app = create_app(testing=True, database_uri=DATABASE_URI_BASE)
-        with app.test_request_context():
-            with app.test_client():
-                flask_migrate.upgrade()
-                fill_basic_db(db)
-                db.engine.dispose()
+    """Ensure an upgraded and seeded database template is available."""
+    # Create database and upgrade to latest schema
+    base_created = upgrade_database(DATABASE_URI_BASE)
 
+    # Add data to the created database
+    if base_created:
+        seed_database(DATABASE_URI_BASE)
+
+    # Create a separate database for tests
     if not database_exists(DATABASE_URI):
         create_database(DATABASE_URI)
+
     try:
         yield None
     finally:
-        # Drop database to save container space
         if not os.environ.get("SAVE_DB", False):
             drop_database(DATABASE_URI)
             drop_database(DATABASE_URI_BASE)
@@ -578,7 +644,7 @@ def runner() -> click.testing.CliRunner:
 
 
 @pytest.fixture()
-def cli_test_app():
+def cli_test_app(setup_database):
     from dds_web import create_app
     from tests import conftest
 
@@ -632,3 +698,25 @@ def mock_queue_redis(mock_enqueue):
                 # Mock the enqueue to call the function directly without actually enqueueing
                 mock_enqueue_func.side_effect = mock_enqueue
                 yield mock_enqueue_func
+
+
+@pytest.fixture()
+def migrated_database(mock_redis_init):
+    """Provide a throwaway database upgraded to the latest head."""
+
+    # Unique URI for throwaway db
+    unique_suffix = uuid.uuid4().hex
+    database_uri = (
+        f"mysql+pymysql://root:{mysql_root_password}@db/DeliverySystemTestTemp_{unique_suffix}"
+    )
+
+    # Create throwaway database
+    create_database(database_uri)
+
+    # Upgrade database to latest version and make availble to tests
+    try:
+        upgrade_database(database_uri)
+        yield database_uri
+    finally:
+        if not os.environ.get("SAVE_DB", False):
+            drop_database(database_uri)
