@@ -151,7 +151,7 @@ def _assert_user_active_after_downgrade(connection, context):
     result = connection.execute(
         select(table.c.active).where(table.c.username == context["username"])
     ).one()
-    assert result.active is False
+    assert result.active == 0 # sa.Boolean actually stored as TINYINT in mysql --> 0 not False
 
 
 def _assert_user_active_after_upgrade(connection, context):
@@ -170,7 +170,7 @@ def _assert_user_active_after_upgrade(connection, context):
     result = connection.execute(
         select(table.c.active).where(table.c.username == context["username"])
     ).one()
-    assert result.active is False
+    assert result.active == 0 # sa.Boolean actually stored as TINYINT in mysql --> 0 not False
 
 
 def _default_value_for(column: sqlalchemy.Column) -> object:
