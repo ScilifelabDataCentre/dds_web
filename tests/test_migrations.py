@@ -503,7 +503,7 @@ def test_data_migrations_transform_existing_rows(
         with engine.begin() as connection:
             upgrade_assertion(connection=connection, context=context)
 
-        # Run downgrade to specific revision
+        # Run downgrade to specific revision, again
         _run_migration(app=app, migration_func=flask_migrate.downgrade, revision=down_revision)
 
         # Verify that the downgrade worked as intended
