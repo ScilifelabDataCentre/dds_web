@@ -186,7 +186,15 @@ def _default_value_for(column: sqlalchemy.Column) -> object:
         return 0
     if isinstance(column.type, sqltypes.DateTime):
         return datetime.datetime.utcnow()
-    if isinstance(column.type, sqltypes.LargeBinary):
+    if isinstance(
+        column.type,
+        (
+            sqltypes.LargeBinary,
+            sqltypes._Binary,
+            mysql.BINARY,
+            mysql.VARBINARY,
+        ),
+    ):
         length = getattr(column.type, "length", None) or 1
         return b"x" * length
     return f"default_{column.name}"
