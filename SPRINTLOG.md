@@ -471,3 +471,72 @@ _Nothing merged during this sprint_
 - Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
 - Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577))
 - Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
+
+# 2024-12-16 - 2024-12-20
+
+- New version: 2.9.0 ([#1584](https://github.com/ScilifelabDataCentre/dds_web/pull/1584))
+- Instructions regarding database migrations moved to migrations directory, and Linkspector action added to scan for incorrect links in MD ([#1576](https://github.com/ScilifelabDataCentre/dds_web/pull/1576))
+
+# 2025-12-20 - 2025-01-17
+
+- Make release template ([#1587](https://github.com/ScilifelabDataCentre/dds_web/pull/1587))
+- Fix codecov action ([#1589](https://github.com/ScilifelabDataCentre/dds_web/pull/1589))
+
+# 2025-02-03 - 2025-02-14
+
+- Implement Redis Queue to process some requests asynschronusly and avoid timeouts. Set project deletion as a background task. ([#1591](https://github.com/ScilifelabDataCentre/dds_web/pull/1591))
+
+# 2025-03-31 - 2025-04-11
+
+- New version: 2.10.0 ([#1597](https://github.com/ScilifelabDataCentre/dds_web/pull/1597))
+
+# 2025-04-14 - 2025-04-25
+
+- Set MOTD as a background task([#1594](https://github.com/ScilifelabDataCentre/dds_web/pull/1594))
+- Remove docker-compose.yml version (obsolete) ([#1598](https://github.com/ScilifelabDataCentre/dds_web/pull/1598))
+- New Github Action for automatically creating release draft: Release Drafter ([#1604](https://github.com/ScilifelabDataCentre/dds_web/pull/1604))
+- Improve set-expired-to-archived command to insure project are not inactivated without being deleted ([#1605](https://github.com/ScilifelabDataCentre/dds_web/pull/1605))
+- Fix RQ worker missconfigurations([#1603](https://github.com/ScilifelabDataCentre/dds_web/pull/1603))
+
+# 2025-05-26 - 2025-06-06
+
+- Bump jinja2 from 3.1.3 to 3.1.6 ([#1606](https://github.com/ScilifelabDataCentre/dds_web/pull/1606))
+- Bump werkzeug from 3.0.3 to 3.0.6 ([#1607](https://github.com/ScilifelabDataCentre/dds_web/pull/1607))
+
+# Summer 2025
+
+- Rename 'doc' directory to 'docs' for consistency ([#1614](https://github.com/ScilifelabDataCentre/dds_web/pull/1614))
+- Add queuing for archiving projects([#1595](https://github.com/ScilifelabDataCentre/dds_web/pull/1595))
+
+# 2025-08-04 - 2025-08-15
+
+- Fix bug: Users should be able to release the project once and extend / rerelease the project twice ([#1619](https://github.com/ScilifelabDataCentre/dds_web/pull/1619))
+- Add labelling instructions to a specific doc in the repository ([#1616](https://github.com/ScilifelabDataCentre/dds_web/pull/1616))
+- New version: 2.12.0 ([#1624](https://github.com/ScilifelabDataCentre/dds_web/pull/1624))
+
+# 2025-08-18 - 2025-08-29
+
+- Add queuing for deleting projects([#1610](https://github.com/ScilifelabDataCentre/dds_web/pull/1610))
+- Add style guidelines to the repository ([#1618](https://github.com/ScilifelabDataCentre/dds_web/pull/1618))
+- Move instructions on how to solve failing actions / workflows to the workflow files ([#1620](https://github.com/ScilifelabDataCentre/dds_web/pull/1620/))
+- Added ADR for Queue solution ([#1625](https://github.com/ScilifelabDataCentre/dds_web/pull/1625))
+- New version: 2.13.0 ([#1627](https://github.com/ScilifelabDataCentre/dds_web/pull/1627))
+- Bug: Users should be able to release once and extend twice ([#1630](https://github.com/ScilifelabDataCentre/dds_web/pull/1630))
+
+# 2025-09-01 - 2025-09-12
+
+- Disable autoflush on project creation and assure no duplicate public ID ([#1626](https://github.com/ScilifelabDataCentre/dds_web/pull/1626))
+- Bump node libraries and python dependencies to solve vulnerabilities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640)):
+  - `dnspython` from 2.2.0 to 2.6.1
+  - `idna` from 3.3 to 3.7
+  - `Pillow` from 10.2.0 to 10.3.0
+  - `requests` from 2.32.0 to 2.32.4
+
+## 2025-09-15 - 2025-09-26
+
+- Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
+  Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
+  - boto3 from 1.20.47 to 1.40.34
+  - botocore from 1.23.47 to 1.40.34
+  - request_cache from 0.9.4 to 1.2.1
+  - s3transfer from 0.5.1 to 0.14.0
