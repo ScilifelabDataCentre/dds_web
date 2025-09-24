@@ -50,6 +50,16 @@ from dds_web.security.project_user_keys import obtain_project_private_key, share
 from dds_web.security.auth import get_user_roles_common
 from dds_web.api.files import check_eligibility_for_deletion
 
+####################################################################################################
+# CONSTANTS ############################################################################ CONSTANTS #
+####################################################################################################
+
+# Maximum number of times a project deadline can be extended
+MAX_DEADLINE_EXTENSIONS = 2
+
+# Maximum number of times a project can be released after having expired
+MAX_RELEASES_FROM_EXPIRED = 3
+
 
 ####################################################################################################
 # ENDPOINTS ############################################################################ ENDPOINTS #
@@ -214,7 +224,15 @@ class ProjectStatus(flask_restful.Resource):
     @handle_validation_errors
     @handle_db_error
     def patch(self):
-        """Partially update a the project status"""
+        """
+        Use to extend the project deadline of a project.
+
+        It works by faking an expiration and re-releasing the project.
+        Therefore it consumes one of the times that a project can be released after having expired.
+
+        Available --> Expired --> Available
+
+        """
         # Get project ID, project and verify access
         project_id = dds_web.utils.get_required_item(obj=flask.request.args, req="project")
         project = dds_web.utils.collect_project(project_id=project_id)
@@ -223,11 +241,9 @@ class ProjectStatus(flask_restful.Resource):
         # Get json input from request
         json_input = flask.request.get_json(silent=True)  # Already checked by json_required
 
-        # A project can have the expired status 3 times
-        # It can be released / extended 3 times
-        # If more attempts --> cannot be extended again
-        # will be automatically archived by the system
-        if project.times_expired > 3:
+        # A project can have the deadline extended a maximum of MAX_DEADLINE_EXTENSIONS
+        # If more attempts occur, the deadline cannot be extended again.
+        if project.times_expired >= MAX_DEADLINE_EXTENSIONS:
             raise DDSArgumentError(
                 "Project availability limit: The maximum number of changes in data availability has been reached."
             )
@@ -401,10 +417,10 @@ class ProjectStatus(flask_restful.Resource):
             days=deadline_in
         )
 
-        # Project can only MOVE FROM Expired 2 times
-        # but can BE IN Exired 3 times
+        # Project can only MOVE FROM Expired to Available
+        # MAX_RELEASES_FROM_EXPIRED times
         if project.current_status == "Expired":
-            if project.times_expired > 3:
+            if project.times_expired >= MAX_RELEASES_FROM_EXPIRED:
                 raise DDSArgumentError(
                     "Project availability limit: Project cannot be made Available any more times"
                 )
@@ -569,7 +585,7 @@ class ProjectStatus(flask_restful.Resource):
         new_status: str,
         aborted: bool = False,
     ):
-        """When the delete contents operation has being sucesfully executed. Perform the update in the DB.
+        """When the delete contents operation has been successfully executed, perform the update in the DB.
         Function ONLY to be called by the queue.
         """
 
@@ -611,7 +627,7 @@ class ProjectStatus(flask_restful.Resource):
 
 
 class GetPublic(flask_restful.Resource):
-    """Gets the public key beloning to the current project."""
+    """Gets the public key belonging to the current project."""
 
     @auth.login_required(role=["Unit Admin", "Unit Personnel", "Project Owner", "Researcher"])
     @logging_bind_request

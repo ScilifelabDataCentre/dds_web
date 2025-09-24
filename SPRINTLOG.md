@@ -520,3 +520,18 @@ _Nothing merged during this sprint_
 - Move instructions on how to solve failing actions / workflows to the workflow files ([#1620](https://github.com/ScilifelabDataCentre/dds_web/pull/1620/))
 - Added ADR for Queue solution ([#1625](https://github.com/ScilifelabDataCentre/dds_web/pull/1625))
 - New version: 2.13.0 ([#1627](https://github.com/ScilifelabDataCentre/dds_web/pull/1627))
+- Bug: Users should be able to release once and extend twice ([#1630](https://github.com/ScilifelabDataCentre/dds_web/pull/1630))
+
+# 2025-09-01 - 2025-09-12
+
+- Disable autoflush on project creation and assure no duplicate public ID ([#1626](https://github.com/ScilifelabDataCentre/dds_web/pull/1626))
+- Bump node libraries and python dependencies to solve vulnerabilities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640)):
+  - `dnspython` from 2.2.0 to 2.6.1
+  - `idna` from 3.3 to 3.7
+  - `Pillow` from 10.2.0 to 10.3.0
+  - `requests` from 2.32.0 to 2.32.4
+
+## 2025-09-15 - 2025-09-26
+
+- Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
+- New version: 2.13.1 ([#1647](https://github.com/ScilifelabDataCentre/dds_web/pull/1647))
