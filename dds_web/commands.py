@@ -230,18 +230,18 @@ def update_unit_quota(unit_id, quota):
 
     # calculate quotas for logging purposes
     old_quota_tb = round(unit.quota / 1000**4, 4)
-    old_quota_gb = round(unit.quota / 1000**3, 4)
-    new_quota_gb = round(quota * 1000, 4)
+    new_quota_bytes = int(quota * 1000**4)
 
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"Current quota for unit '{unit_id}' is {old_quota_tb} TB ({old_quota_gb} GB). \n"
-        f"You are about to update the quota to {quota} TB ({new_quota_gb} GB). \n"
+        f"Current quota for unit '{unit_id}' is {old_quota_tb} TB. \n"
+        f"You are about to update the quota to {quota} TB. \n"
+        f"NOTE: In the database it will appear as bytes: {new_quota_bytes} Bytes \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
         flask.current_app.logger.info(
-            f"Cancelling quota update for unit '{unit_id}'. The quota is still {old_quota_tb} TB. ({old_quota_gb} GB)"
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {old_quota_tb} TB."
         )
         return
 
