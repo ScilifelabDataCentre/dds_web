@@ -469,7 +469,7 @@ _Nothing merged during this sprint_
 - Update backend Dockerfile to pin a fixed version of mariadb-client ([#1581](https://github.com/ScilifelabDataCentre/dds_web/pull/1581))
 - Update documentation regarding 'Upload' or 'Download' added to end of delivery directory name depending on command ([#1580](https://github.com/ScilifelabDataCentre/dds_web/pull/1580))
 - Modify the monitor usage command to send warning to the affected unit as well as Data Centre([#1562](https://github.com/ScilifelabDataCentre/dds_web/pull/1562))
-- Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577))
+- Run npm audit fix to solve node cve's ([#1577](https://github.com/ScilifelabDataCentre/dds_web/pull/1577)
 
 # 2024-12-16 - 2024-12-20
 
@@ -535,10 +535,6 @@ _Nothing merged during this sprint_
 
 - Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
 - New version: 2.13.1 ([#1647](https://github.com/ScilifelabDataCentre/dds_web/pull/1647))
-
-## 2025-09-29 - 2025-10-10
-
-- Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
 
 ## 2025-10-27 - 2025-11-07
 
