@@ -536,6 +536,14 @@ _Nothing merged during this sprint_
 - Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
 - New version: 2.13.1 ([#1647](https://github.com/ScilifelabDataCentre/dds_web/pull/1647))
 
+## 2025-09-29 - 2025-10-10
+
+- Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
+  - `boto3` from 1.20.47 to 1.40.34
+  - `botocore` from 1.23.47 to 1.40.34
+  - `request_cache` from 0.9.4 to 1.2.1
+  - `s3transfer` from 0.5.1 to 0.14.0
+
 ## 2025-10-27 - 2025-11-07
 
 - Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
