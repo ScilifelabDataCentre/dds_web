@@ -592,6 +592,8 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
 def test_update_unit_quota_database_error(client, runner, capfd: LogCaptureFixture) -> None:
     """Unit quota update fails when there is a database error."""
 
+    from tests.api.test_project import mock_sqlalchemyerror
+
     # Get existing unit
     unit: models.Unit = models.Unit.query.first()
     unit_id: str = unit.public_id
