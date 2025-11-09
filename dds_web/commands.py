@@ -222,6 +222,10 @@ def update_unit_quota(unit_id, quota):
     from dds_web import db
     from dds_web.database import models
 
+    if quota <= 0:
+        flask.current_app.logger.error(f"Quota must be positive. Got: {quota} TB")
+        sys.exit(1)
+
     # Get unit
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
     if not unit:
@@ -245,10 +249,14 @@ def update_unit_quota(unit_id, quota):
         )
         return
 
-    # Set new quota info
-    new_quota_bytes = int(quota * 1000**4)
-    unit.quota = new_quota_bytes
-    db.session.commit()
+    try:
+        # Set new quota info
+        unit.quota = new_quota_bytes
+        db.session.commit()
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError):
+        db.session.rollback()
+        flask.current_app.logger.error(f"Failed to update quota for unit '{unit_id}'.")
+        sys.exit(1)
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 

@@ -474,7 +474,7 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
         "--unit-id",
         "unitdoesntexist",
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -487,6 +487,28 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
 
     # Verify message
     assert f"There is no unit with the public ID '{command_options[1]}'." in err
+
+
+def test_update_unit_quota_wrong_quota(client, runner, capfd: LogCaptureFixture) -> None:
+    """The quota is incorrect -> Error."""
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        "unitdoesntexist",
+        "--quota",
+        -2,  # negative,
+    ]
+
+    # Run command
+    result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+    assert result.exit_code == 1
+    assert not result.output
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify message
+    assert f"Quota must be positive" in err
 
 
 def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptureFixture) -> None:
@@ -565,6 +587,44 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
     assert unit
     assert unit.quota != quota_original
     assert unit.quota == command_options[3] * 1000**4  # TB to bytes
+
+
+def test_update_unit_quota_database_error(client, runner, capfd: LogCaptureFixture) -> None:
+    """Unit quota update fails when there is a database error."""
+
+    # Get existing unit
+    unit: models.Unit = models.Unit.query.first()
+    unit_id: str = unit.public_id
+
+    # save original quota
+    quota_original = unit.quota
+
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        unit_id,
+        "--quota",
+        2,  # 2 TB,
+    ]
+
+    # Run command
+    # Mock rich prompt - True
+    # Mock commit to raise error
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
+        with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+            result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+            assert result.exit_code == 1
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify logging
+    assert f"Failed to update quota for unit" in err
+
+    # Verify no change in unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
+    assert unit
+    assert unit.quota == quota_original
 
 
 # update_uploaded_file_with_log
