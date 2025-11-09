@@ -546,4 +546,4 @@ _Nothing merged during this sprint_
 
 ## 2025-11-10 - 2025-11-21
 
-- Update Authlib to solve CVE ([#1648](https://github.com/ScilifelabDataCentre/dds_web/pull/1648))
+- Update Authlib to solve CVE ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
