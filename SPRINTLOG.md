@@ -546,4 +546,6 @@ _Nothing merged during this sprint_
 
 ## 2025-11-10 - 2025-11-21
 
+- Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
 - Update Authlib to solve CVE ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
+
