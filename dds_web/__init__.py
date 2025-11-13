@@ -96,17 +96,24 @@ class FilterRQworkerLogs(logging.Filter):
 
         # catch these usual messages
         worker_usual_messages = [
-            "Sent heartbeat to prevent worker timeout.",
-            "Registering birth of worker",
-            "Subscribing to channel rq:pubsub",
-            "*** Listening on default...",
-            "Cleaning registries for queue:",
-            "Dequeueing jobs on queues",
-
+            "Sent heartbeat to prevent worker timeout. Next one should arrive in %s seconds.",
+            "Registering birth of worker %s",
+            "Worker %s started with PID %d, version %s",
+            "*** Listening on %s...",
+            "Cleaning registries for queue: %s",
+            "Dequeueing jobs on queues %s and timeout %s",
+            "Subscribing to channel %s",
+            "Unsubscribing from channel %s",
+            "Worker %s [PID %d]: warm shut down requested",
+            "Registering death",
+            "Got signal %s",
         ]
 
-        # Check if the log record comes from the worker function and if its message is in the usual messages list
-        return record.funcName != "worker" or worker_usual_messages not in record.msg
+        # Filtered if
+        # 1 log message is present in the "usual messages" list 
+        # AND
+        # 2 the log is from rq worker.py
+        return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
 
 class FilterRQworkerLogs(logging.Filter):
 
