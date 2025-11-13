@@ -117,37 +117,6 @@ class FilterRQworkerLogs(logging.Filter):
         return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
 
 
-class FilterRQworkerLogs(logging.Filter):
-
-    def filter(record):
-        """
-        Filters log records to exclude those from RQ workers.
-        Returns:
-            bool: True if the log record should be logged, False if it should be filtered out.
-        """
-
-        # catch these usual messages
-        worker_usual_messages = [
-            "Sent heartbeat to prevent worker timeout. Next one should arrive in %s seconds.",
-            "Registering birth of worker %s",
-            "Worker %s started with PID %d, version %s",
-            "*** Listening on %s...",
-            "Cleaning registries for queue: %s",
-            "Dequeueing jobs on queues %s and timeout %s",
-            "Subscribing to channel %s",
-            "Unsubscribing from channel %s",
-            "Worker %s [PID %d]: warm shut down requested",
-            "Registering death",
-            "Got signal %s",
-        ]
-
-        # Filtered if
-        # 1 log message is present in the "usual messages" list
-        # AND
-        # 2 the log is from rq worker.py
-        return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
-
-
 class FilterWebRQLogs(logging.Filter):
 
     def filter(record):
@@ -276,7 +245,6 @@ def setup_logging(app):
     # For filtering web requests, both gunicorn (k8s) and werkzeug (development) loggers
     for logger in [logging.getLogger("gunicorn.access"), logging.getLogger("werkzeug")]:
         logger.addFilter(FilterWebRQLogs)
-
 
 
 def create_app(testing=False, database_uri=None):
