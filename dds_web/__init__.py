@@ -102,7 +102,7 @@ class FilterRQworkerLogs(logging.Filter):
             "Cleaning registries for queue: %s",
             "Dequeueing jobs on queues %s and timeout %s",
             "Subscribing to channel %s",
-            #"Unsubscribing from channel %s",
+            "Unsubscribing from channel %s",
             #"Worker %s [PID %d]: warm shut down requested",
             #"Registering death",
             #"Got signal %s",
