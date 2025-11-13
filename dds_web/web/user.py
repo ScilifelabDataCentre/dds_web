@@ -180,7 +180,7 @@ def activate_totp(token):
     if form.validate_on_submit():
         try:
             user.verify_TOTP(form.totp.data.encode())
-        except ddserr.AuthenticationError:
+        except (ddserr.AuthenticationError, ddserr.AccessDeniedError):
             flask.flash("Invalid two-factor authentication code.")
             return (
                 flask.render_template(
