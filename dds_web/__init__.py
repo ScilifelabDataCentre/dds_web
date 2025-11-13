@@ -85,6 +85,7 @@ class FilterMaintenanceExc(logging.Filter):
         # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
         return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
 
+
 class FilterRQworkerLogs(logging.Filter):
 
     def filter(record):
@@ -110,10 +111,11 @@ class FilterRQworkerLogs(logging.Filter):
         ]
 
         # Filtered if
-        # 1 log message is present in the "usual messages" list 
+        # 1 log message is present in the "usual messages" list
         # AND
         # 2 the log is from rq worker.py
         return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
+
 
 class FilterRQworkerLogs(logging.Filter):
 
@@ -274,6 +276,7 @@ def setup_logging(app):
     # For filtering web requests, both gunicorn (k8s) and werkzeug (development) loggers
     for logger in [logging.getLogger("gunicorn.access"), logging.getLogger("werkzeug")]:
         logger.addFilter(FilterWebRQLogs)
+
 
 
 def create_app(testing=False, database_uri=None):
