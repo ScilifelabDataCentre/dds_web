@@ -132,6 +132,11 @@ class FilterWebRQLogs(logging.Filter):
         # To filter them, we need to check the args atribute
         # https://docs.python.org/3/library/logging.html#logging.LogRecord
         # If there is no args tuple or if the args do not contain the rq dashboard path, we log it
+        import logging
+        if record.args:
+            logging.getLogger("general").debug(f"RQ log filtered out: {record.args}")
+            if len(record.args) > 0:
+                logging.getLogger("general").debug(f"First arg: {record.args[0]}")
         return (
             record.args is None
             or len(record.args) == 0
