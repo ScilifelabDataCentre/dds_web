@@ -70,6 +70,7 @@ migrate = flask_migrate.Migrate()
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
 
+
 # https://docs.python.org/3/library/logging.html#filter-objects
 class FilterMaintenanceExc(logging.Filter):
 
@@ -83,6 +84,7 @@ class FilterMaintenanceExc(logging.Filter):
 
         # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
         return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
+
 
 class FilterRQworkerLogs(logging.Filter):
 
@@ -109,10 +111,11 @@ class FilterRQworkerLogs(logging.Filter):
         ]
 
         # Filtered if
-        # 1 log message is present in the "usual messages" list 
+        # 1 log message is present in the "usual messages" list
         # AND
         # 2 the log is from rq worker.py
         return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
+
 
 def setup_logging(app):
     """Setup loggers"""
@@ -213,6 +216,7 @@ def setup_logging(app):
     # Add custom filter to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
     logging.getLogger("general").addFilter(FilterRQworkerLogs)
+
 
 def create_app(testing=False, database_uri=None):
     try:
