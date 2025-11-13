@@ -275,7 +275,7 @@ def confirm_2fa():
     token = flask.session.get("2fa_initiated_token")
     try:
         user = dds_web.security.auth.verify_token_no_data(token)
-    except ddserr.AuthenticationError:
+    except (ddserr.AuthenticationError, ddserr.AccessDeniedError):
         flask.flash(
             "Error: Please initiate a log in before entering the one-time authentication code.",
             "warning",
