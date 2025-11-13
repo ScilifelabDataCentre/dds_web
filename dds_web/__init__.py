@@ -117,6 +117,28 @@ class FilterRQworkerLogs(logging.Filter):
         return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
 
 
+class FilterWebRQLogs(logging.Filter):
+
+    def filter(record):
+        """
+        Filters log records to exclude those from a web request of "delivery.scilifelab.se/rq"
+        Because the auto-refresh of the RQ dashboard creates a lot of log entries.
+
+        Returns:
+            bool: True if the log record should be logged, False if it should be filtered out.
+        """
+
+        # In web requests, the msg is just a string with placeholders like "%s %s %s"
+        # To filter them, we need to check the args atribute
+        # https://docs.python.org/3/library/logging.html#logging.LogRecord
+        # If there is no args tuple or if the args do not contain the rq dashboard path, we log it
+        return (
+            record.args is None
+            or len(record.args) == 0
+            or "/rq/0/data/queues.json" not in record.args[0]
+        )
+
+
 def setup_logging(app):
     """Setup loggers"""
 
@@ -216,6 +238,7 @@ def setup_logging(app):
     # Add custom filter to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
     logging.getLogger("general").addFilter(FilterRQworkerLogs)
+    logging.getLogger("werkzeug").addFilter(FilterWebRQLogs)
 
 
 def create_app(testing=False, database_uri=None):
