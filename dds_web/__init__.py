@@ -70,7 +70,7 @@ migrate = flask_migrate.Migrate()
 # FUNCTIONS ############################################################################ FUNCTIONS #
 ####################################################################################################
 
-
+# https://docs.python.org/3/library/logging.html#filter-objects
 class FilterMaintenanceExc(logging.Filter):
 
     def filter(record):
@@ -84,6 +84,28 @@ class FilterMaintenanceExc(logging.Filter):
         # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
         return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
 
+class FilterRQworkerLogs(logging.Filter):
+
+    def filter(record):
+        """
+        Filters log records to exclude those from RQ workers.
+        Returns:
+            bool: True if the log record should be logged, False if it should be filtered out.
+        """
+
+        # catch these usual messages
+        worker_usual_messages = [
+            "Sent heartbeat to prevent worker timeout.",
+            "Registering birth of worker",
+            "Subscribing to channel rq:pubsub",
+            "*** Listening on default...",
+            "Cleaning registries for queue:",
+            "Dequeueing jobs on queues",
+
+        ]
+
+        # Check if the log record comes from the worker function and if its message is in the usual messages list
+        return record.funcName != "worker" or worker_usual_messages not in record.msg
 
 def setup_logging(app):
     """Setup loggers"""
@@ -183,7 +205,7 @@ def setup_logging(app):
 
     # Add custom filter to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
-
+    logging.getLogger("general").addFilter(FilterRQworkerLogs())
 
 def create_app(testing=False, database_uri=None):
     try:
