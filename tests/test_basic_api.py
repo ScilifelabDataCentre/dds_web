@@ -323,6 +323,78 @@ def test_request_totp_activation(client):
     assert user.totp_enabled
 
 
+def test_request_totp_activation_error(client):
+    """Request TOTP activation - fails to verify"""
+
+    user = dds_web.database.models.User.query.filter_by(username="researchuser").first()
+    assert not user.totp_enabled
+    assert not user.totp_initiated
+
+    user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client)
+    response = client.post(
+        tests.DDSEndpoint.TOTP_ACTIVATION,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message")
+    assert (
+        "Please check your email and follow the attached link to activate two-factor with authenticator app."
+        == response.json.get("message")
+    )
+
+    totp_token = encrypted_jwt_token(
+        username="researchuser",
+        sensitive_content=None,
+        expires_in=datetime.timedelta(
+            seconds=3600,
+        ),
+        additional_claims={"act": "totp"},
+    )
+
+    form_token = successful_web_login(client, user_auth)
+
+    response = client.get(
+        f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            **tests.DEFAULT_HEADER,
+        },
+        data={
+            "csrf_token": form_token,
+        },
+        follow_redirects=True,
+    )
+    assert user.totp_initiated
+    assert not user.totp_enabled
+
+    # user.verify_TOTP raises a Authentication error
+    with unittest.mock.patch.object(
+        dds_web.database.models.User,
+        "verify_TOTP",
+        side_effect=dds_web.security.auth.AuthenticationError(),
+    ):
+
+        response = client.post(
+            f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                **tests.DEFAULT_HEADER,
+            },
+            data={
+                "csrf_token": form_token,
+                "totp": user.totp_object().generate(time.time()),
+            },
+            follow_redirects=True,
+        )
+
+        from flask import get_flashed_messages
+
+        assert "Invalid two-factor authentication code." in get_flashed_messages()
+
+    assert not user.totp_enabled
+
+
 @pytest.fixture()
 def totp_for_user(client):
     """Create a user with TOTP enabled and return TOTP object"""
