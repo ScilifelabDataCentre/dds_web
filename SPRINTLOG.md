@@ -538,13 +538,18 @@ _Nothing merged during this sprint_
 
 ## 2025-09-29 - 2025-10-10
 
-Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
-
-- boto3 from 1.20.47 to 1.40.34
-- botocore from 1.23.47 to 1.40.34
-- request_cache from 0.9.4 to 1.2.1
-- s3transfer from 0.5.1 to 0.14.0
+- Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
+  - boto3 from 1.20.47 to 1.40.34
+  - botocore from 1.23.47 to 1.40.34
+  - request_cache from 0.9.4 to 1.2.1
+  - s3transfer from 0.5.1 to 0.14.0
 
 ## 2025-11-10 - 2025-11-21
 
 - Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
+- Update Authlib to solve CVE ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
+- Clean up logs comming from RQ Workers ([#1650](https://github.com/ScilifelabDataCentre/dds_web/pull/1650))
+
+## 2025-11-24 - 2025-12-05
+
+- Update Python packages to address deprecated pkg_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
