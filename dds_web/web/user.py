@@ -180,8 +180,14 @@ def activate_totp(token):
     if form.validate_on_submit():
         try:
             user.verify_TOTP(form.totp.data.encode())
-        except (ddserr.AuthenticationError, ddserr.AccessDeniedError):
-            flask.flash("Invalid two-factor authentication code.")
+        except (ddserr.AuthenticationError, ddserr.AccessDeniedError) as err:
+            # if err is authentication
+            if isinstance(err, ddserr.AuthenticationError):
+                msg = "Invalid two-factor authentication code."
+            elif isinstance(err, ddserr.AccessDeniedError):
+                msg = "Your account has been deactivated. You cannot use the DDS."
+
+            flask.flash(msg)
             return (
                 flask.render_template(
                     "user/activate_totp.html",

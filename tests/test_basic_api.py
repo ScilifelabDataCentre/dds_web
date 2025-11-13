@@ -8,6 +8,7 @@ import unittest
 
 # Installed
 import flask
+from flask import get_flashed_messages
 import flask_mail
 import pytest
 
@@ -368,29 +369,46 @@ def test_request_totp_activation_error(client):
     assert user.totp_initiated
     assert not user.totp_enabled
 
-    # user.verify_TOTP raises a Authentication error
+    # user.verify_TOTP raises
+    # 1st -> Authentication error
+    # 2nd -> AccessDeniedError
     with unittest.mock.patch.object(
         dds_web.database.models.User,
         "verify_TOTP",
-        side_effect=dds_web.security.auth.AuthenticationError(),
+        side_effect=(
+            dds_web.security.auth.AuthenticationError(),
+            dds_web.security.auth.AccessDeniedError(),
+        ),
     ):
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            **tests.DEFAULT_HEADER,
+        }
+        data = {
+            "csrf_token": form_token,
+            "totp": user.totp_object().generate(time.time()),
+        }
 
+        # auth error
         response = client.post(
             f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                **tests.DEFAULT_HEADER,
-            },
-            data={
-                "csrf_token": form_token,
-                "totp": user.totp_object().generate(time.time()),
-            },
+            headers=headers,
+            data=data,
             follow_redirects=True,
         )
 
-        from flask import get_flashed_messages
-
         assert "Invalid two-factor authentication code." in get_flashed_messages()
+
+        # access denied error
+        response = client.post(
+            f"{tests.DDSEndpoint.ACTIVATE_TOTP_WEB}{totp_token}",
+            headers=headers,
+            data=data,
+            follow_redirects=True,
+        )
+        assert (
+            "Your account has been deactivated. You cannot use the DDS." in get_flashed_messages()
+        )
 
     assert not user.totp_enabled
 
