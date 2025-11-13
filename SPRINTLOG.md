@@ -544,6 +544,7 @@ _Nothing merged during this sprint_
   - `request_cache` from 0.9.4 to 1.2.1
   - `s3transfer` from 0.5.1 to 0.14.0
 
-## 2025-10-27 - 2025-11-07
+# 2025-11-10 - 2025-11-21
 
 - Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
+- Clean up logs comming from RQ Workers ([#1650](https://github.com/ScilifelabDataCentre/dds_web/pull/1650))
