@@ -134,16 +134,13 @@ class FilterWebRQLogs(logging.Filter):
 
         if record.name == "gunicorn.access":
             # Annoyngly, in gunicorn access logs, the args is a dict with key 'r' for the request
-            query_string = record.args.get('r', '')
+            query_string = record.args.get("r", "")
         else:
             # In werkzeug logs, the args is a tuple like the documentation says
             query_string = record.args
 
         # If there is no args attribute or if the args do not contain the rq dashboard query, we log it
-        return (
-            record.args is None
-            or "GET /rq/0/data/queues.json HTTP/1.1" not in query_string
-        )
+        return record.args is None or "GET /rq/0/data/queues.json HTTP/1.1" not in query_string
 
 
 def setup_logging(app):
