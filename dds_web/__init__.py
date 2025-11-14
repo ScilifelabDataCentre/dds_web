@@ -71,6 +71,7 @@ migrate = flask_migrate.Migrate()
 ####################################################################################################
 
 
+# https://docs.python.org/3/library/logging.html#filter-objects
 class FilterMaintenanceExc(logging.Filter):
 
     def filter(record):
@@ -83,6 +84,63 @@ class FilterMaintenanceExc(logging.Filter):
 
         # Check if the log record does not have an exception or if the exception is not MaintenanceOngoingException
         return record.exc_info is None or record.exc_info[0] != MaintenanceOngoingException
+
+
+class FilterRQworkerLogs(logging.Filter):
+
+    def filter(record):
+        """
+        Filters log records to exclude those from RQ workers.
+        Returns:
+            bool: True if the log record should be logged, False if it should be filtered out.
+        """
+
+        # catch these usual messages
+        worker_usual_messages = [
+            "Sent heartbeat to prevent worker timeout. Next one should arrive in %s seconds.",
+            "Registering birth of worker %s",
+            "Worker %s started with PID %d, version %s",
+            "*** Listening on %s...",
+            "Cleaning registries for queue: %s",
+            "Dequeueing jobs on queues %s and timeout %s",
+            "Subscribing to channel %s",
+            "Unsubscribing from channel %s",
+            "Worker %s [PID %d]: warm shut down requested",
+            "Registering death",
+            "Got signal %s",
+        ]
+
+        # Filtered if
+        # 1 log message is present in the "usual messages" list
+        # AND
+        # 2 the log is from rq worker.py
+        return record.msg not in worker_usual_messages or "/rq/worker.py" not in record.pathname
+
+
+class FilterWebRQLogs(logging.Filter):
+
+    def filter(record):
+        """
+        Filters log records to exclude those from a web request of "delivery.scilifelab.se/rq"
+        Because the auto-refresh of the RQ dashboard creates a lot of log entries.
+
+        Returns:
+            bool: True if the log record should be logged, False if it should be filtered out.
+        """
+
+        # In web requests, the msg is just a string with placeholders like "%s %s %s"
+        # To filter them, need to check the args attribute
+        # https://docs.python.org/3/library/logging.html#logging.LogRecord
+
+        if record.name == "gunicorn.access":
+            # Annoyngly, in gunicorn access logs, the args is a dict with key 'r' for the request
+            query_string = record.args.get("r", "")
+        else:
+            # In werkzeug logs, the args is a tuple like the documentation says
+            query_string = record.args
+
+        # If there is no args attribute or if the args do not contain the rq dashboard query, we log it
+        return record.args is None or "GET /rq/0/data/queues.json HTTP/1.1" not in query_string
 
 
 def setup_logging(app):
@@ -181,8 +239,12 @@ def setup_logging(app):
         cache_logger_on_first_use=True,
     )
 
-    # Add custom filter to the logger
+    # Add custom filters to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
+    logging.getLogger("general").addFilter(FilterRQworkerLogs)
+    # For filtering web requests, both gunicorn (k8s) and werkzeug (development) loggers
+    for logger in [logging.getLogger("gunicorn.access"), logging.getLogger("werkzeug")]:
+        logger.addFilter(FilterWebRQLogs)
 
 
 def create_app(testing=False, database_uri=None):
