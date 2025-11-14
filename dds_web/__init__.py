@@ -129,13 +129,20 @@ class FilterWebRQLogs(logging.Filter):
         """
 
         # In web requests, the msg is just a string with placeholders like "%s %s %s"
-        # To filter them, we need to check the args atribute
+        # To filter them, need to check the args attribute
         # https://docs.python.org/3/library/logging.html#logging.LogRecord
-        # If there is no args tuple or if the args do not contain the rq dashboard path, we log it
+
+        if record.name == "gunicorn.access":
+            # Annoyngly, in gunicorn access logs, the args is a dict with key 'r' for the request
+            query_string = record.args.get('r', '')
+        else:
+            # In werkzeug logs, the args is a tuple like the documentation says
+            query_string = record.args
+
+        # If there is no args attribute or if the args do not contain the rq dashboard query, we log it
         return (
             record.args is None
-            or len(record.args) == 0
-            or "/rq/0/data/queues.json" not in record.args[0]
+            or "GET /rq/0/data/queues.json HTTP/1.1" not in query_string
         )
 
 
@@ -235,11 +242,12 @@ def setup_logging(app):
         cache_logger_on_first_use=True,
     )
 
-    # Add custom filter to the logger
+    # Add custom filters to the logger
     logging.getLogger("general").addFilter(FilterMaintenanceExc)
     logging.getLogger("general").addFilter(FilterRQworkerLogs)
-    if logging.getLogger("gunicorn.access"):  # only in k8s
-        logging.getLogger("gunicorn.access").addFilter(FilterWebRQLogs)
+    # For filtering web requests, both gunicorn (k8s) and werkzeug (development) loggers
+    for logger in [logging.getLogger("gunicorn.access"), logging.getLogger("werkzeug")]:
+        logger.addFilter(FilterWebRQLogs)
 
 
 def create_app(testing=False, database_uri=None):
