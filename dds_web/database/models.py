@@ -361,6 +361,7 @@ class Project(db.Model):
 def add_before_project_update(mapper, connection, target):
     """Listen for the 'before_update' event on Project and update certain of its fields"""
     from dds_web.utils import current_time
+
     if auth.current_user():
         target.date_updated = current_time()
         target.last_updated_by = auth.current_user().username
@@ -505,6 +506,7 @@ class User(flask_login.UserMixin, db.Model):
 
         """
         from dds_web.utils import current_time
+
         self.hotp_counter += 1
         self.hotp_issue_time = current_time()
         db.session.commit()
@@ -524,6 +526,7 @@ class User(flask_login.UserMixin, db.Model):
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
         from dds_web.utils import current_time
+
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         if self.hotp_issue_time is None:
             raise AuthenticationError("No one-time authentication code currently issued.")
@@ -597,6 +600,7 @@ class User(flask_login.UserMixin, db.Model):
         if totp has been successfully verified within the last 90 seconds.
         """
         from dds_web.utils import current_time
+
         # can't use totp successfully more than once within 90 seconds.
         # Time frame chosen so that no one can use the same token more than once
         # No need to use epoch time here.
