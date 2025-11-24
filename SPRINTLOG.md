@@ -549,3 +549,7 @@ _Nothing merged during this sprint_
 - Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
 - Update Authlib to solve CVE ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
 - Clean up logs comming from RQ Workers ([#1650](https://github.com/ScilifelabDataCentre/dds_web/pull/1650))
+
+## 2025-11-24 - 2025-12-05
+
+- Update Python packages to address deprecated pkg_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
