@@ -715,14 +715,14 @@ def test_list_lost_files_uses_create_s3_resource(client, cli_runner):
     project = models.Project.query.first()
     assert project
 
-    # Random object for mocking session instead of creating a real one
-    session_object = object()
+    # Mock session object for boto3
+    session_mock = MagicMock()
 
     # Mock list_lost_files_in_project, use_sto4, boto3.session.Session, create_s3_resource
     with (
-        patch("dds_web.commands.list_lost_files_in_project", return_value=([], [])) as mock_list,
-        patch("dds_web.commands.use_sto4", return_value=False),
-        patch("boto3.session.Session", return_value=session_object),
+        patch("dds_web.utils.list_lost_files_in_project", return_value=([], [])) as mock_list,
+        patch("dds_web.utils.use_sto4", return_value=False),
+        patch("boto3.session.Session", return_value=session_mock) as mock_session,
         patch("dds_web.commands.create_s3_resource") as mock_create_resource,
     ):
         # Run command
@@ -733,13 +733,16 @@ def test_list_lost_files_uses_create_s3_resource(client, cli_runner):
     # Verify that the command was successful
     assert result.exit_code == 0
 
+    # Verify that boto3.session.Session was called
+    mock_session.assert_called_once()
+
     # Verify that create_s3_resource was called with the unit sto2 credentials
     unit = project.responsible_unit
     mock_create_resource.assert_called_once_with(
         endpoint_url=unit.sto2_endpoint,
         access_key=unit.sto2_access,
         secret_key=unit.sto2_secret,
-        session=session_object,
+        session=session_mock,
     )
 
     # Verify that list_lost_files_in_project was called with the project and the mocked s3 resource
