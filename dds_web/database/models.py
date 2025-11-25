@@ -869,7 +869,9 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
-    created_at = db.Column(db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow())
+    created_at = db.Column(
+        db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow()
+    )
 
     @property
     def projects(self):
@@ -1037,7 +1039,9 @@ class MOTD(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     message = db.Column(db.Text, nullable=False)
-    date_created = db.Column(db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow())
+    date_created = db.Column(
+        db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow()
+    )
     active = db.Column(db.Boolean, nullable=False, default=True)
 
 
