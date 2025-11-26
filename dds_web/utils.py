@@ -986,8 +986,8 @@ def create_s3_resource(
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,
         config=botocore.client.Config(
-            read_timeout=constants.READ_TIMEOUT,
-            connect_timeout=constants.CONNECT_TIMEOUT,
+            read_timeout=constants.S3_READ_TIMEOUT,
+            connect_timeout=constants.S3_CONNECT_TIMEOUT,
             retries={
                 "max_attempts": 10,
                 # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
