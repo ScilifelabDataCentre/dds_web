@@ -1607,8 +1607,8 @@ def test_create_s3_resource_uses_dds_config():
 
     # Verify the config parameters used to create the s3 resource
     config = call_kwargs["config"]
-    assert config.read_timeout == constants.READ_TIMEOUT
-    assert config.connect_timeout == constants.CONNECT_TIMEOUT
+    assert config.read_timeout == constants.S3_READ_TIMEOUT
+    assert config.connect_timeout == constants.S3_CONNECT_TIMEOUT
     assert config.retries["max_attempts"] == 10
 
     # Verify that the created resource is the mocked resource
@@ -1641,8 +1641,8 @@ def test_create_s3_resource_uses_dds_config():
 
     # Verify the config parameters used to create the s3 resource
     provided_config = provided_kwargs["config"]
-    assert provided_config.read_timeout == constants.READ_TIMEOUT
-    assert provided_config.connect_timeout == constants.CONNECT_TIMEOUT
+    assert provided_config.read_timeout == constants.S3_READ_TIMEOUT
+    assert provided_config.connect_timeout == constants.S3_CONNECT_TIMEOUT
     assert provided_config.retries["max_attempts"] == 10
 
     # Verify that the created resource is the provided resource
