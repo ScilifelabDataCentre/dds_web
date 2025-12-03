@@ -553,3 +553,4 @@ _Nothing merged during this sprint_
 ## 2025-11-24 - 2025-12-05
 
 - Update Python packages to address deprecated pkg_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
+- Add email validation to user adding ([#1653](https://github.com/ScilifelabDataCentre/dds_web/pull/1653))
