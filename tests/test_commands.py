@@ -770,6 +770,49 @@ def test_list_lost_files_no_such_project(client, cli_runner, capfd: LogCaptureFi
     assert f"No such project: '{project_id}'" in err
 
 
+def test_list_lost_files_uses_create_s3_resource(client, cli_runner):
+    """flask lost-files ls: verify that create_s3_resource uses unit sto2 credentials."""
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock session object for boto3
+    session_mock = MagicMock()
+
+    # Mock list_lost_files_in_project, use_sto4, boto3.session.Session, create_s3_resource
+    with (
+        patch("dds_web.utils.list_lost_files_in_project", return_value=([], [])) as mock_list,
+        patch("dds_web.utils.use_sto4", return_value=False),
+        patch("boto3.session.Session", return_value=session_mock) as mock_session,
+        patch("dds_web.commands.create_s3_resource") as mock_create_resource,
+    ):
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["ls", "--project-id", project.public_id]
+        )
+
+    # Verify that the command was successful
+    assert result.exit_code == 0
+
+    # Verify that boto3.session.Session was called
+    mock_session.assert_called_once()
+
+    # Verify that create_s3_resource was called with the unit sto2 credentials
+    unit = project.responsible_unit
+    mock_create_resource.assert_called_once_with(
+        endpoint_url=unit.sto2_endpoint,
+        access_key=unit.sto2_access,
+        secret_key=unit.sto2_secret,
+        session=session_mock,
+    )
+
+    # Verify that list_lost_files_in_project was called with the project and the mocked s3 resource
+    mock_list.assert_called_once_with(
+        project=project, s3_resource=mock_create_resource.return_value
+    )
+
+
 def test_list_lost_files_no_lost_files_in_project(
     client, cli_runner, boto3_session, capfd: LogCaptureFixture
 ):

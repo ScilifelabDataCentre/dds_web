@@ -16,6 +16,7 @@ from dateutil.relativedelta import relativedelta
 import gc
 
 # Installed
+import boto3
 import botocore
 from contextlib import contextmanager
 import flask
@@ -39,7 +40,7 @@ import wtforms
 
 # Own modules
 from dds_web.database import models
-from dds_web import auth, mail
+from dds_web import auth, mail, constants
 from dds_web.version import __version__
 
 ####################################################################################################
@@ -963,3 +964,33 @@ def new_file_version(existing_file, new_info):
 
     # Clean up information
     del new_info
+
+
+# S3 ############################################################################################ S3 #
+
+
+def create_s3_resource(
+    endpoint_url: str,
+    access_key: str,
+    secret_key: str,
+    session: typing.Optional[boto3.session.Session] = None,
+):
+    """Create an S3 resource with the standard DDS configuration."""
+    # Create a new session if one is not provided
+    session = session or boto3.session.Session()
+
+    # Create the S3 resource
+    return session.resource(
+        service_name="s3",
+        endpoint_url=endpoint_url,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        config=botocore.client.Config(
+            read_timeout=constants.S3_READ_TIMEOUT,
+            connect_timeout=constants.S3_CONNECT_TIMEOUT,
+            retries={
+                "max_attempts": 10,
+                # TODO: Add retry strategy mode="standard" when boto3 version >= 1.26.0
+            },
+        ),
+    )
