@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 from unittest.mock import PropertyMock
 
 from dds_web import db
+from dds_web import constants
 from dds_web.database import models
 from dds_web.errors import (
     AccessDeniedError,
@@ -1565,6 +1566,87 @@ def test_list_lost_files_in_project_sql_error(
     out, err = capfd.readouterr()
     assert "OperationalError occurred" in out
     assert "Unable to connect to db" in err
+
+
+def test_create_s3_resource_uses_dds_config():
+    """create_s3_resource should build the expected boto3 session resource."""
+
+    # Test parameters for S3 connection
+    endpoint_url = "https://example.com"
+    access_key = "access"
+    secret_key = "secret"
+
+    # Mock the boto3 session and resource
+    # Name the mocked_resource so that if the identity assertion fails,
+    # the failure message prints s3_resource instead of <MagicMock>
+    mock_session = MagicMock()
+    mocked_resource = MagicMock(name="s3_resource")
+    mock_session.resource.return_value = mocked_resource
+
+    with patch(
+        "dds_web.utils.boto3.session.Session", return_value=mock_session
+    ) as mock_session_cls:
+        # Create a s3 resource without providing a session -- a new session should be created
+        created_resource = utils.create_s3_resource(
+            endpoint_url=endpoint_url,
+            access_key=access_key,
+            secret_key=secret_key,
+        )
+
+    # Session should be called once to create a new session
+    # Resource should be called once to create the s3 resource
+    mock_session_cls.assert_called_once_with()
+    mock_session.resource.assert_called_once()
+
+    # Verify the parameters used to create the s3 resource
+    _, call_kwargs = mock_session.resource.call_args
+    assert call_kwargs["service_name"] == "s3"
+    assert call_kwargs["endpoint_url"] == endpoint_url
+    assert call_kwargs["aws_access_key_id"] == access_key
+    assert call_kwargs["aws_secret_access_key"] == secret_key
+
+    # Verify the config parameters used to create the s3 resource
+    config = call_kwargs["config"]
+    assert config.read_timeout == constants.S3_READ_TIMEOUT
+    assert config.connect_timeout == constants.S3_CONNECT_TIMEOUT
+    assert config.retries["max_attempts"] == 10
+
+    # Verify that the created resource is the mocked resource
+    assert created_resource is mocked_resource
+
+    provided_session = MagicMock()
+    provided_resource = MagicMock(name="provided_s3_resource")
+    provided_session.resource.return_value = provided_resource
+
+    # Create a s3 resource providing an existing session -- the provided session should be used
+    with patch("dds_web.utils.boto3.session.Session") as mock_session_cls:
+        reused_resource = utils.create_s3_resource(
+            endpoint_url=endpoint_url,
+            access_key=access_key,
+            secret_key=secret_key,
+            session=provided_session,
+        )
+
+    # Session class should not be called since a session was provided
+    # Resource should be called once to create the s3 resource
+    mock_session_cls.assert_not_called()
+    provided_session.resource.assert_called_once()
+
+    # Verify the parameters used to create the s3 resource from the provided session
+    _, provided_kwargs = provided_session.resource.call_args
+    assert provided_kwargs["service_name"] == "s3"
+    assert provided_kwargs["endpoint_url"] == endpoint_url
+    assert provided_kwargs["aws_access_key_id"] == access_key
+    assert provided_kwargs["aws_secret_access_key"] == secret_key
+
+    # Verify the config parameters used to create the s3 resource
+    provided_config = provided_kwargs["config"]
+    assert provided_config.read_timeout == constants.S3_READ_TIMEOUT
+    assert provided_config.connect_timeout == constants.S3_CONNECT_TIMEOUT
+    assert provided_config.retries["max_attempts"] == 10
+
+    # Verify that the created resource is the provided resource
+    assert reused_resource is provided_resource
 
 
 # use_sto4

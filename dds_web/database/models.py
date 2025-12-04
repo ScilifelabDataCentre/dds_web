@@ -27,7 +27,6 @@ from cryptography.hazmat.primitives import hashes
 from dds_web import db, auth
 from dds_web.errors import AuthenticationError
 from dds_web.security.project_user_keys import generate_user_key_pair
-import dds_web.utils
 
 
 ####################################################################################################
@@ -256,7 +255,7 @@ class Project(db.Model):
     date_created = db.Column(
         db.DateTime(),
         nullable=True,
-        default=dds_web.utils.current_time,
+        default=lambda: datetime.datetime.utcnow(),
     )
     date_updated = db.Column(db.DateTime(), nullable=True)
     description = db.Column(db.Text)
@@ -361,8 +360,10 @@ class Project(db.Model):
 @sqlalchemy.event.listens_for(Project, "before_update")
 def add_before_project_update(mapper, connection, target):
     """Listen for the 'before_update' event on Project and update certain of its fields"""
+    from dds_web.utils import current_time
+
     if auth.current_user():
-        target.date_updated = dds_web.utils.current_time()
+        target.date_updated = current_time()
         target.last_updated_by = auth.current_user().username
 
 
@@ -504,8 +505,10 @@ class User(flask_login.UserMixin, db.Model):
         The time when it was issued is recorded to put an expiration time on the token.
 
         """
+        from dds_web.utils import current_time
+
         self.hotp_counter += 1
-        self.hotp_issue_time = dds_web.utils.current_time()
+        self.hotp_issue_time = current_time()
         db.session.commit()
 
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
@@ -522,10 +525,12 @@ class User(flask_login.UserMixin, db.Model):
         raises AuthenticationError if token is invalid or has expired (older than 1 hour).
         If the token is valid, the counter is incremented, to prohibit re-use.
         """
+        from dds_web.utils import current_time
+
         hotp = twofactor_hotp.HOTP(self.hotp_secret, 8, hashes.SHA512())
         if self.hotp_issue_time is None:
             raise AuthenticationError("No one-time authentication code currently issued.")
-        timediff = dds_web.utils.current_time() - self.hotp_issue_time
+        timediff = current_time() - self.hotp_issue_time
         if timediff > datetime.timedelta(minutes=15):
             raise AuthenticationError("One-time authentication code has expired.")
 
@@ -594,12 +599,14 @@ class User(flask_login.UserMixin, db.Model):
         raises AuthenticationError if token is invalid, has expired or
         if totp has been successfully verified within the last 90 seconds.
         """
+        from dds_web.utils import current_time
+
         # can't use totp successfully more than once within 90 seconds.
         # Time frame chosen so that no one can use the same token more than once
         # No need to use epoch time here.
-        current_time = dds_web.utils.current_time()
+        curr_time = current_time()
         if self.totp_last_verified and (
-            current_time - self.totp_last_verified < datetime.timedelta(seconds=90)
+            curr_time - self.totp_last_verified < datetime.timedelta(seconds=90)
         ):
             raise AuthenticationError(
                 "Authentications with time-based token need to be at least 90 seconds apart."
@@ -624,7 +631,7 @@ class User(flask_login.UserMixin, db.Model):
             raise AuthenticationError("Invalid time-based token.")
 
         # if the token is valid, save time of last successful verification
-        self.totp_last_verified = current_time
+        self.totp_last_verified = curr_time
         db.session.commit()
 
     # Email related
@@ -862,7 +869,9 @@ class Invite(db.Model):
     nonce = db.Column(db.LargeBinary(12), default=None)
     public_key = db.Column(db.LargeBinary(300), default=None)
     private_key = db.Column(db.LargeBinary(300), default=None)
-    created_at = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time)
+    created_at = db.Column(
+        db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow()
+    )
 
     @property
     def projects(self):
@@ -1004,7 +1013,7 @@ class Version(db.Model):
     # Additional columns
     size_stored = db.Column(db.BigInteger, unique=False, nullable=False)
     time_uploaded = db.Column(
-        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time
+        db.DateTime(), unique=False, nullable=False, default=lambda: datetime.datetime.utcnow()
     )
     time_deleted = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
     time_invoiced = db.Column(db.DateTime(), unique=False, nullable=True, default=None)
@@ -1030,7 +1039,9 @@ class MOTD(db.Model):
     # Columns
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     message = db.Column(db.Text, nullable=False)
-    date_created = db.Column(db.DateTime(), nullable=False, default=dds_web.utils.current_time)
+    date_created = db.Column(
+        db.DateTime(), nullable=False, default=lambda: datetime.datetime.utcnow()
+    )
     active = db.Column(db.Boolean, nullable=False, default=True)
 
 
@@ -1061,7 +1072,7 @@ class Usage(db.Model):
     # Additional columns
     usage = db.Column(db.Float, nullable=False)
     time_collected = db.Column(
-        db.DateTime(), unique=False, nullable=False, default=dds_web.utils.current_time
+        db.DateTime(), unique=False, nullable=False, default=lambda: datetime.datetime.utcnow()
     )
 
 
