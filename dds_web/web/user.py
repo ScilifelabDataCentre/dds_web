@@ -281,11 +281,14 @@ def confirm_2fa():
     token = flask.session.get("2fa_initiated_token")
     try:
         user = dds_web.security.auth.verify_token_no_data(token)
-    except (ddserr.AuthenticationError, ddserr.AccessDeniedError):
-        flask.flash(
-            "Error: Please initiate a log in before entering the one-time authentication code.",
-            "warning",
-        )
+    except (ddserr.AuthenticationError, ddserr.AccessDeniedError) as err:
+        # if err is authentication
+        if isinstance(err, ddserr.AuthenticationError):
+            msg = "Failed to authenticate user: Missing or incorrect credentials."
+        elif isinstance(err, ddserr.AccessDeniedError):
+            msg = "Your account has been deactivated. You cannot use the DDS."
+
+        flask.flash(msg, "danger")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
     except Exception as e:
         flask.current_app.logger.exception(e)
