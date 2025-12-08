@@ -298,6 +298,9 @@ def __user_from_subject(subject):
         user = models.User.query.get(subject)
         if user:
             if not user.is_active:
+                flask.current_app.logger.warning(
+                    f"Deactivated user '{user.username}' tried to use the DDS."
+                )
                 raise AccessDeniedError(
                     message=("Your account has been deactivated. You cannot use the DDS.")
                 )
