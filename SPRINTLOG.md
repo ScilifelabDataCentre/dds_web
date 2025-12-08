@@ -555,3 +555,7 @@ _Nothing merged during this sprint_
 - Update Python packages to address deprecated pkg_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
 - Add email validation to user adding ([#1653](https://github.com/ScilifelabDataCentre/dds_web/pull/1653))
 - Increase readtimeout value for S3 connections ([#1644](https://github.com/ScilifelabDataCentre/dds_web/pull/1644/))
+
+## 2025-12-8 - 2025-12-19
+
+- Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
