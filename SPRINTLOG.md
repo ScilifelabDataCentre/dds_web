@@ -556,3 +556,7 @@ _Nothing merged during this sprint_
 - Add email validation to user adding ([#1653](https://github.com/ScilifelabDataCentre/dds_web/pull/1653))
 - Increase readtimeout value for S3 connections ([#1644](https://github.com/ScilifelabDataCentre/dds_web/pull/1644/))
 - Don't throw Errors with deactivated users in logs - log their info ([#1651](https://github.com/ScilifelabDataCentre/dds_web/pull/1651))
+
+## 2025-12-08 - 2025-12-19
+
+- Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
