@@ -287,7 +287,7 @@ class ProjectStatus(flask_restful.Resource):
             default_unit_days = project.responsible_unit.days_in_available
 
             # Update the deadline functionality
-            if new_deadline_in:
+            if new_deadline_in is not None:
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
                     raise DDSArgumentError(
@@ -298,6 +298,9 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError(
                         message="The deadline attribute passed should be of type Int (i.e a number)."
                     )
+
+                if new_deadline_in <= 0:
+                    raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
                 # New deadline shouldnt surpass the default unit days
                 if new_deadline_in > default_unit_days:
@@ -408,6 +411,9 @@ class ProjectStatus(flask_restful.Resource):
             current_status=project.current_status, new_status="Available"
         )
 
+        if not isinstance(deadline_in, int) or deadline_in <= 0:
+            raise DDSArgumentError(message="The deadline needs to be a positive integer.")
+
         if deadline_in > 90:
             raise DDSArgumentError(
                 message="The deadline needs to be less than (or equal to) 90 days."
@@ -457,6 +463,9 @@ class ProjectStatus(flask_restful.Resource):
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Expired")
+
+        if not isinstance(deadline_in, int) or deadline_in <= 0:
+            raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
         if deadline_in > 30:
             raise DDSArgumentError(
