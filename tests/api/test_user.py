@@ -1126,6 +1126,7 @@ def test_invite_users_should_have_different_timestamps(client):
             headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
             json=researcher_info,
         )
+        print(f"Response: {response.status_code}, body: {response.json}")
         assert response.status_code == http.HTTPStatus.OK
 
     # Check invite created time
