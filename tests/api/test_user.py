@@ -1118,7 +1118,7 @@ def test_invite_users_should_have_different_timestamps(client):
         assert start_time == new_time_initial
 
     # Invite researcher
-    researcher_info = {"role": "Researcher", "email": "newresearcher@test.com"}
+    researcher_info = {"role": "Researcher", "email": "newresearcher@mailtrap.io"}
     new_time_1 = new_time_initial + timedelta(days=1)
     # Get token outside frozen time to avoid email/network hangs
     superadmin_token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
@@ -1128,9 +1128,7 @@ def test_invite_users_should_have_different_timestamps(client):
             headers=superadmin_token,
             json=researcher_info,
         )
-        assert (
-            response.status_code == http.HTTPStatus.OK
-        ), f"Got {response.status_code}: {response.json}"
+        assert response.status_code == http.HTTPStatus.OK
 
     # Check invite created time
     researcher_invite: models.Invite = models.Invite.query.filter_by(
@@ -1145,14 +1143,14 @@ def test_invite_users_should_have_different_timestamps(client):
 
     unitpersonnel_info = {
         "role": "Unit Personnel",
-        "email": "newunitpersonnel@test.com",
+        "email": "newunitpersonnel@mailtrap.io",
         "unit": unit.public_id,
     }
     new_time_2 = new_time_1 + timedelta(days=1)
     with freezegun.freeze_time(new_time_2):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=superadmin_token,
             json=unitpersonnel_info,
         )
         assert response.status_code == http.HTTPStatus.OK
@@ -1173,14 +1171,14 @@ def test_invite_users_should_have_different_timestamps(client):
 
     unitadmin_info = {
         "role": "Unit Admin",
-        "email": "newunitadmin@test.com",
+        "email": "newunitadmin@mailtrap.io",
         "unit": unit.public_id,
     }
     new_time_3 = new_time_2 + timedelta(days=1, hours=3)
     with freezegun.freeze_time(new_time_3):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=superadmin_token,
             json=unitadmin_info,
         )
         assert response.status_code == http.HTTPStatus.OK
@@ -1197,12 +1195,12 @@ def test_invite_users_should_have_different_timestamps(client):
     ]
 
     # Invite Super Admin
-    superadmin_info = {"role": "Super Admin", "email": "newsuperadmin@test.com"}
+    superadmin_info = {"role": "Super Admin", "email": "newsuperadmin@mailtrap.io"}
     new_time_4 = new_time_3 + timedelta(days=1, hours=6)
     with freezegun.freeze_time(new_time_4):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=superadmin_token,
             json=superadmin_info,
         )
         assert response.status_code == http.HTTPStatus.OK
