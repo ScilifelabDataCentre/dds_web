@@ -1120,13 +1120,17 @@ def test_invite_users_should_have_different_timestamps(client):
     # Invite researcher
     researcher_info = {"role": "Researcher", "email": "newresearcher@test.com"}
     new_time_1 = new_time_initial + timedelta(days=1)
+    # Get token outside frozen time to avoid email/network hangs
+    superadmin_token = tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client)
     with freezegun.freeze_time(new_time_1):
         response: werkzeug.test.WrapperTestResponse = client.post(
             tests.DDSEndpoint.USER_ADD,
-            headers=tests.UserAuth(tests.USER_CREDENTIALS["superadmin"]).token(client),
+            headers=superadmin_token,
             json=researcher_info,
         )
-        assert response.status_code == http.HTTPStatus.OK, f"Got {response.status_code}: {response.json}"
+        assert (
+            response.status_code == http.HTTPStatus.OK
+        ), f"Got {response.status_code}: {response.json}"
 
     # Check invite created time
     researcher_invite: models.Invite = models.Invite.query.filter_by(
