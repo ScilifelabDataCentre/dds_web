@@ -19,6 +19,7 @@ import itsdangerous
 import structlog
 import sqlalchemy
 import http
+import email_validator
 
 
 # Own modules
@@ -72,10 +73,15 @@ class AddUser(flask_restful.Resource):
         if project:
             project = project_schemas.ProjectRequiredSchema().load({"project": project})
 
-        # Verify email
+        # Verify email exists and is valid
         email = json_info.get("email")
         if not email:
             raise ddserr.DDSArgumentError(message="Email address required to add or invite.")
+
+        try:
+            email_validator.validate_email(email)
+        except email_validator.EmailNotValidError as err:
+            raise ddserr.DDSArgumentError(message=str(err))
 
         # Notify the users about project additions? Invites are still being sent out.
         send_email = json_info.get("send_email", True)

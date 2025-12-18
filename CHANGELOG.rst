@@ -1,6 +1,25 @@
 Changelog
 ==========
 
+.. _2.13.1:
+
+2.13.1 - 2025-09-22
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - Disable autoflush on project creation and assure no duplicate public ID
+    - Fix bug: Users should be able to release once and extend twice
+- 📄 Documentation
+    - Correct key access swagger references 
+- 🛡️ Dependencies
+    - Bump node packages using `npm audit fix`
+    - Bump python packages to solve vulnerabilities:
+        - `cryptography` from 42.0.4 to 44.0.1
+        - `dnspython` from 2.2.0 to 2.6.1
+        - `idna` from 3.3 to 3.7
+        - `Pillow` from 10.2.0 to 10.3.0
+        - `requests` from 2.32.0 to 2.32.4
+
 .. _2.13.0:
 
 2.13.0 - 2025-08-25

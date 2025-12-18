@@ -109,7 +109,7 @@ correct_unit: typing.Dict = {
     "safespring_secret": "newsafespringsecret",
     "days_in_available": 45,
     "days_in_expired": 15,
-    "quota": 80,
+    "quota": 0.8,  # in TB
 }
 
 
@@ -293,7 +293,7 @@ def test_create_new_unit_success(client, runner, capfd: LogCaptureFixture) -> No
     assert new_unit.sto4_secret == correct_unit["safespring_secret"]
     assert new_unit.days_in_available
     assert new_unit.days_in_expired
-    assert new_unit.quota == correct_unit["quota"]
+    assert new_unit.quota == correct_unit["quota"] * 1000**4  # TB to bytes
     assert new_unit.warning_level
 
 
@@ -474,7 +474,7 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
         "--unit-id",
         "unitdoesntexist",
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -487,6 +487,28 @@ def test_update_unit_quota_no_such_unit(client, runner, capfd: LogCaptureFixture
 
     # Verify message
     assert f"There is no unit with the public ID '{command_options[1]}'." in err
+
+
+def test_update_unit_quota_wrong_quota(client, runner, capfd: LogCaptureFixture) -> None:
+    """The quota is incorrect -> Error."""
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        "unitdoesntexist",
+        "--quota",
+        -2,  # negative,
+    ]
+
+    # Run command
+    result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+    assert result.exit_code == 1
+    assert not result.output
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify message
+    assert f"Quota must be positive" in err
 
 
 def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptureFixture) -> None:
@@ -503,7 +525,7 @@ def test_update_unit_quota_confirm_prompt_False(client, runner, capfd: LogCaptur
         "--unit-id",
         unit_id,
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -542,7 +564,7 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
         "--unit-id",
         unit_id,
         "--quota",
-        2,  # 2 GB,
+        2,  # 2 TB,
     ]
 
     # Run command
@@ -564,7 +586,47 @@ def test_update_unit_quota_confirm_prompt_true(client, runner, capfd: LogCapture
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
     assert unit
     assert unit.quota != quota_original
-    assert unit.quota == command_options[3] * 1000**3  # GB to bytes
+    assert unit.quota == command_options[3] * 1000**4  # TB to bytes
+
+
+def test_update_unit_quota_database_error(client, runner, capfd: LogCaptureFixture) -> None:
+    """Unit quota update fails when there is a database error."""
+
+    from tests.api.test_project import mock_sqlalchemyerror
+
+    # Get existing unit
+    unit: models.Unit = models.Unit.query.first()
+    unit_id: str = unit.public_id
+
+    # save original quota
+    quota_original = unit.quota
+
+    # Create command options
+    command_options: typing.List = [
+        "--unit-id",
+        unit_id,
+        "--quota",
+        2,  # 2 TB,
+    ]
+
+    # Run command
+    # Mock rich prompt - True
+    # Mock commit to raise error
+    with patch.object(rich.prompt.Confirm, "ask", return_value=True) as mock_ask:
+        with patch("dds_web.db.session.commit", mock_sqlalchemyerror):
+            result: click.testing.Result = runner.invoke(update_unit_quota, command_options)
+            assert result.exit_code == 1
+
+    # Get logging
+    _, err = capfd.readouterr()
+
+    # Verify logging
+    assert f"Failed to update quota for unit" in err
+
+    # Verify no change in unit
+    unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).first()
+    assert unit
+    assert unit.quota == quota_original
 
 
 # update_uploaded_file_with_log
@@ -706,6 +768,49 @@ def test_list_lost_files_no_such_project(client, cli_runner, capfd: LogCaptureFi
     _, err = capfd.readouterr()
     assert f"Searching for lost files in project '{project_id}'." in err
     assert f"No such project: '{project_id}'" in err
+
+
+def test_list_lost_files_uses_create_s3_resource(client, cli_runner):
+    """flask lost-files ls: verify that create_s3_resource uses unit sto2 credentials."""
+
+    # Get project
+    project = models.Project.query.first()
+    assert project
+
+    # Mock session object for boto3
+    session_mock = MagicMock()
+
+    # Mock list_lost_files_in_project, use_sto4, boto3.session.Session, create_s3_resource
+    with (
+        patch("dds_web.utils.list_lost_files_in_project", return_value=([], [])) as mock_list,
+        patch("dds_web.utils.use_sto4", return_value=False),
+        patch("boto3.session.Session", return_value=session_mock) as mock_session,
+        patch("dds_web.commands.create_s3_resource") as mock_create_resource,
+    ):
+        # Run command
+        result: click.testing.Result = cli_runner.invoke(
+            lost_files_s3_db, ["ls", "--project-id", project.public_id]
+        )
+
+    # Verify that the command was successful
+    assert result.exit_code == 0
+
+    # Verify that boto3.session.Session was called
+    mock_session.assert_called_once()
+
+    # Verify that create_s3_resource was called with the unit sto2 credentials
+    unit = project.responsible_unit
+    mock_create_resource.assert_called_once_with(
+        endpoint_url=unit.sto2_endpoint,
+        access_key=unit.sto2_access,
+        secret_key=unit.sto2_secret,
+        session=session_mock,
+    )
+
+    # Verify that list_lost_files_in_project was called with the project and the mocked s3 resource
+    mock_list.assert_called_once_with(
+        project=project, s3_resource=mock_create_resource.return_value
+    )
 
 
 def test_list_lost_files_no_lost_files_in_project(

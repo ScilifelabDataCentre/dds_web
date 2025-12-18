@@ -16,7 +16,7 @@ import sqlalchemy
 
 # Own modules
 from dds_web import errors as ddserr
-from dds_web import auth
+from dds_web import auth, db
 from dds_web.database import models
 from dds_web.api import api_s3_connector
 from dds_web.api.schemas import sqlalchemyautoschemas
@@ -137,37 +137,51 @@ class CreateProjectSchema(marshmallow.Schema):
     def create_project(self, data, **kwargs):
         """Create project row in db."""
 
-        # Lock db, get unit row and update counter
-        unit_row = (
-            models.Unit.query.filter_by(id=auth.current_user().unit_id)
-            .with_for_update()
-            .one_or_none()
-        )
-        if not unit_row:
-            raise ddserr.AccessDeniedError(message="Error: Your user is not associated to a unit.")
-
-        unit_row.counter = unit_row.counter + 1 if unit_row.counter else 1
-        data["public_id"] = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
-
-        # Generate bucket name
-        data["bucket"] = self.generate_bucketname(
-            public_id=data["public_id"], created_time=data["date_created"]
-        )
-
-        # Create project
-        current_user = auth.current_user()
-        new_project = models.Project(
-            **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
-        )
-        new_project.project_statuses.append(
-            models.ProjectStatuses(
-                **{
-                    "status": "In Progress",
-                    "date_created": data["date_created"],
-                }
+        with db.session.no_autoflush:
+            # Lock db, get unit row and update counter
+            unit_row = (
+                models.Unit.query.filter_by(id=auth.current_user().unit_id)
+                .with_for_update()
+                .one_or_none()
             )
-        )
-        generate_project_key_pair(current_user, new_project)
+            if not unit_row:
+                raise ddserr.DatabaseError(
+                    message="Error: Your account is not associated to a unit. Contact the Data Centre.",
+                    pass_message=True,
+                )
+
+            if unit_row.counter is None:
+                unit_row.counter = 0
+
+            # Check if public_id of the project already exists
+            duplicate_public_id = True
+            while duplicate_public_id:
+                unit_row.counter += 1
+                elected_public_id = "{}{:05d}".format(unit_row.internal_ref, unit_row.counter)
+                if not models.Project.query.filter_by(public_id=elected_public_id).first():
+                    data["public_id"] = elected_public_id
+                    # Generate bucket name
+                    data["bucket"] = self.generate_bucketname(
+                        public_id=data["public_id"], created_time=data["date_created"]
+                    )
+                    duplicate_public_id = False
+
+            # Create project
+            current_user = auth.current_user()
+            new_project = models.Project(
+                **{**data, "unit_id": current_user.unit.id, "created_by": current_user.username}
+            )
+            new_project.project_statuses.append(
+                models.ProjectStatuses(
+                    **{
+                        "status": "In Progress",
+                        "date_created": data["date_created"],
+                    }
+                )
+            )
+
+            generate_project_key_pair(current_user, new_project)
+            db.session.flush()
 
         return new_project
 
