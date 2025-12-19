@@ -560,3 +560,4 @@ _Nothing merged during this sprint_
 ## 2025-12-8 - 2025-12-19
 
 - Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
+- Raise AuthenticationError if authorization information is missing ([#1642](https://github.com/ScilifelabDataCentre/dds_web/pull/1642))
