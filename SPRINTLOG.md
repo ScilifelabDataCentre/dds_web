@@ -560,3 +560,4 @@ _Nothing merged during this sprint_
 ## 2025-12-08 - 2025-12-19
 
 - Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
+- Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
