@@ -1365,6 +1365,7 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
     assert "The deadline needs to be less than (or equal to) 30 days." in response.json["message"]
 
+
 def test_projectstatus_post_invalid_deadline_release_nonpositive(module_client, boto3_session):
     """Attempt to set a non-positive deadline at release should fail."""
     # ensure enough unit admins

@@ -1306,7 +1306,6 @@ class ProjectInfo(flask_restful.Resource):
         }
 
         return return_message
-            "pi": project.pi,
         }
 
         return return_message
