@@ -5,11 +5,13 @@
 ####################################################################################################
 
 import datetime
+
 # Standard Library
 import http
 
 import botocore
 import flask
+
 # Installed
 import flask_restful
 import marshmallow
@@ -22,21 +24,32 @@ from rq import Queue
 import dds_web.utils
 from dds_web import auth, db
 from dds_web.api.api_s3_connector import ApiS3Connector
-from dds_web.api.dds_decorators import (dbsession, handle_db_error,
-                                        handle_validation_errors,
-                                        json_required, logging_bind_request)
+from dds_web.api.dds_decorators import (
+    dbsession,
+    handle_db_error,
+    handle_validation_errors,
+    json_required,
+    logging_bind_request,
+)
 from dds_web.api.files import check_eligibility_for_deletion
 from dds_web.api.schemas import project_schemas, user_schemas
 from dds_web.api.user import AddUser
 from dds_web.database import models
-from dds_web.errors import (AccessDeniedError, BucketNotFoundError,
-                            DatabaseError, DDSArgumentError, DeletionError,
-                            EmptyProjectException, KeyNotFoundError,
-                            NoSuchUserError, ProjectBusyError,
-                            S3ConnectionError, VersionMismatchError)
+from dds_web.errors import (
+    AccessDeniedError,
+    BucketNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    DeletionError,
+    EmptyProjectException,
+    KeyNotFoundError,
+    NoSuchUserError,
+    ProjectBusyError,
+    S3ConnectionError,
+    VersionMismatchError,
+)
 from dds_web.security.auth import get_user_roles_common
-from dds_web.security.project_user_keys import (obtain_project_private_key,
-                                                share_project_private_key)
+from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
 
 ####################################################################################################
 # CONSTANTS ############################################################################ CONSTANTS #
@@ -1303,9 +1316,6 @@ class ProjectInfo(flask_restful.Resource):
             "title": project.title,
             "description": project.description,
             "pi": project.pi,
-        }
-
-        return return_message
         }
 
         return return_message
