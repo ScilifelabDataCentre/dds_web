@@ -390,6 +390,11 @@ def login():
                 flask.url_for("auth_blueprint.login", next=next_target)
             )  # Try login again
 
+        # Check if user is deactivated
+        if not user.is_active:
+            flask.flash("Your account has been deactivated. You cannot use the DDS.", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
+
         # Correct credentials still needs 2fa
         if not user.totp_enabled:
             # Send 2fa token to user's email
