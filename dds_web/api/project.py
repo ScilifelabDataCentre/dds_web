@@ -49,7 +49,10 @@ from dds_web.errors import (
     VersionMismatchError,
 )
 from dds_web.security.auth import get_user_roles_common
-from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
+from dds_web.security.project_user_keys import (
+    obtain_project_private_key,
+    share_project_private_key,
+)
 
 ####################################################################################################
 # CONSTANTS ############################################################################ CONSTANTS #
@@ -412,7 +415,7 @@ class ProjectStatus(flask_restful.Resource):
             current_status=project.current_status, new_status="Available"
         )
 
-        if not isinstance(deadline_in, int) or deadline_in <= 0:
+        if type(deadline_in) is not int or deadline_in <= 0:
             raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
         if deadline_in > 90:
@@ -465,7 +468,7 @@ class ProjectStatus(flask_restful.Resource):
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Expired")
 
-        if not isinstance(deadline_in, int) or deadline_in <= 0:
+        if type(deadline_in) is not int or deadline_in <= 0:
             raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
         if deadline_in > 30:
