@@ -264,6 +264,60 @@ def test_reset_password_expired_token_post(client):
     assert researchuser_pw_hash_before == researchuser_pw_hash_after
 
 
+def test_reset_password_deactivated_user_get(client):
+    user = models.User.query.filter_by(username="researchuser").first()
+    user.active = False
+    db.session.add(user)
+    db.session.commit()
+
+    try:
+        # Add new row to password reset
+        new_reset_row = models.PasswordReset(
+            user=user, email=user.primary_email, issued=utils.timestamp()
+        )
+        db.session.add(new_reset_row)
+        db.session.commit()
+
+        valid_reset_token = get_valid_reset_token("researchuser")
+        response = client.get(
+            tests.DDSEndpoint.RESET_PASSWORD + valid_reset_token,
+            follow_redirects=True,
+            headers=tests.DEFAULT_HEADER,
+        )
+
+        assert response.status_code == http.HTTPStatus.OK
+        assert response.request.path == tests.DDSEndpoint.INDEX
+    finally:
+        user.active = True
+        db.session.add(user)
+        db.session.commit()
+
+
+def test_password_reset_completed_deactivated_user(client):
+    user = models.User.query.filter_by(username="researchuser").first()
+    user.active = False
+    db.session.add(user)
+    db.session.commit()
+
+    try:
+        valid_reset_token = get_valid_reset_token("researchuser")
+        with client.session_transaction() as session:
+            session["reset_token"] = valid_reset_token
+
+        response = client.get(
+            tests.DDSEndpoint.PASSWORD_RESET_COMPLETED,
+            follow_redirects=True,
+            headers=tests.DEFAULT_HEADER,
+        )
+
+        assert response.status_code == http.HTTPStatus.OK
+        assert response.request.path == tests.DDSEndpoint.INDEX
+    finally:
+        user.active = True
+        db.session.add(user)
+        db.session.commit()
+
+
 def test_reset_password_researchuser_no_password_reset_row(client):
     user = models.User.query.filter_by(username="researchuser").first()
     nr_proj_user_keys_total_before = models.ProjectUserKeys.query.count()
