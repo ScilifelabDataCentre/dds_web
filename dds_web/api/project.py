@@ -4,15 +4,14 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
-import datetime
 
 # Standard Library
 import http
-
-import botocore
-import flask
+import datetime
 
 # Installed
+import botocore
+import flask
 import flask_restful
 import marshmallow
 import sqlalchemy
