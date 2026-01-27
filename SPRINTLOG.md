@@ -557,7 +557,8 @@ _Nothing merged during this sprint_
 - Increase readtimeout value for S3 connections ([#1644](https://github.com/ScilifelabDataCentre/dds_web/pull/1644/))
 - Don't throw Errors with deactivated users in logs - log their info ([#1651](https://github.com/ScilifelabDataCentre/dds_web/pull/1651))
 
-## 2025-12-8 - 2025-12-19
+## 2025-12-08 - 2025-12-19
 
+- Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
 - Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
 - Fix bug: Return correct error message for deactivated use ([#1656](https://github.com/ScilifelabDataCentre/dds_web/pull/1656))

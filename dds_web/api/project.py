@@ -4,51 +4,54 @@
 # IMPORTS ################################################################################ IMPORTS #
 ####################################################################################################
 
+
 # Standard Library
 import http
+import datetime
 
 # Installed
-import flask_restful
-from flask_restful import inputs
-import flask
-import sqlalchemy
-import datetime
 import botocore
+import flask
+import flask_restful
 import marshmallow
-from rq import Queue
+import sqlalchemy
+from flask_restful import inputs
 from redis import Redis
+from rq import Queue
 
 # Own modules
 import dds_web.utils
 from dds_web import auth, db
-from dds_web.database import models
 from dds_web.api.api_s3_connector import ApiS3Connector
 from dds_web.api.dds_decorators import (
-    logging_bind_request,
     dbsession,
-    json_required,
-    handle_validation_errors,
     handle_db_error,
+    handle_validation_errors,
+    json_required,
+    logging_bind_request,
 )
+from dds_web.api.files import check_eligibility_for_deletion
+from dds_web.api.schemas import project_schemas, user_schemas
+from dds_web.api.user import AddUser
+from dds_web.database import models
 from dds_web.errors import (
     AccessDeniedError,
-    DDSArgumentError,
-    DatabaseError,
-    EmptyProjectException,
-    DeletionError,
     BucketNotFoundError,
+    DatabaseError,
+    DDSArgumentError,
+    DeletionError,
+    EmptyProjectException,
     KeyNotFoundError,
-    NoSuchProjectError,
+    NoSuchUserError,
     ProjectBusyError,
     S3ConnectionError,
-    NoSuchUserError,
     VersionMismatchError,
 )
-from dds_web.api.user import AddUser
-from dds_web.api.schemas import project_schemas, user_schemas
-from dds_web.security.project_user_keys import obtain_project_private_key, share_project_private_key
 from dds_web.security.auth import get_user_roles_common
-from dds_web.api.files import check_eligibility_for_deletion
+from dds_web.security.project_user_keys import (
+    obtain_project_private_key,
+    share_project_private_key,
+)
 
 ####################################################################################################
 # CONSTANTS ############################################################################ CONSTANTS #
@@ -287,7 +290,7 @@ class ProjectStatus(flask_restful.Resource):
             default_unit_days = project.responsible_unit.days_in_available
 
             # Update the deadline functionality
-            if new_deadline_in:
+            if new_deadline_in is not None:
                 # deadline can only be extended from Available
                 if not project.current_status == "Available":
                     raise DDSArgumentError(
@@ -298,6 +301,9 @@ class ProjectStatus(flask_restful.Resource):
                     raise DDSArgumentError(
                         message="The deadline attribute passed should be of type Int (i.e a number)."
                     )
+
+                if new_deadline_in <= 0:
+                    raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
                 # New deadline shouldnt surpass the default unit days
                 if new_deadline_in > default_unit_days:
@@ -337,7 +343,7 @@ class ProjectStatus(flask_restful.Resource):
                     project.busy = False  # return to not busy
                     db.session.commit()
 
-                except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError) as err:
+                except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError):
                     flask.current_app.logger.exception("Failed to extend deadline")
                     db.session.rollback()
                     raise
@@ -408,6 +414,9 @@ class ProjectStatus(flask_restful.Resource):
             current_status=project.current_status, new_status="Available"
         )
 
+        if type(deadline_in) is not int or deadline_in <= 0:
+            raise DDSArgumentError(message="The deadline needs to be a positive integer.")
+
         if deadline_in > 90:
             raise DDSArgumentError(
                 message="The deadline needs to be less than (or equal to) 90 days."
@@ -457,6 +466,9 @@ class ProjectStatus(flask_restful.Resource):
         """
         # Check if valid status transition
         self.check_transition_possible(current_status=project.current_status, new_status="Expired")
+
+        if type(deadline_in) is not int or deadline_in <= 0:
+            raise DDSArgumentError(message="The deadline needs to be a positive integer.")
 
         if deadline_in > 30:
             raise DDSArgumentError(
@@ -1175,7 +1187,7 @@ class ProjectAccess(flask_restful.Resource):
                             project=proj,
                             from_user_token=dds_web.security.auth.obtain_current_encrypted_token(),
                         )
-            except KeyNotFoundError as keyerr:
+            except KeyNotFoundError:
                 fix_errors[proj.public_id] = (
                     "You do not have access to this project. Please contact the responsible unit."
                 )
