@@ -562,3 +562,7 @@ _Nothing merged during this sprint_
 - Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
 - Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
 - Fix bug: Return correct error message for deactivated use ([#1656](https://github.com/ScilifelabDataCentre/dds_web/pull/1656))
+
+## 2026-01-19 - 2026-02-02
+
+- Dependency: Replace `node-sass` with `sass` due to node-tar vulnerability ([#1659](https://github.com/ScilifelabDataCentre/dds_web/pull/1659))
