@@ -24,16 +24,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
+      - name: Run Snyk Code to check for vulnerabilities
         uses: snyk/actions/python@master
         continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test
-          args: --sarif-file-output=snyk.sarif
-      - name: Upload result to GitHub Code Scanning
+          args: --sarif-file-output=snyk-code.sarif
+      - name: Upload Snyk Code result to GitHub Code Scanning
+        if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: snyk.sarif
-          category: snyk
+          sarif_file: snyk-code.sarif
+          category: snyk-code
+      - name: Run Snyk Open Source to check dependencies
+        uses: snyk/actions/python@master
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --sarif-file-output=snyk-oss.sarif
+      - name: Upload Snyk Open Source result to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: snyk-oss.sarif
+          category: snyk-oss
