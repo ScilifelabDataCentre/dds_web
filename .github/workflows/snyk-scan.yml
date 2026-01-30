@@ -32,8 +32,16 @@ jobs:
         with:
           command: code test
           args: --sarif-file-output=snyk-code.sarif
-      - name: Upload Snyk Code result to GitHub Code Scanning
+      - name: Report Snyk Code SARIF status
         if: always()
+        run: |
+          if [ -f snyk-code.sarif ]; then
+            echo "Snyk Code SARIF generated."
+          else
+            echo "Snyk Code SARIF missing; skipping upload."
+          fi
+      - name: Upload Snyk Code result to GitHub Code Scanning
+        if: always() && hashFiles('snyk-code.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-code.sarif
@@ -46,8 +54,16 @@ jobs:
         with:
           command: test
           args: --file=requirements.txt --package-manager=pip --sarif-file-output=snyk-oss.sarif
-      - name: Upload Snyk Open Source result to GitHub Code Scanning
+      - name: Report Snyk Open Source SARIF status
         if: always()
+        run: |
+          if [ -f snyk-oss.sarif ]; then
+            echo "Snyk Open Source SARIF generated."
+          else
+            echo "Snyk Open Source SARIF missing; skipping upload."
+          fi
+      - name: Upload Snyk Open Source result to GitHub Code Scanning
+        if: always() && hashFiles('snyk-oss.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-oss.sarif
