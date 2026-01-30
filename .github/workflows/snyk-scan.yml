@@ -45,7 +45,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --sarif-file-output=snyk-oss.sarif
+          args: --file=requirements.txt --package-manager=pip --sarif-file-output=snyk-oss.sarif
       - name: Upload Snyk Open Source result to GitHub Code Scanning
         if: always()
         uses: github/codeql-action/upload-sarif@v4
