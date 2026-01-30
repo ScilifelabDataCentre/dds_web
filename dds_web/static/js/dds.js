@@ -67,7 +67,6 @@ document.querySelector(".theme-switcher").addEventListener("click", (e) => {
   document.getElementById("theme-switcher-moon").classList.toggle("d-none");
   // Set a cookie
   document.cookie = "ddstheme=" + theme + "; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/; Secure; SameSite=Lax";
-  // console.log("Cookie set to: " + document.cookie);
 });
 
 //
