@@ -3,7 +3,7 @@
 #############################
 
 # Set official image -- parent image
-FROM python:3.12-alpine as base
+FROM python:3.12-alpine AS base
 
 ARG USERNAME=dds-user
 ARG USER_UID=1001
@@ -42,12 +42,12 @@ RUN pip3 install -r /code/requirements.txt
 COPY --chown=$USER_UID:$USER_GID . /code
 
 # Add code directory in pythonpath
-ENV PYTHONPATH /code
+ENV PYTHONPATH=/code
 
 ###################
 ## TEST CONTAINER
 ###################
-FROM base as test
+FROM base AS test
 RUN pip3 install -r /code/tests/requirements-test.txt
 
 # The version of mariadb-client should match the version of the mariadb server
@@ -62,22 +62,21 @@ USER $USERNAME
 ###################
 ## BUILD FRONTEND
 ###################
-FROM node:18 as nodebuilder
+FROM node:18 AS nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
-RUN npm install -g npm@10.9.2 --quiet
 RUN npm install --quiet
 RUN npm run css
 
 #########################
 ## PRODUCTION CONTAINER
 #########################
-FROM base as production
+FROM base AS production
 
 RUN pip install gunicorn
 
 # Add parameters for gunicorn
-ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
+ENV GUNICORN_CMD_ARGS="--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
 
 # Set working directory - 'code' dir in container, 'code' dir locally (in code)
 WORKDIR /code/dds_web
