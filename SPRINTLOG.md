@@ -568,3 +568,7 @@ _Nothing merged during this sprint_
 - Bump pynacl from 1.5.0 to 1.6.2 and cffi from 1.15.0 to 2.0.0 ([#1660](https://github.com/ScilifelabDataCentre/dds_web/pull/1660))
 - Dependency: Replace `node-sass` with `sass` due to node-tar vulnerability ([#1659](https://github.com/ScilifelabDataCentre/dds_web/pull/1659))
 - Fix Sensitive Cookie in HTTPS Session vulnerability ([#1661](https://github.com/ScilifelabDataCentre/dds_web/pull/1661))
+
+## 2026-01-19 - 2026-02-02
+
+- Bump `authlib` from 1.6.5 to 1.6.6 ([#1664](https://github.com/ScilifelabDataCentre/dds_web/pull/1664))
