@@ -9,7 +9,7 @@ name: Snyk
 
 on:
   push:
-    branches: ["dev", master]
+    branches: ["dev", "master"]
   pull_request:
     # The branches below must be a subset of the branches above
     branches: ["dev"]
@@ -23,17 +23,56 @@ jobs:
       security-events: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python@master
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Snyk Code to check for vulnerabilities
+        id: snyk-code
+        uses: snyk/actions/python@0.4.0
         continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test
-          args: --sarif-file-output=snyk.sarif
-      - name: Upload result to GitHub Code Scanning
+          args: --sarif-file-output=snyk-code.sarif
+      - name: Check Snyk Code SARIF exists
+        id: check-code-sarif
+        run: |
+          if [ -f snyk-code.sarif ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Snyk Code result to GitHub Code Scanning
+        if: steps.check-code-sarif.outputs.exists == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: snyk.sarif
-          category: snyk
+          sarif_file: snyk-code.sarif
+          category: snyk-code
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run Snyk Open Source to check dependencies
+        id: snyk-oss
+        uses: snyk/actions/python@0.4.0
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --file=requirements.txt --package-manager=pip --sarif-file-output=snyk-oss.sarif
+      - name: Check Snyk OSS SARIF exists
+        id: check-oss-sarif
+        run: |
+          if [ -f snyk-oss.sarif ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Snyk Open Source result to GitHub Code Scanning
+        if: steps.check-oss-sarif.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: snyk-oss.sarif
+          category: snyk-oss
