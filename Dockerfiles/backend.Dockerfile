@@ -81,7 +81,7 @@ ENV GUNICORN_CMD_ARGS="--bind=0.0.0.0:5000 --workers=2 --thread=4 --worker-class
 # Set working directory - 'code' dir in container, 'code' dir locally (in code)
 WORKDIR /code/dds_web
 
-# Get the built frontend (only copy compiled assets, not node_modules)
+# Get the built frontend
 COPY --from=nodebuilder /build/css ./static/css
 COPY --from=nodebuilder /build/js ./static/js
 COPY --from=nodebuilder /build/img ./static/img
@@ -89,6 +89,13 @@ COPY --from=nodebuilder /build/robots.txt ./static/robots.txt
 COPY --from=nodebuilder /build/swagger.yaml ./static/swagger.yaml
 COPY --from=nodebuilder /build/swaggerv3.yaml ./static/swaggerv3.yaml
 COPY --from=nodebuilder /build/user_agreement.pdf ./static/user_agreement.pdf
+
+# Copy only the specific vendor files needed (avoiding vulnerable packages like tar)
+COPY --from=nodebuilder /build/node_modules/jquery/dist/jquery.min.js ./static/node_modules/jquery/dist/jquery.min.js
+COPY --from=nodebuilder /build/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js ./static/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js
+COPY --from=nodebuilder /build/node_modules/datatables.net/js/jquery.dataTables.min.js ./static/node_modules/datatables.net/js/jquery.dataTables.min.js
+COPY --from=nodebuilder /build/node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css ./static/node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css
+COPY --from=nodebuilder /build/node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js ./static/node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js
 
 # Switch to the user
 USER $USERNAME
