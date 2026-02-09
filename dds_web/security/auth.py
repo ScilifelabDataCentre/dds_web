@@ -298,6 +298,9 @@ def __user_from_subject(subject):
         user = models.User.query.get(subject)
         if user:
             if not user.is_active:
+                flask.current_app.logger.warning(
+                    f"Deactivated user '{user.username}' tried to use the DDS."
+                )
                 raise AccessDeniedError(
                     message=("Your account has been deactivated. You cannot use the DDS.")
                 )
@@ -403,7 +406,14 @@ def verify_password(username, password):
     """Verify that user exists and that password is correct."""
     user = models.User.query.get(username)
 
-    if user and user.is_active and user.verify_password(input_password=password):
+    if user and user.verify_password(input_password=password):
+        if not user.is_active:
+            flask.current_app.logger.warning(
+                f"Deactivated user '{user.username}' tried to use the DDS."
+            )
+            raise AccessDeniedError(
+                message=("Your account has been deactivated. You cannot use the DDS.")
+            )
         # Block all users but Super Admins during maintenance
         dds_web.utils.block_if_maintenance(user=user)
 

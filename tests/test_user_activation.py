@@ -60,7 +60,7 @@ def test_deactivate_user_as_superadmin(module_client):
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_deactivate_deactivated_user_as_superadmin(module_client):
@@ -77,13 +77,13 @@ def test_deactivate_deactivated_user_as_superadmin(module_client):
 
 def test_reactivate_user_as_superadmin(module_client):
     """Reactivate researchuser as super admin"""
-    # Try to get token as user that is to be deactivated
+    # Try to get token as user that is to be reactivated
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[user["username"]]).as_tuple(),
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # Reactivate user
     response = module_client.post(
@@ -169,18 +169,18 @@ def test_deactivate_unituser_as_unitadmin(module_client):
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
 
 def test_reactivate_unituser_as_unitadmin(module_client):
     """Reactivate unituser as Unit Admin"""
-    # Try to get token as user that is to be deactivated
+    # Try to get token as user that is to be reactivated
     response = module_client.get(
         tests.DDSEndpoint.ENCRYPTED_TOKEN,
         auth=tests.UserAuth(tests.USER_CREDENTIALS[unituser["username"]]).as_tuple(),
         headers=tests.DEFAULT_HEADER,
     )
-    assert response.status_code == http.HTTPStatus.UNAUTHORIZED
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # Reactivate user
     response = module_client.post(

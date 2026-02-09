@@ -535,3 +535,46 @@ _Nothing merged during this sprint_
 
 - Bump cryptography library from 42.0.4 to 44.0.1 to solve vulnerabities ([#1640](https://github.com/ScilifelabDataCentre/dds_web/pull/1640))
 - New version: 2.13.1 ([#1647](https://github.com/ScilifelabDataCentre/dds_web/pull/1647))
+
+## 2025-09-29 - 2025-10-10
+
+- Update urrlib (1.26.18 to 2.5.0) and related libraries to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
+  - `boto3` from 1.20.47 to 1.40.34
+  - `botocore` from 1.23.47 to 1.40.34
+  - `request_cache` from 0.9.4 to 1.2.1
+  - `s3transfer` from 0.5.1 to 0.14.0
+
+## 2025-11-10 - 2025-11-21
+
+- Change quota input to TB ([#1575](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
+- Update Authlib to solve CVE ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
+- Clean up logs comming from RQ Workers ([#1650](https://github.com/ScilifelabDataCentre/dds_web/pull/1650))
+
+## 2025-11-24 - 2025-12-05
+
+- Update Python packages to address deprecated pkg_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
+- Add email validation to user adding ([#1653](https://github.com/ScilifelabDataCentre/dds_web/pull/1653))
+- Increase readtimeout value for S3 connections ([#1644](https://github.com/ScilifelabDataCentre/dds_web/pull/1644/))
+- Don't throw Errors with deactivated users in logs - log their info ([#1651](https://github.com/ScilifelabDataCentre/dds_web/pull/1651))
+
+## 2025-12-08 - 2025-12-19
+
+- Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
+- Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
+- Fix bug: Return correct error message for deactivated use ([#1656](https://github.com/ScilifelabDataCentre/dds_web/pull/1656))
+
+## 2026-01-19 - 2026-02-02
+
+- Bump pynacl from 1.5.0 to 1.6.2 and cffi from 1.15.0 to 2.0.0 ([#1660](https://github.com/ScilifelabDataCentre/dds_web/pull/1660))
+- Dependency: Replace `node-sass` with `sass` due to node-tar vulnerability ([#1659](https://github.com/ScilifelabDataCentre/dds_web/pull/1659))
+- Fix Sensitive Cookie in HTTPS Session vulnerability ([#1661](https://github.com/ScilifelabDataCentre/dds_web/pull/1661))
+
+## 2026-01-19 - 2026-02-02
+
+- Bump `authlib` from 1.6.5 to 1.6.6 ([#1664](https://github.com/ScilifelabDataCentre/dds_web/pull/1664))
+- Make Snyk workflow more robust ([#1665](https://github.com/ScilifelabDataCentre/dds_web/pull/1665))
+- Address security alerts with `node_modules` ([#1663](https://github.com/ScilifelabDataCentre/dds_web/pull/1663))
+
+## 2026-02-02 - 2026-02-13
+
+- New version 2.14.0 ([#1667](https://github.com/ScilifelabDataCentre/dds_web/pull/1667))

@@ -1366,6 +1366,123 @@ def test_projectstatus_post_invalid_deadline_expire(module_client, boto3_session
     assert "The deadline needs to be less than (or equal to) 30 days." in response.json["message"]
 
 
+def test_projectstatus_post_invalid_deadline_release_nonpositive(module_client, boto3_session):
+    """Attempt to set a non-positive deadline at release should fail."""
+    # ensure enough unit admins
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # create project
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    # deadline = 0
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available", "deadline": 0},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+    # deadline = -5
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available", "deadline": -5},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+
+def test_projectstatus_post_invalid_deadline_expire_nonpositive(module_client, boto3_session):
+    """Attempt to set a non-positive deadline at expire should fail."""
+    # ensure enough unit admins
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    if current_unit_admins < 3:
+        create_unit_admins(num_admins=2)
+    current_unit_admins = models.UnitUser.query.filter_by(unit_id=1, is_admin=True).count()
+    assert current_unit_admins >= 3
+
+    # create
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_CREATE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(module_client),
+        json=proj_data,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    project_id = response.json.get("project_id")
+
+    # release
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # expire with 0
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Expired", "deadline": 0},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+    # expire with -1
+    response = module_client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={"new_status": "Expired", "deadline": -1},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+
+def test_extend_deadline_nonpositive_values(module_client, boto3_session):
+    """Extending with 0 or negative should fail."""
+    # create project and release it
+    project_id, project = create_and_release_project(
+        client=module_client, proj_data=proj_data, release_data=release_project
+    )
+    assert project.times_expired == 0
+    time.sleep(1)
+
+    # new_deadline_in = 0
+    response = module_client.patch(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={**extend_deadline_data, "new_deadline_in": 0},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+    # new_deadline_in = -1
+    response = module_client.patch(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(module_client),
+        query_string={"project": project_id},
+        json={**extend_deadline_data, "new_deadline_in": -1},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert "The deadline needs to be a positive integer." in response.json["message"]
+
+
 def test_extend_deadline_bad_confirmed(module_client, boto3_session):
     """Try to extend a deadline and send a not boolean for confirmation"""
 

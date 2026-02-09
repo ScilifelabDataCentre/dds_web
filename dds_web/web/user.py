@@ -180,8 +180,14 @@ def activate_totp(token):
     if form.validate_on_submit():
         try:
             user.verify_TOTP(form.totp.data.encode())
-        except ddserr.AuthenticationError:
-            flask.flash("Invalid two-factor authentication code.")
+        except (ddserr.AuthenticationError, ddserr.AccessDeniedError) as err:
+            # if err is authentication
+            if isinstance(err, ddserr.AuthenticationError):
+                msg = "Invalid two-factor authentication code."
+            elif isinstance(err, ddserr.AccessDeniedError):
+                msg = "Your account has been deactivated. You cannot use the DDS."
+
+            flask.flash(msg)
             return (
                 flask.render_template(
                     "user/activate_totp.html",
@@ -275,11 +281,14 @@ def confirm_2fa():
     token = flask.session.get("2fa_initiated_token")
     try:
         user = dds_web.security.auth.verify_token_no_data(token)
-    except ddserr.AuthenticationError:
-        flask.flash(
-            "Error: Please initiate a log in before entering the one-time authentication code.",
-            "warning",
-        )
+    except (ddserr.AuthenticationError, ddserr.AccessDeniedError) as err:
+        # if err is authentication
+        if isinstance(err, ddserr.AuthenticationError):
+            msg = "Failed to authenticate user: Missing or incorrect credentials."
+        elif isinstance(err, ddserr.AccessDeniedError):
+            msg = "Your account has been deactivated. You cannot use the DDS."
+
+        flask.flash(msg, "danger")
         return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
     except Exception as e:
         flask.current_app.logger.exception(e)
@@ -380,6 +389,11 @@ def login():
             return flask.redirect(
                 flask.url_for("auth_blueprint.login", next=next_target)
             )  # Try login again
+
+        # Check if user is deactivated
+        if not user.is_active:
+            flask.flash("Your account has been deactivated. You cannot use the DDS.", "danger")
+            return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
         # Correct credentials still needs 2fa
         if not user.totp_enabled:

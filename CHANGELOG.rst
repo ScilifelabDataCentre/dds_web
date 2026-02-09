@@ -1,6 +1,32 @@
 Changelog
 ==========
 
+.. _2.14.0:
+
+2.14.0 - 2026-02-09
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - Restrict non-positive deadline values ([#1655](https://github.com/ScilifelabDataCentre/dds_web/pull/1655))
+    - Fix error message when deactivated user authenticates with the CLI ([#1656](https://github.com/ScilifelabDataCentre/dds_web/pull/1656))
+    - Errors with deactivated user in logs ([#1651](https://github.com/ScilifelabDataCentre/dds_web/pull/1651))
+    - Add email validation for adding users ([#1653](https://github.com/ScilifelabDataCentre/dds_web/pull/1653))
+- 🛡️ Dependencies
+    - Bump pynacl from 1.5.0 to 1.6.2 ([#1660](https://github.com/ScilifelabDataCentre/dds_web/pull/1660))
+    - Update urllib3 version ([#1654](https://github.com/ScilifelabDataCentre/dds_web/pull/1654))
+    - Update authlib to fix vulnerabities ([#1649](https://github.com/ScilifelabDataCentre/dds_web/pull/1649))
+    - Update urrlib and related libraries (boto3, botocore, request\_cache, s3transfer) to solve CVE ([#1645](https://github.com/ScilifelabDataCentre/dds_web/pull/1645))
+    - Add Secure and SameSite=Lax attibutes to the ddstheme cookie ([#1661](https://github.com/ScilifelabDataCentre/dds_web/pull/1661))
+    - Avoid copying node\_modules folder from nodebuiler ([#1663](https://github.com/ScilifelabDataCentre/dds_web/pull/1663))
+    - Bump authlib from 1.6.5 to 1.6.6 ([#1664](https://github.com/ScilifelabDataCentre/dds_web/pull/1664))
+    - Change snyck workflow to possibly avoid failures ([#1665](https://github.com/ScilifelabDataCentre/dds_web/pull/1665))
+    - Fix node tar vulnerability by replacing node-sass with sass ([#1659](https://github.com/ScilifelabDataCentre/dds_web/pull/1659))
+    - Bump urllib3 from 2.6.0 to 2.6.3 and CodeQL Actions to v4 ([#1658](https://github.com/ScilifelabDataCentre/dds_web/pull/1658))
+    - Handle deprecating pkg\_resources ([#1652](https://github.com/ScilifelabDataCentre/dds_web/pull/1652))
+- 📌 Other Changes
+    - Increase readtimeout value for S3 connections ([#1644](https://github.com/ScilifelabDataCentre/dds_web/pull/1644))
+    - Change quota input to TB ([#1579](https://github.com/ScilifelabDataCentre/dds_web/pull/1579))
+
 .. _2.13.1:
 
 2.13.1 - 2025-09-22

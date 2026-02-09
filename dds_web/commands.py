@@ -24,6 +24,7 @@ from rq.command import send_shutdown_command
 
 # Own
 from dds_web import db
+from dds_web.utils import create_s3_resource
 
 
 @click.command("init-db")
@@ -87,7 +88,7 @@ def fill_db_wrapper(db_type):
 @click.option("--safespring_secret", "-ss", type=str, required=True)
 @click.option("--days_in_available", "-da", type=int, required=False, default=90)
 @click.option("--days_in_expired", "-de", type=int, required=False, default=30)
-@click.option("--quota", "-q", type=int, required=True)
+@click.option("--quota", "-q", type=float, required=True, help="Quota in TB")
 @click.option("--warn-at", "-w", type=click.FloatRange(0.0, 1.0), required=False, default=0.8)
 @flask.cli.with_appcontext
 def create_new_unit(
@@ -131,6 +132,9 @@ def create_new_unit(
         flask.current_app.logger.error(error_message)
         return
 
+    # The quota input is in TB, convert to bytes
+    quota_bytes = int(quota * 1000**4)
+
     new_unit = models.Unit(
         name=name,
         public_id=public_id,
@@ -144,7 +148,7 @@ def create_new_unit(
         sto4_secret=safespring_secret,
         days_in_available=days_in_available,
         days_in_expired=days_in_expired,
-        quota=quota,
+        quota=quota_bytes,
         warning_level=warn_at,
     )
     db.session.add(new_unit)
@@ -210,14 +214,18 @@ def update_unit_sto4(unit_id, sto4_endpoint, sto4_name, sto4_access, sto4_secret
 
 @click.command("update-unit-quota")
 @click.option("--unit-id", "-u", type=str, required=True)
-@click.option("--quota", "-q", type=int, required=True)
+@click.option("--quota", "-q", type=float, required=True, help="Quota in TB")
 @flask.cli.with_appcontext
 def update_unit_quota(unit_id, quota):
-    """Update unit quota. The input is in GB."""
+    """Update unit quota. The input is in TB."""
     # Imports
     import rich.prompt
     from dds_web import db
     from dds_web.database import models
+
+    if quota <= 0:
+        flask.current_app.logger.error(f"Quota must be positive. Got: {quota} TB")
+        sys.exit(1)
 
     # Get unit
     unit: models.Unit = models.Unit.query.filter_by(public_id=unit_id).one_or_none()
@@ -225,22 +233,31 @@ def update_unit_quota(unit_id, quota):
         flask.current_app.logger.error(f"There is no unit with the public ID '{unit_id}'.")
         sys.exit(1)
 
+    # calculate quotas for logging purposes
+    old_quota_tb = round(unit.quota / 1000**4, 4)
+    new_quota_bytes = int(quota * 1000**4)
+
     # ask the user for confirmation
     do_update = rich.prompt.Confirm.ask(
-        f"Current quota for unit '{unit_id}' is {round(unit.quota / 1000 ** 3,2)} GB. \n"
-        f"You are about to update the quota to {quota} GB ({quota * 1000 ** 3} bytes). \n"
+        f"Current quota for unit '{unit_id}' is {old_quota_tb} TB. \n"
+        f"You are about to update the quota to {quota} TB. \n"
+        f"NOTE: In the database it will appear as bytes: {new_quota_bytes} Bytes \n"
         "Are you sure you want to continue?"
     )
     if not do_update:
         flask.current_app.logger.info(
-            f"Cancelling quota update for unit '{unit_id}'. The quota is still {round(unit.quota / 1000 ** 3,2)} GB. ({unit.quota} bytes.)"
+            f"Cancelling quota update for unit '{unit_id}'. The quota is still {old_quota_tb} TB."
         )
         return
 
-    # Set sto4 info
-    quota_bytes = quota * 1000**3
-    unit.quota = quota_bytes
-    db.session.commit()
+    try:
+        # Set new quota info
+        unit.quota = new_quota_bytes
+        db.session.commit()
+    except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.SQLAlchemyError):
+        db.session.rollback()
+        flask.current_app.logger.error(f"Failed to update quota for unit '{unit_id}'.")
+        sys.exit(1)
 
     flask.current_app.logger.info(f"Unit '{unit_id}' updated successfully")
 
@@ -315,23 +332,23 @@ def list_lost_files(project_id: str):
             sys.exit(1)
 
         # Connect to S3
-        resource = session.resource(
-            service_name="s3",
+        resource = create_s3_resource(
             endpoint_url=(
                 project.responsible_unit.sto4_endpoint
                 if sto4
                 else project.responsible_unit.sto2_endpoint
             ),
-            aws_access_key_id=(
+            access_key=(
                 project.responsible_unit.sto4_access
                 if sto4
                 else project.responsible_unit.sto2_access
             ),
-            aws_secret_access_key=(
+            secret_key=(
                 project.responsible_unit.sto4_secret
                 if sto4
                 else project.responsible_unit.sto2_secret
             ),
+            session=session,
         )
 
         # List the lost files
@@ -384,23 +401,23 @@ def list_lost_files(project_id: str):
                     continue
 
                 # Connect to S3
-                resource_unit = session.resource(
-                    service_name="s3",
+                resource_unit = create_s3_resource(
                     endpoint_url=(
                         proj.responsible_unit.sto4_endpoint
                         if sto4
                         else proj.responsible_unit.sto2_endpoint
                     ),
-                    aws_access_key_id=(
+                    access_key=(
                         proj.responsible_unit.sto4_access
                         if sto4
                         else proj.responsible_unit.sto2_access
                     ),
-                    aws_secret_access_key=(
+                    secret_key=(
                         proj.responsible_unit.sto4_secret
                         if sto4
                         else proj.responsible_unit.sto2_secret
                     ),
+                    session=session,
                 )
 
                 # List the lost files
@@ -461,19 +478,19 @@ def add_missing_bucket(project_id: str):
         sys.exit(1)
 
     # Connect to S3
-    resource = session.resource(
-        service_name="s3",
+    resource = create_s3_resource(
         endpoint_url=(
             project.responsible_unit.sto4_endpoint
             if sto4
             else project.responsible_unit.sto2_endpoint
         ),
-        aws_access_key_id=(
+        access_key=(
             project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
         ),
-        aws_secret_access_key=(
+        secret_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
         ),
+        session=session,
     )
 
     # Check if bucket exists
@@ -526,19 +543,19 @@ def delete_lost_files(project_id: str):
         sys.exit(1)
 
     # Connect to S3
-    resource = session.resource(
-        service_name="s3",
+    resource = create_s3_resource(
         endpoint_url=(
             project.responsible_unit.sto4_endpoint
             if sto4
             else project.responsible_unit.sto2_endpoint
         ),
-        aws_access_key_id=(
+        access_key=(
             project.responsible_unit.sto4_access if sto4 else project.responsible_unit.sto2_access
         ),
-        aws_secret_access_key=(
+        secret_key=(
             project.responsible_unit.sto4_secret if sto4 else project.responsible_unit.sto2_secret
         ),
+        session=session,
     )
 
     # Get list of lost files
@@ -1278,9 +1295,15 @@ def monitor_usage():
         flask.current_app.logger.info(f"Checking quotas and usage for: {unit.name}")
 
         # Get info from database
-        quota: int = unit.quota
+        quota: int = unit.quota  # in bytes
         warn_after: float = unit.warning_level
         current_usage: int = unit.size
+
+        # convert to TB and GB, only for logs
+        quota_tb: float = round(quota / 1000**4, 4)
+        quota_gb: float = round(quota / 1000**3, 4)
+        current_usage_tb: float = round(current_usage / 1000**4, 4)
+        current_usage_gb: float = round(current_usage / 1000**3, 4)
 
         # Check if 0 and then skip the next steps
         if not current_usage:
@@ -1295,9 +1318,9 @@ def monitor_usage():
 
         # Information to log and potentially send
         info_string: str = (
-            f"- Quota:{quota} bytes\n"
-            f"- Warning level: {int(warn_after*quota)} bytes ({int(warn_after*100)}%)\n"
-            f"- Current usage: {current_usage} bytes ({perc_used}%)\n"
+            f"- Quota: {quota_tb} TB // {quota_gb} GB\n"
+            f"- Warning level: {round(warn_after*quota_tb,4)} TB // {round(warn_after*quota_gb,4)} GB ({int(warn_after*100)}%)\n"
+            f"- Current usage: {current_usage_tb} TB // {current_usage_gb} GB ({perc_used}%)\n"
         )
         flask.current_app.logger.debug(
             f"Monitoring the usage for unit '{unit.name}' showed the following:\n" + info_string

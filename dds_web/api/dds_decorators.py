@@ -25,7 +25,7 @@ from dds_web.errors import (
     MissingJsonError,
     S3ConnectionError,
 )
-from dds_web.utils import get_username_or_request_ip
+from dds_web.utils import create_s3_resource, get_username_or_request_ip
 
 # initiate logging
 action_logger = structlog.getLogger("actions")
@@ -133,11 +133,11 @@ def connect_cloud(func):
             _, self.keys, self.url, self.bucketname = self.get_s3_info()
             # Connect to service
             session = boto3.session.Session()
-            self.resource = session.resource(
-                service_name="s3",
+            self.resource = create_s3_resource(
                 endpoint_url=self.url,
-                aws_access_key_id=self.keys["access_key"],
-                aws_secret_access_key=self.keys["secret_key"],
+                access_key=self.keys["access_key"],
+                secret_key=self.keys["secret_key"],
+                session=session,
             )
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as sqlerr:
             raise DatabaseError(
