@@ -574,3 +574,7 @@ _Nothing merged during this sprint_
 - Bump `authlib` from 1.6.5 to 1.6.6 ([#1664](https://github.com/ScilifelabDataCentre/dds_web/pull/1664))
 - Make Snyk workflow more robust ([#1665](https://github.com/ScilifelabDataCentre/dds_web/pull/1665))
 - Address security alerts with `node_modules` ([#1663](https://github.com/ScilifelabDataCentre/dds_web/pull/1663))
+
+## 2026-02-02 - 2026-02-13
+
+- New version 2.14.0 ([#1667](https://github.com/ScilifelabDataCentre/dds_web/pull/1667))
