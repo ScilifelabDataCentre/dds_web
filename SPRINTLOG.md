@@ -582,4 +582,5 @@ _Nothing merged during this sprint_
 
 ## 2026-02-16 - 2026-02-27
 
+- Bump cryptography from 44.0.1 to 46.0.5 ([#1670](https://github.com/ScilifelabDataCentre/dds_web/pull/1670))
 - Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
