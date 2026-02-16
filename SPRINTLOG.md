@@ -579,3 +579,4 @@ _Nothing merged during this sprint_
 
 - New version 2.14.0 ([#1667](https://github.com/ScilifelabDataCentre/dds_web/pull/1667))
 - Address workzeug security alert ([#1669](Address workzeug security alert #1669))
+- Bump cryptography from 44.0.1 to 46.0.5 ([#1670](https://github.com/ScilifelabDataCentre/dds_web/pull/1670))
