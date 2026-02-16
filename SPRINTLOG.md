@@ -579,3 +579,7 @@ _Nothing merged during this sprint_
 
 - New version 2.14.0 ([#1667](https://github.com/ScilifelabDataCentre/dds_web/pull/1667))
 - Address workzeug security alert ([#1669](Address workzeug security alert #1669))
+
+## 2026-02-16 - 2026-02-27
+
+- Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
