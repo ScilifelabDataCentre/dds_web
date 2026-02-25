@@ -61,7 +61,7 @@ rq-dashboard # publish_and_trivyscan stops working if we pin version 0.8.2.2
 s3transfer==0.14.0
 simplejson==3.17.6
 six==1.16.0
-SQLAlchemy==1.4.31
+SQLAlchemy==1.4.54
 structlog==21.5.0
 tzdata==2021.5
 tzlocal==4.1
