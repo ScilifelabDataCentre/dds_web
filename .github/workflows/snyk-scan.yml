@@ -30,7 +30,7 @@ jobs:
           python-version: "3.12"
       - name: Run Snyk Code to check for vulnerabilities
         id: snyk-code
-        uses: snyk/actions/python@0.4.0
+        uses: snyk/actions/python@v1.0.0
         continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -55,7 +55,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run Snyk Open Source to check dependencies
         id: snyk-oss
-        uses: snyk/actions/python@0.4.0
+        uses: snyk/actions/python@v1.0.0
         continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
