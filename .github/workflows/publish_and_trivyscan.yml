@@ -43,7 +43,7 @@ jobs:
             docs/technical-overview.md
             "
       - name: Upload technical overview PDF
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: technical-overview-pdf
           path: dds_web/static/dds-technical-overview.pdf
@@ -67,7 +67,7 @@ jobs:
             docs/troubleshooting.md
             "
       - name: Upload troubleshooting PDF
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: troubleshooting-pdf
           path: dds_web/static/dds-troubleshooting.pdf
