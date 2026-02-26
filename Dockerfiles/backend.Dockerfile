@@ -62,7 +62,7 @@ USER $USERNAME
 ###################
 ## BUILD FRONTEND
 ###################
-FROM node:18 AS nodebuilder
+FROM node:25 AS nodebuilder
 COPY ./dds_web/static /build
 WORKDIR /build
 RUN npm install --quiet
