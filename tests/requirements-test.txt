@@ -6,4 +6,4 @@ sqlalchemy-utils==0.38.2
 pytest-mock==3.7.0
 pyfakefs==5.3.0
 requests_cache==1.2.1
-testfixtures==7.0.4
+testfixtures==10.0.0
