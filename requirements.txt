@@ -63,7 +63,7 @@ simplejson==3.17.6
 six==1.16.0
 SQLAlchemy==1.4.31
 structlog==21.5.0
-tzdata==2021.5
+tzdata==2025.3
 tzlocal==4.1
 urllib3==2.6.3
 visitor==0.1.3
