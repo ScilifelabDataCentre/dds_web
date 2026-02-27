@@ -527,6 +527,9 @@ def reset_password(token):
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
         return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active. You cannot reset your password.", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Get form for reseting password
     form = forms.ResetPasswordForm()
@@ -576,6 +579,9 @@ def password_reset_completed():
             return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     units_to_contact = {}
