@@ -481,13 +481,14 @@ def request_reset_password():
                 flask.flash(
                     "Your account is deactivated. You cannot reset your password.", "warning"
                 )
+                return flask.redirect(flask.url_for("pages.home"))
 
         flask.flash(
             "If the specified email address is registered to a DDS account, "
             "you should receive an email with instructions on how to reset your password. "
             f"You specified the following email address: {form.email.data}"
         )
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)
