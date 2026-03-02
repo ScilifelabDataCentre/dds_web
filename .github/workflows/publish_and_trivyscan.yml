@@ -117,11 +117,16 @@ jobs:
           context: .
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          version: v0.56.1
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.26.0
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
+          skip-setup-trivy: true
           image-ref: "ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}"
           format: "sarif"
           output: "trivy-results.sarif"
