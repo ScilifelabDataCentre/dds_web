@@ -2,6 +2,8 @@
 ---
 name: Linkspector
 on: [pull_request]
+  paths:
+    - "**/*.md"
 permissions:
   pull-requests: write
 jobs:
