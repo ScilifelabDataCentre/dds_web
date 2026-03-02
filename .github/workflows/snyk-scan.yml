@@ -1,4 +1,4 @@
-# Snyk: Scan for for vulnerabilities in your Python code and dependencies
+# Snyk: Scan for for vulnerabilities in dependencies and Python code
 # The results are then uploaded to GitHub Security Code Scanning
 # https://github.com/snyk/actions/
 # ---
