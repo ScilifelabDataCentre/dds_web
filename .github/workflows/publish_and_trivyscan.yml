@@ -12,7 +12,6 @@
 # https://github.com/aquasecurity/trivy
 # ---------------------------------------
 # Publish Docker Image to GHCR and run Trivy Security Scan
-# Comment to make pr
 name: Publish to GHCR (+ Trivy scan)
 on:
   workflow_dispatch:
@@ -36,8 +35,9 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-fonts-extra &&
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
+            updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
             docs/technical-overview.md
@@ -59,11 +59,12 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-fonts-extra &&
+            tlmgr update --self &&
+            tlmgr install cm-super fontaxes lato xkeyval &&
+            updmap-sys &&
             pandoc
-            --output=dds_web/static/dds-technical-overview.pdf
-            docs/technical-overview.md
+            --output=dds_web/static/dds-troubleshooting.pdf
+            docs/troubleshooting.md
             "
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v4
@@ -117,7 +118,7 @@ jobs:
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.34.1
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
