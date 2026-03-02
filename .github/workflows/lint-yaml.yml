@@ -12,9 +12,12 @@
 name: Yamllint
 on:
   push:
-    paths:
+    branches: [dev, master]
+    paths: &yaml_files
       - '**/*.yaml'
       - '**/*.yml'
+  pull_request:
+    paths: *yaml_files
 jobs:
   lint:
     runs-on: ubuntu-latest
