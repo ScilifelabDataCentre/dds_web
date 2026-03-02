@@ -1,9 +1,10 @@
 # Linkspector: Verify links in MD files
 ---
 name: Linkspector
-on: [pull_request]
-  paths:
-    - "**/*.md"
+on: 
+  pull_request:
+    paths:
+      - "**/*.md"
 permissions:
   pull-requests: write
 jobs:
