@@ -8,7 +8,12 @@
 ---
 name: Black
 
-on: [push, pull_request]
+on:
+  push:
+    paths: &python_files
+      - "**/*.py"
+  pull_request:
+    paths: *python_files
 
 env:
   INPUT_VERSION: 24.1.1
