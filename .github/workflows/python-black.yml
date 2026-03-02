@@ -10,6 +10,7 @@ name: Black
 
 on:
   push:
+    branches: [dev, master]
     paths: &python_files
       - "**/*.py"
   pull_request:
