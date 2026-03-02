@@ -10,7 +10,7 @@
 name: Trivy - ghcr image scan - master
 on:
   schedule:
-    - cron: "0 7,15 * * *"
+    - cron: "0 4 * * 1" # every Monday at 4am
 jobs:
   scan:
     permissions:
