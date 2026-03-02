@@ -14,8 +14,8 @@ on:
   push:
     branches: [dev, master]
     paths: &yaml_files
-      - '**/*.yaml'
-      - '**/*.yml'
+      - "**/*.yaml"
+      - "**/*.yml"
   pull_request:
     paths: *yaml_files
 jobs:
