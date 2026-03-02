@@ -36,7 +36,7 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
+            tlmgr option repository https://tug.org/historic/systems/texlive/2024/tlnet-final &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
@@ -60,8 +60,8 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
-            tlmgr install cm-super fontaxes lato xkeyval &&
+            tlmgr option repository https://tug.org/historic/systems/texlive/2024/tlnet-final &&
+            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
