@@ -16,7 +16,13 @@ name: Pytest
 on:
   push:
     branches: [dev, master]
+    # Only run tests if Python files are changed
+    # &python_files is a YAML anchor - allows us to reuse the same list of paths
+    # Only slight simplification here - anchor used in pull_request below
+    paths: &python_files
+      - "**/*.py"
   pull_request:
+    paths: *python_files
   workflow_dispatch:
 
 jobs:
