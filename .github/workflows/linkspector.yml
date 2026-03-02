@@ -2,10 +2,11 @@
 ---
 name: Linkspector
 on: 
-  pull_request:
+  push:
+    branches: [dev, master]
     paths: &markdown
       - ["**/*.md"]
-  pull:
+  pull_request:
     paths: *markdown
   schedule:
     - cron: "0 0 * * *"
