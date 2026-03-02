@@ -3,6 +3,12 @@
 name: Linkspector
 on: 
   pull_request:
+    paths: &markdown
+      - ["**/*.md"]
+  pull:
+    paths: *markdown
+  schedule:
+    - cron: "0 0 * * *"
 permissions:
   pull-requests: write
 jobs:
