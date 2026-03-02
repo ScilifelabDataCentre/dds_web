@@ -330,6 +330,7 @@ def create_app(testing=False, database_uri=None):
         # Errors, TODO: Move somewhere else?
         @app.errorhandler(sqlalchemy.exc.SQLAlchemyError)
         def handle_sqlalchemyerror(e):
+            app.logger.exception(e)
             return f"SQLAlchemyError: {e}", 500  # TODO: Fix logging and a page
 
         # Initialize login manager
