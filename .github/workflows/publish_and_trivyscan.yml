@@ -28,14 +28,11 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex:3
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
-            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
-            updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
             docs/technical-overview.md
@@ -52,13 +49,11 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex:3
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
-            apt-get update &&
-            apt-get install -y texlive-fonts-extra texlive-latex-extra lmodern &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
             docs/troubleshooting.md
