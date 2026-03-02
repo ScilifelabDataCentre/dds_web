@@ -13,7 +13,6 @@
 # ---------------------------------------
 # Publish Docker Image to GHCR and run Trivy Security Scan
 name: Publish to GHCR (+ Trivy scan)
-
 on:
   workflow_dispatch:
   pull_request:
@@ -23,7 +22,6 @@ on:
       - dev
   release:
     types: [published]
-
 jobs:
   build_tech_overview:
     name: Build technical overview
@@ -31,64 +29,54 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-
       - name: Build tech overview PDF
-        # Use Ubuntu-based image so we can install TeX deps reliably with apt (no tlmgr / mirrors)
         uses: docker://pandoc/latex:3.2-ubuntu
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
             apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
-              texlive-latex-extra
-              texlive-fonts-extra
-              texlive-fonts-recommended
-              cm-super
-            &&
-            pandoc
-              --output=dds_web/static/dds-technical-overview.pdf
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+              texlive-latex-extra \
+              texlive-fonts-extra \
+              texlive-fonts-recommended \
+              cm-super &&
+            pandoc \
+              --output=dds_web/static/dds-technical-overview.pdf \
               docs/technical-overview.md
             "
-
       - name: Upload technical overview PDF
         uses: actions/upload-artifact@v4
         with:
           name: technical-overview-pdf
           path: dds_web/static/dds-technical-overview.pdf
-
   build_troubleshooting:
     name: Build troubleshooting guide
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-
       - name: Build troubleshooting guide
-        # Use Ubuntu-based image so we can install TeX deps reliably with apt (no tlmgr / mirrors)
         uses: docker://pandoc/latex:3.2-ubuntu
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
             apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
-              texlive-latex-extra
-              texlive-fonts-extra
-              texlive-fonts-recommended
-              cm-super
-            &&
-            pandoc
-              --output=dds_web/static/dds-troubleshooting.pdf
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+              texlive-latex-extra \
+              texlive-fonts-extra \
+              texlive-fonts-recommended \
+              cm-super &&
+            pandoc \
+              --output=dds_web/static/dds-troubleshooting.pdf \
               docs/troubleshooting.md
             "
-
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v4
         with:
           name: troubleshooting-pdf
           path: dds_web/static/dds-troubleshooting.pdf
-
   push_to_registry:
     needs: [build_tech_overview, build_troubleshooting]
     if: github.repository == 'ScilifelabDataCentre/dds_web'
@@ -104,36 +92,30 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-
       - name: Log in to Github Container Repository
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Download technical overview PDF
         uses: actions/download-artifact@v4
         with:
           name: technical-overview-pdf
           path: dds_web/static
-
       - name: Download troubleshooting PDF
         uses: actions/download-artifact@v4
         with:
           name: troubleshooting-pdf
           path: dds_web/static
-
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/scilifelabdatacentre/dds-backend
-
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-
       - name: Build for scan
         uses: docker/build-push-action@v5
         with:
@@ -141,9 +123,8 @@ jobs:
           context: .
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.34.1
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
@@ -151,13 +132,11 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
-
       - name: Upload Trivy scan results to Github Security tab
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy-build
-
       - name: Publish image
         uses: docker/build-push-action@v5
         with:
