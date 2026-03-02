@@ -33,7 +33,7 @@ on:
     # The branches below must be a subset of the branches above
     paths: *python_paths
   schedule:
-    - cron: "0 1 * * *" # every day at 1 AM
+    - cron: "0 0 * * *" # every day at midnight
 
 jobs:
   analyze:
