@@ -1,5 +1,4 @@
-"""Flask commands runable in container.
-Change in python"""
+"""Flask commands runable in container."""
 
 # Imports
 
