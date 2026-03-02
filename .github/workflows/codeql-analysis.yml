@@ -21,6 +21,7 @@
 # ---
 # Action failing? Go through the alerts and either manually fix, dismiss or ignore.
 #                 Add info on ignored or dismissed alerts.
+# test comment
 ---
 name: CodeQL
 
