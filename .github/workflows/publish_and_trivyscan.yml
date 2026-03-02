@@ -57,9 +57,8 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
-            tlmgr install cm-super fontaxes lato xkeyval &&
-            updmap-sys &&
+            apt-get update &&
+            apt-get install -y texlive-fonts-extra texlive-latex-extra lmodern &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
             docs/troubleshooting.md
