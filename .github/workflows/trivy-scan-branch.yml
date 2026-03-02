@@ -7,11 +7,10 @@
 #                 Add info on ignored or dismissed alerts.
 name: Trivy - branch scan
 on:
-  pull_request:
   push:
-    branches:
-      - master
-      - dev
+    branches: [dev, master]
+  pull_request:
+
 jobs:
   scan:
     permissions:
