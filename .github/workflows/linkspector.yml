@@ -9,7 +9,7 @@ on:
   pull_request:
     paths: *markdown
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 1 * * *" # every day at 1am
 permissions:
   pull-requests: write
 jobs:
