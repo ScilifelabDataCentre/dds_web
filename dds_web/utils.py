@@ -837,6 +837,16 @@ def add_uploaded_files_to_db(proj_in_db, log: typing.Dict):
             except botocore.client.ClientError as err:
                 if err.response["Error"]["Code"] == "404":
                     errors[file] = {"error": "File not found in S3", "traceback": err.__traceback__}
+                else:
+                    error_code = err.response.get("Error", {}).get("Code", "Unknown")
+                    error_message = err.response.get("Error", {}).get("Message", str(err))
+                    errors[file] = {
+                        "error": f"S3 head_object failed ({error_code}): {error_message}",
+                        "traceback": err.__traceback__,
+                    }
+                    flask.current_app.logger.exception(
+                        "Could not verify uploaded file in S3 before database insert."
+                    )
             else:
                 try:
                     # Check if the file already exists in the database
