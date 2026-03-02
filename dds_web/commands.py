@@ -1,5 +1,4 @@
 """Flask commands runable in container."""
-# testing
 # Imports
 
 # Standard
