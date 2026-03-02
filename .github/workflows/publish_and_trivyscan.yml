@@ -12,8 +12,6 @@
 # https://github.com/aquasecurity/trivy
 # ---------------------------------------
 # Publish Docker Image to GHCR and run Trivy Security Scan
-
-testing 
 name: Publish to GHCR (+ Trivy scan)
 on:
   workflow_dispatch:
