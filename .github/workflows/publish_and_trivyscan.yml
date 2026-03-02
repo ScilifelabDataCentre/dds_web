@@ -117,20 +117,20 @@ jobs:
           context: .
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
-      - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v0.2.2
-        with:
-          version: v0.56.1
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.26.0
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
-        with:
-          skip-setup-trivy: true
-          image-ref: "ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}"
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
+        run: |
+          mkdir -p "${{ github.workspace }}/.cache/trivy"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${{ github.workspace }}:/workspace" \
+            -v "${{ github.workspace }}/.cache/trivy:/root/.cache/trivy" \
+            aquasec/trivy:0.56.1 image \
+            --format sarif \
+            --output /workspace/trivy-results.sarif \
+            --severity CRITICAL,HIGH \
+            --db-repository ghcr.io/aquasecurity/trivy-db \
+            --db-repository public.ecr.aws/aquasecurity/trivy-db \
+            "ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}"
       - name: Upload Trivy scan results to Github Security tab
         uses: github/codeql-action/upload-sarif@v4
         with:
