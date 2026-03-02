@@ -33,7 +33,6 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
@@ -57,7 +56,6 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
             tlmgr install cm-super fontaxes lato xkeyval &&
             updmap-sys &&
             pandoc
