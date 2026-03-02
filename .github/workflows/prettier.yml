@@ -25,5 +25,3 @@ jobs:
 
       - name: Run Prettier --check
         run: prettier --check ${GITHUB_WORKSPACE}
-
-# Test again
