@@ -10,7 +10,11 @@
 # Action failing? Manually fix any errors locally.
 ---
 name: Yamllint
-on: [push]
+on:
+  push:
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
 jobs:
   lint:
     runs-on: ubuntu-latest
