@@ -28,11 +28,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex:3
+        uses: docker://pandoc/latex:3.2
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
+            tlmgr update --self &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
@@ -51,11 +52,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex:3
+        uses: docker://pandoc/latex:3.2
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
+            tlmgr update --self &&
             tlmgr install cm-super fontaxes lato xkeyval &&
             updmap-sys &&
             pandoc
@@ -114,7 +116,7 @@ jobs:
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.34.1
+        uses: aquasecurity/trivy-action@0.26.0
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
