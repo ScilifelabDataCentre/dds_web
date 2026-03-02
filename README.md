@@ -208,8 +208,6 @@ docker exec -it dds_backend /bin/sh
 pytest
 ```
 
-test test test
-
 If you want to run tests quickly, without rebuilding the database each time, set the `SAVE_DB` environment variable:
 
 ```bash
