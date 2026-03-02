@@ -5,7 +5,7 @@ on:
   push:
     branches: [dev, master]
     paths: &markdown
-      - ["**/*.md"]
+      - "**/*.md"
   pull_request:
     paths: *markdown
   schedule:
