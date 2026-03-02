@@ -7,6 +7,7 @@
 name: Prettier
 on:
   push:
+    branches: [dev, master]
     paths-ignore: &python_files
       - "**/*.py"
   pull_request:
