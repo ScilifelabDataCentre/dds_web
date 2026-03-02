@@ -36,9 +36,8 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr option repository https://tug.org/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
-            updmap-sys &&
+            apt-get update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-fonts-extra &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
             docs/technical-overview.md
@@ -60,12 +59,11 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr option repository https://tug.org/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
-            updmap-sys &&
+            apt-get update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-fonts-extra &&
             pandoc
-            --output=dds_web/static/dds-troubleshooting.pdf
-            docs/troubleshooting.md
+            --output=dds_web/static/dds-technical-overview.pdf
+            docs/technical-overview.md
             "
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v4
