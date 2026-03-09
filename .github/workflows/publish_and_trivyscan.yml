@@ -34,7 +34,7 @@ jobs:
           args: >-
             -c "
             tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install --no-checksums cm-super fontaxes lato pdflscape xkeyval &&
+            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
@@ -58,7 +58,7 @@ jobs:
           args: >-
             -c "
             tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install --no-checksums cm-super fontaxes lato xkeyval &&
+            tlmgr install cm-super fontaxes lato xkeyval &&
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
