@@ -586,3 +586,10 @@ _Nothing merged during this sprint_
 - Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
 - Handle deactivated users in password reset flow ([#1657](https://github.com/ScilifelabDataCentre/dds_web/pull/1657))
 - Fix flash messages in password reset ([#1786](https://github.com/ScilifelabDataCentre/dds_web/pull/1786))
+
+## 2026-03-02 - 2026-03-13
+
+- Reduce duplicate action runs and only run when relevant ([#1787]https://github.com/ScilifelabDataCentre/dds_web/pull/1787)
+- Fix failing Trivy workflow step ([#1796]https://github.com/ScilifelabDataCentre/dds_web/pull/1796)
+- Fix failing Trivy TeX Live dependent workflow step ([#1797]https://github.com/ScilifelabDataCentre/dds_web/pull/1797)
+- Dependency: Bump `Werkzeug` to 3.1.6 due to CVE-2026-27199 ([#1673]https://github.com/ScilifelabDataCentre/dds_web/pull/1673)
