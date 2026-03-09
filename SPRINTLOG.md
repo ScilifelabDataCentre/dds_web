@@ -595,3 +595,4 @@ _Nothing merged during this sprint_
 - Dependency: Bump `Werkzeug` to 3.1.6 due to CVE-2026-27199 ([#1673]https://github.com/ScilifelabDataCentre/dds_web/pull/1673)
 - Update docker/metadata-action action to v6 ([#1795]https://github.com/ScilifelabDataCentre/dds_web/pull/1795)
 - Update docker/build-push-action action to v7 ([#1794]https://github.com/ScilifelabDataCentre/dds_web/pull/1794)
+- Update docker/login-action action to v4 ([#1793]https://github.com/ScilifelabDataCentre/dds_web/pull/1793)
