@@ -144,7 +144,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
     )
     assert response.status_code == HTTPStatus.OK
     assert response.content_type == "text/html; charset=utf-8"
-    assert response.request.path == DDSEndpoint.LOGIN
+    assert response.request.path == DDSEndpoint.INDEX
 
     response: werkzeug.test.WrapperTestResponse = client.post(
         f"{DDSEndpoint.REQUEST_RESET_PASSWORD}/{token}",

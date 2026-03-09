@@ -10,7 +10,7 @@
 name: Trivy - ghcr image scan - dev
 on:
   schedule: # Since dev is the default branch of the repo don't specify
-    - cron: "0 9,12,15 * * *"
+    - cron: "0 3 * * *" # every day at 3am
 jobs:
   scan:
     permissions:
