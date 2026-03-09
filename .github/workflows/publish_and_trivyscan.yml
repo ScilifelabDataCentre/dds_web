@@ -14,12 +14,10 @@
 # Publish Docker Image to GHCR and run Trivy Security Scan
 name: Publish to GHCR (+ Trivy scan)
 on:
-  workflow_dispatch:
-  pull_request:
   push:
-    branches:
-      - master
-      - dev
+    branches: [dev, master]
+  pull_request:
+  workflow_dispatch:
   release:
     types: [published]
 jobs:
@@ -35,7 +33,7 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
+            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
@@ -59,7 +57,7 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr update --self &&
+            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
             tlmgr install cm-super fontaxes lato xkeyval &&
             updmap-sys &&
             pandoc
@@ -117,11 +115,14 @@ jobs:
           context: .
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.5
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.33.1
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
+          skip-setup-trivy: true
           image-ref: "ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}"
           format: "sarif"
           output: "trivy-results.sarif"
