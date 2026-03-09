@@ -590,3 +590,4 @@ _Nothing merged during this sprint_
 ## 2026-03-02 - 2026-03-13
 
 - Reduce duplicate action runs and only run when relevant ([#1787]https://github.com/ScilifelabDataCentre/dds_web/pull/1787)
+- Fix failing Trivy workflow step ([#1796]https://github.com/ScilifelabDataCentre/dds_web/pull/1796)
