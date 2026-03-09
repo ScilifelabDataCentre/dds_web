@@ -7,11 +7,10 @@
 #                 Add info on ignored or dismissed alerts.
 name: Trivy - branch scan
 on:
-  pull_request:
   push:
-    branches:
-      - master
-      - dev
+    branches: [dev, master]
+  pull_request:
+
 jobs:
   scan:
     permissions:
@@ -23,9 +22,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.5
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.33.1
         with:
+          skip-setup-trivy: true
           scan-type: "fs"
           ignore-unfixed: true
           format: "sarif"
