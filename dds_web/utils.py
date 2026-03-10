@@ -215,9 +215,7 @@ def username_not_taken(indata):
     the form validator should catch it.
     """
     if username_in_db(username=indata):
-        raise marshmallow.ValidationError(
-            "That username is taken. Please choose a different one."
-        )
+        raise marshmallow.ValidationError("That username is taken. Please choose a different one.")
 
 
 def valid_user_role(specified_role):
