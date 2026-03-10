@@ -10,7 +10,7 @@
 name: Trivy - ghcr image scan - dev
 on:
   schedule: # Since dev is the default branch of the repo don't specify
-    - cron: "0 9,12,15 * * *"
+    - cron: "0 3 * * *" # every day at 3am
 jobs:
   scan:
     permissions:
@@ -25,11 +25,14 @@ jobs:
       - name: Ensure lowercase name
         run: echo REPOSITORY_OWNER=$(echo ${{ github.repository_owner }} | tr "[:upper:]" "[:lower:]") >> $GITHUB_ENV
 
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.5
       - name: Run Trivy on latest dev image
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.33.1
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
+          skip-setup-trivy: true
           image-ref: "ghcr.io/${{ env.REPOSITORY_OWNER }}/dds-backend:dev"
           format: "sarif"
           output: "trivy-results-dev.sarif"
