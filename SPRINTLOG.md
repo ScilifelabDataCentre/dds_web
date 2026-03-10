@@ -598,3 +598,4 @@ _Nothing merged during this sprint_
 - Update docker/login-action action to v4 ([#1793]https://github.com/ScilifelabDataCentre/dds_web/pull/1793)
 - Update actions/upload-artifact action to v7 ([#1785]https://github.com/ScilifelabDataCentre/dds_web/pull/1785)
 - Dependency: Bump `marshmallow` to 3.26.2 due to CVE-2025-68480 ([#1674]https://github.com/ScilifelabDataCentre/dds_web/pull/1674)
+- Update snyk/actions action to v1 ([#1783]https://github.com/ScilifelabDataCentre/dds_web/pull/1783)
