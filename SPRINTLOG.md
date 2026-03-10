@@ -584,3 +584,15 @@ _Nothing merged during this sprint_
 
 - Bump cryptography from 44.0.1 to 46.0.5 ([#1670](https://github.com/ScilifelabDataCentre/dds_web/pull/1670))
 - Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
+- Handle deactivated users in password reset flow ([#1657](https://github.com/ScilifelabDataCentre/dds_web/pull/1657))
+- Fix flash messages in password reset ([#1786](https://github.com/ScilifelabDataCentre/dds_web/pull/1786))
+
+## 2026-03-02 - 2026-03-13
+
+- Reduce duplicate action runs and only run when relevant ([#1787]https://github.com/ScilifelabDataCentre/dds_web/pull/1787)
+- Fix failing Trivy workflow step ([#1796]https://github.com/ScilifelabDataCentre/dds_web/pull/1796)
+- Fix failing Trivy TeX Live dependent workflow step ([#1797]https://github.com/ScilifelabDataCentre/dds_web/pull/1797)
+- Dependency: Bump `Werkzeug` to 3.1.6 due to CVE-2026-27199 ([#1673]https://github.com/ScilifelabDataCentre/dds_web/pull/1673)
+- Update docker/metadata-action action to v6 ([#1795]https://github.com/ScilifelabDataCentre/dds_web/pull/1795)
+- Update docker/build-push-action action to v7 ([#1794]https://github.com/ScilifelabDataCentre/dds_web/pull/1794)
+- Update docker/login-action action to v4 ([#1793]https://github.com/ScilifelabDataCentre/dds_web/pull/1793)
