@@ -96,7 +96,9 @@ class CreateProjectSchema(marshmallow.Schema):
             "null": {"message": "A principal investigator is required."},
         },
     )
-    non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
+    non_sensitive = marshmallow.fields.Boolean(
+        required=False, load_default=False, dump_default=False
+    )
     date_created = custom_fields.MyDateTimeField(required=False)
 
     @marshmallow.pre_load
@@ -225,8 +227,12 @@ class ProjectContentSchema(ProjectRequiredSchema):
     """ """
 
     requested_items = marshmallow.fields.List(marshmallow.fields.String, required=False)
-    url = marshmallow.fields.Boolean(required=False, default=False)
-    get_all = marshmallow.fields.Boolean(required=False, default=False)
+    url = marshmallow.fields.Boolean(
+        required=False, load_default=False, dump_default=False
+    )
+    get_all = marshmallow.fields.Boolean(
+        required=False, load_default=False, dump_default=False
+    )
 
     def find_contents(self, project, contents):
         # All contents

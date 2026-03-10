@@ -197,13 +197,13 @@ def email_not_taken(indata):
     field should not be changeable and if it is the form validator should catch it.
     """
     if email_in_db(email=indata):
-        raise marshmallow.validate.ValidationError("The email is already taken by another user.")
+        raise marshmallow.ValidationError("The email is already taken by another user.")
 
 
 def email_taken(indata):
     """Validator - verify that email is taken."""
     if not email_in_db(email=indata):
-        raise marshmallow.validate.ValidationError(
+        raise marshmallow.ValidationError(
             "If the email is connected to a user within the DDS, you should receive an email with the password reset instructions."
         )
 
@@ -215,7 +215,7 @@ def username_not_taken(indata):
     the form validator should catch it.
     """
     if username_in_db(username=indata):
-        raise marshmallow.validate.ValidationError(
+        raise marshmallow.ValidationError(
             "That username is taken. Please choose a different one."
         )
 
@@ -273,7 +273,7 @@ def username_not_taken_wtforms():
         """Validate that the username is not taken already."""
         try:
             username_not_taken(indata=field.data)
-        except marshmallow.validate.ValidationError as valerr:
+        except marshmallow.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
     return _username_not_taken
@@ -284,7 +284,7 @@ def email_not_taken_wtforms():
         """Validate that the email is not taken already."""
         try:
             email_not_taken(indata=field.data)
-        except marshmallow.validate.ValidationError as valerr:
+        except marshmallow.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
     return _email_not_taken
@@ -295,7 +295,7 @@ def email_taken_wtforms():
         """Validate that the email exists."""
         try:
             email_taken(indata=field.data)
-        except marshmallow.validate.ValidationError as valerr:
+        except marshmallow.ValidationError as valerr:
             raise wtforms.validators.ValidationError(valerr)
 
     return _email_taken
