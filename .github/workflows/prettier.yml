@@ -11,7 +11,7 @@ on:
     paths-ignore: &python_files
       - "**/*.py"
   pull_request:
-    paths-ignore: *python_files
+    # paths-ignore: *python_files
 
 jobs:
   Prettier:
