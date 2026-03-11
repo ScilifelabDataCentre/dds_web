@@ -600,3 +600,4 @@ _Nothing merged during this sprint_
 - Dependency: Bump `marshmallow` to 3.26.2 due to CVE-2025-68480 ([#1674]https://github.com/ScilifelabDataCentre/dds_web/pull/1674)
 - Update snyk/actions action to v1 ([#1783]https://github.com/ScilifelabDataCentre/dds_web/pull/1783)
 - Dependency: Bump `autoprefixer` to 10.4.27 ([#1677]https://github.com/ScilifelabDataCentre/dds_web/pull/1677)
+- Extend Renovate configuration ([#1801](https://github.com/ScilifelabDataCentre/dds_web/pull/1801))
