@@ -481,13 +481,14 @@ def request_reset_password():
                 flask.flash(
                     "Your account is deactivated. You cannot reset your password.", "warning"
                 )
+                return flask.redirect(flask.url_for("pages.home"))
 
         flask.flash(
             "If the specified email address is registered to a DDS account, "
             "you should receive an email with instructions on how to reset your password. "
             f"You specified the following email address: {form.email.data}"
         )
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)
@@ -526,6 +527,9 @@ def reset_password(token):
 
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active. You cannot reset your password.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     # Get form for reseting password
@@ -576,6 +580,9 @@ def password_reset_completed():
             return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     units_to_contact = {}
