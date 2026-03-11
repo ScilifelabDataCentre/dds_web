@@ -41,7 +41,7 @@ jobs:
             docs/technical-overview.md
             "
       - name: Upload technical overview PDF
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: technical-overview-pdf
           path: dds_web/static/dds-technical-overview.pdf
@@ -65,7 +65,7 @@ jobs:
             docs/troubleshooting.md
             "
       - name: Upload troubleshooting PDF
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: troubleshooting-pdf
           path: dds_web/static/dds-troubleshooting.pdf
@@ -85,7 +85,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Log in to Github Container Repository
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
