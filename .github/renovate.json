@@ -1,5 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "labels": ["type:dependency"]
+  "labels": ["type:dependency"],
+  "abandonmentThreshold": "2 years",
+  "packageRules": [
+    {
+      "matchAbandoned": true,
+      "addLabels": ["type:dependency", "status:abandoned"]
+    }
+  ]
 }
