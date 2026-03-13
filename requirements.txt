@@ -32,7 +32,7 @@ Flask-SQLAlchemy==2.5.1
 Flask-WTF==1.1.2
 flask_swagger_ui==4.11.1
 freezegun==1.2.2
-gevent>=24.2.1
+gevent>=24.10.1
 greenlet>=3.0.3
 idna==3.7
 itsdangerous==2.2.0
