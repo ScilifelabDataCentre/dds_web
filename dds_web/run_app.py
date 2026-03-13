@@ -3,6 +3,7 @@
 # Gevent monkey-patch must run before any other imports that use sockets, threading, or blocking I/O
 # (required for Gunicorn with --worker-class=gevent)
 import gevent.monkey
+
 gevent.monkey.patch_all()
 
 ####################################################################################################
