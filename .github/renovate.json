@@ -17,20 +17,20 @@
       "addLabels": ["npm"]
     },
     {
-      "matchFileNames": ["tests/**"],
-      "labels": ["skip-changelog", "tests"]
-    },
-    {
-      "matchFileNames": [".github/workflows/**"],
-      "labels": ["skip-changelog", "github-actions"]
-    },
-    {
       "matchFileNames": ["Dockerfiles/**"],
       "addLabels": ["docker"]
     },
     {
       "matchManagers": ["pip_requirements"],
       "addLabels": ["python"]
+    },
+    {
+      "matchFileNames": ["tests/**"],
+      "labels": ["skip-changelog", "tests"]
+    },
+    {
+      "matchFileNames": [".github/workflows/**"],
+      "labels": ["skip-changelog", "github-actions"]
     }
   ]
 }
