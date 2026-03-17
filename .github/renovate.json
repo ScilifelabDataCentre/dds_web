@@ -8,7 +8,7 @@
   "schedule": ["* 18-23,0-5 * * 1-5"],
   "packageRules": [
     {
-      "matchAbandoned": true,
+      "matchJsonata": ["isAbandoned = true"],
       "addLabels": ["status:abandoned"]
     }
   ]
