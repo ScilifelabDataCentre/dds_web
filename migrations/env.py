@@ -23,9 +23,7 @@ logger = logging.getLogger("alembic.env")
 # Flask-SQLAlchemy 3.x: use db.engine (get_engine() was deprecated/removed)
 _db = current_app.extensions["migrate"].db
 _engine = _db.engine
-config.set_main_option(
-    "sqlalchemy.url", str(_engine.url).replace("%", "%%")
-)
+config.set_main_option("sqlalchemy.url", str(_engine.url).replace("%", "%%"))
 target_metadata = _db.metadata
 
 # other values from the config, defined by the needs of env.py,
