@@ -16,7 +16,11 @@ name: Pytest
 on:
   push:
     branches: [dev, master]
+    paths-ignore: &doc_files
+      - "**/*.md"
+      - "docs/**"
   pull_request:
+    paths-ignore: *doc_files
   workflow_dispatch:
 
 jobs:

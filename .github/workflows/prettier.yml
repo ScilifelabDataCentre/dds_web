@@ -5,7 +5,13 @@
 # Action failing? Run npx prettier --write . locally to execute formatting.
 ---
 name: Prettier
-on: [push, pull_request]
+on:
+  push:
+    branches: [dev, master]
+    paths-ignore: &python_files
+      - "**/*.py"
+  pull_request:
+    paths-ignore: *python_files
 
 jobs:
   Prettier:
@@ -13,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
 
       - name: Install Prettier
         run: npm install -g prettier
