@@ -603,3 +603,7 @@ _Nothing merged during this sprint_
 - New release: v2.14.1 ([#1802]https://github.com/ScilifelabDataCentre/dds_web/pull/1802)
 - Edit documentation for new release procedure ([#1805]https://github.com/ScilifelabDataCentre/dds_web/pull/1805)
 - Extend Renovate configuration ([#1801](https://github.com/ScilifelabDataCentre/dds_web/pull/1801))
+
+## 2026-03-16 - 2026-03-27
+
+- Update Trivy GitHub Actions ([#1814]https://github.com/ScilifelabDataCentre/dds_web/pull/1814)
