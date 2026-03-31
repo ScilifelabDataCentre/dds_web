@@ -1,6 +1,24 @@
 Changelog
 ==========
 
+.. _2.14.1:
+
+2.14.1 - 2026-03-11
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - HMS-2642 Contradicting flash messages when deactivated user tries to reset password ([#1786](https://github.com/ScilifelabDataCentre/dds_web/pull/1786))
+    - Handle deactivated users in password reset flow ([#1657](https://github.com/ScilifelabDataCentre/dds_web/pull/1657))
+- 🛡️ Dependencies
+    - Update dependency Werkzeug to v3.1.6 [SECURITY] ([#1673](https://github.com/ScilifelabDataCentre/dds_web/pull/1673))
+    - Bump cryptography from 44.0.1 to 46.0.5 ([#1670](https://github.com/ScilifelabDataCentre/dds_web/pull/1670))
+    - Address workzeug security alert ([#1669](https://github.com/ScilifelabDataCentre/dds_web/pull/1669))
+    - Update dependency autoprefixer to v10.4.27 ([#1677](https://github.com/ScilifelabDataCentre/dds_web/pull/1677))
+    - Update dependency marshmallow to v3.26.2 [SECURITY] ([#1674](https://github.com/ScilifelabDataCentre/dds_web/pull/1674))
+    - Update docker/login-action action to v4 ([#1793](https://github.com/ScilifelabDataCentre/dds_web/pull/1793))
+    - Update docker/metadata-action action to v6 ([#1795](https://github.com/ScilifelabDataCentre/dds_web/pull/1795))
+    - Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
+
 .. _2.14.0:
 
 2.14.0 - 2026-02-09
