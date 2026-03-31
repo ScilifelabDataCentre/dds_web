@@ -316,6 +316,14 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
+        # ProjectUploadComplete - "/proj/upload/complete"
+        response = client.post(
+            DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+            headers=token,
+        )
+        assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+        assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
+
         # RetrieveUserInfo - "/user/info"
         response = client.get(
             DDSEndpoint.USER_INFO,
@@ -626,6 +634,13 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
     # ProjectInfo - "/proj/info"
     response = client.get(
         DDSEndpoint.PROJECT_INFO,
+        headers=token,
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+    # ProjectUploadComplete - "/proj/upload/complete"
+    response = client.post(
+        DDSEndpoint.PROJ_UPLOAD_COMPLETE,
         headers=token,
     )
     assert response.status_code == http.HTTPStatus.BAD_REQUEST

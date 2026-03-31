@@ -30,7 +30,7 @@ from dds_web.api.dds_decorators import (
     json_required,
     logging_bind_request,
 )
-from dds_web.api.files import check_eligibility_for_deletion
+from dds_web.api.files import check_eligibility_for_deletion, check_eligibility_for_upload
 from dds_web.api.schemas import project_schemas, user_schemas
 from dds_web.api.user import AddUser
 from dds_web.database import models
@@ -1321,3 +1321,36 @@ class ProjectInfo(flask_restful.Resource):
         }
 
         return return_message
+
+
+class ProjectUploadComplete(flask_restful.Resource):
+    """Update ``date_updated`` / ``last_updated_by`` once after a batch upload.
+
+    The CLI calls this at the end of ``dds data put`` when at least one file was
+    registered in the database, so project metadata stays accurate without
+    updating the project row on every ``POST /file/new``.
+    """
+
+    @auth.login_required(role=["Unit Admin", "Unit Personnel"])
+    @logging_bind_request
+    @handle_validation_errors
+    def post(self):
+        project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
+        check_eligibility_for_upload(status=project.current_status)
+        project.date_updated = dds_web.utils.current_time()
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:
+            flask.current_app.logger.debug(err)
+            db.session.rollback()
+            raise DatabaseError(
+                message=str(err),
+                alt_message="Failed to update project timestamp after upload"
+                + (
+                    ": Database malfunction."
+                    if isinstance(err, sqlalchemy.exc.OperationalError)
+                    else "."
+                ),
+            ) from err
+
+        return {"message": "Project upload timestamp updated."}

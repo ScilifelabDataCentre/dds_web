@@ -418,6 +418,28 @@ def test_new_file_database_error(client):
     assert rollback.called
 
 
+def test_proj_upload_complete_updates_timestamp(client):
+    """POST /proj/upload/complete refreshes date_updated and last_updated_by."""
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+    db.session.refresh(project_1)
+    before = project_1.date_updated
+
+    response = client.post(
+        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.json.get("message") == "Project upload timestamp updated."
+
+    db.session.refresh(project_1)
+    assert project_1.date_updated is not None
+    if before is not None:
+        assert project_1.date_updated >= before
+    assert project_1.last_updated_by == "unitadmin"
+
+
 def test_new_file(client):
     """Add and overwrite file to database."""
 
