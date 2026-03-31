@@ -612,3 +612,4 @@ _Nothing merged during this sprint_
 
 - Update Trivy GitHub Actions ([#1814]https://github.com/ScilifelabDataCentre/dds_web/pull/1814)
 - Bump flatted from 3.2.7 to 3.4.2 ([#1817]https://github.com/ScilifelabDataCentre/dds_web/pull/1817)
+- Update dependency cryptography to v46.0.6 ([#1816]https://github.com/ScilifelabDataCentre/dds_web/pull/1816)
