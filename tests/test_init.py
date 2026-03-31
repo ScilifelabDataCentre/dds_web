@@ -643,7 +643,7 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
         DDSEndpoint.PROJ_UPLOAD_COMPLETE,
         headers=token,
     )
-    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.status_code == http.HTTPStatus.FORBIDDEN
 
     # RetrieveUserInfo - "/user/info"
     response = client.get(
