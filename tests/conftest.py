@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import uuid
 import requests
+import logging
 
 # Installed
 import flask_migrate
@@ -570,6 +571,62 @@ def disable_requests_cache():
     """
     with unittest.mock.patch("requests_cache.CachedSession", requests.Session):
         yield
+
+
+@pytest.fixture
+def capfd(capfdbinary):
+    """Capture fd output and include newly emitted log records in stderr text.
+
+    Some tests assert against ``capfd.readouterr()`` for log messages. Depending on
+    logger/pytest capture internals, log records may be captured by pytest's logging
+    plugin while fd stderr remains empty. This wrapper keeps existing test semantics
+    by appending new log messages to the captured stderr text.
+    """
+
+    captured_logs = []
+    last_log_index = 0
+
+    class _CaptureLogHandler(logging.Handler):
+        pass
+
+    log_handler = _CaptureLogHandler(level=logging.DEBUG)
+    log_handler.setFormatter(
+        logging.Formatter("[%(asctime)s] %(module)s [%(levelname)s] %(message)s")
+    )
+
+    def _emit(record):
+        captured_logs.append(log_handler.format(record))
+
+    log_handler.emit = _emit
+
+    # The app uses this logger for API/runtime logs.
+    general_logger = logging.getLogger("general")
+    general_logger.addHandler(log_handler)
+
+    class CapfdWithLogs:
+        def readouterr(self):
+            nonlocal last_log_index
+
+            capture = capfdbinary.readouterr()
+            out = capture.out.decode("utf-8", errors="replace")
+            err = capture.err.decode("utf-8", errors="replace")
+
+            new_logs = captured_logs[last_log_index:]
+            last_log_index = len(captured_logs)
+
+            if new_logs:
+                log_text = "\n".join(new_logs)
+                err = f"{err}\n{log_text}" if err else log_text
+
+            return out, err
+
+        def __getattr__(self, name):
+            return getattr(capfdbinary, name)
+
+    try:
+        yield CapfdWithLogs()
+    finally:
+        general_logger.removeHandler(log_handler)
 
 
 @pytest.fixture

@@ -142,7 +142,7 @@ class NewUserSchema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.validates("username")
-    def verify_username(self, value):
+    def verify_username(self, value, **kwargs):
         """Verify that the username is not used in the system."""
 
         if utils.username_in_db(username=value):
@@ -151,7 +151,7 @@ class NewUserSchema(marshmallow.Schema):
             )
 
     @marshmallow.validates("email")
-    def verify_new_email(self, value):
+    def verify_new_email(self, value, **kwargs):
         """Verify that the email is not used in the system already."""
 
         if utils.email_in_db(email=value):
