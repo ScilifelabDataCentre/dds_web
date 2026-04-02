@@ -1266,10 +1266,6 @@ class ProjectInfo(flask_restful.Resource):
             title_validator = marshmallow.validate.And(
                 marshmallow.validate.Length(min=1),
                 dds_web.utils.contains_disallowed_characters,
-                error={
-                    "required": {"message": "Title is required."},
-                    "null": {"message": "Title is required."},
-                },
             )
             try:
                 title_validator(new_title)
@@ -1281,10 +1277,6 @@ class ProjectInfo(flask_restful.Resource):
             description_validator = marshmallow.validate.And(
                 marshmallow.validate.Length(min=1),
                 dds_web.utils.contains_unicode_emojis,
-                error={
-                    "required": {"message": "A project description is required."},
-                    "null": {"message": "A project description is required."},
-                },
             )
             try:
                 description_validator(new_description)

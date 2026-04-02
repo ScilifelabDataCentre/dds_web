@@ -204,7 +204,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.validates("project")
-    def validate_project(self, value):
+    def validate_project(self, value, **kwargs):
         """Validate existing project and user access to it."""
 
         project = verify_project_exists(spec_proj=value)
