@@ -615,3 +615,4 @@ _Nothing merged during this sprint_
 - Update dependency cryptography to v46.0.6 ([#1816]https://github.com/ScilifelabDataCentre/dds_web/pull/1816)
 - Update dependency requests to v2.33.0 ([#1815]https://github.com/ScilifelabDataCentre/dds_web/pull/1815)
 - Update dependency marshmallow to v4 ([#1800]https://github.com/ScilifelabDataCentre/dds_web/pull/1800)
+- New version 2.14.2 ([#1820]https://github.com/ScilifelabDataCentre/dds_web/pull/1820)
