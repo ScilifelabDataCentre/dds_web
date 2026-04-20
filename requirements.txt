@@ -12,7 +12,7 @@ certifi==2024.7.4
 cffi==2.0.0
 charset-normalizer==2.0.11
 click==8.1.7
-cryptography==46.0.5
+cryptography==46.0.6
 Deprecated==1.3.1
 dnspython==2.6.1
 dominate==2.6.0
@@ -25,7 +25,7 @@ Flask-HTTPAuth==4.8.0
 Flask-Limiter==2.1.3
 Flask-Login==0.6.3
 Flask-Mail==0.9.1
-flask-marshmallow==0.14.0
+flask-marshmallow==1.4.0
 Flask-Migrate==3.1.0
 Flask-RESTful==0.3.10
 Flask-SQLAlchemy==3.0.5
@@ -40,10 +40,10 @@ jwcrypto==1.5.6
 limits==3.13.0
 Mako==1.2.2
 MarkupSafe==2.1.1
-marshmallow==3.26.2
-marshmallow-sqlalchemy==0.27.0
+marshmallow==4.2.2
+marshmallow-sqlalchemy==1.4.2
 packaging==21.3
-Pillow==12.1.1 # required by qrcode
+Pillow==12.2.0 # required by qrcode
 pycparser==2.21
 PyMySQL==1.1.1
 PyNaCl==1.6.2
@@ -53,7 +53,7 @@ pytz==2021.3
 pytz-deprecation-shim==0.1.0.post0
 qrcode==7.3.1
 redis==4.5.5
-requests==2.32.4
+requests==2.33.0
 requests_cache==1.2.1
 rich==12.5.1
 rq==2.1.0
@@ -61,7 +61,7 @@ rq-dashboard # publish_and_trivyscan stops working if we pin version 0.8.2.2
 s3transfer==0.14.0
 simplejson==3.17.6
 six==1.16.0
-SQLAlchemy==1.4.31
+SQLAlchemy==1.4.54
 structlog==21.5.0
 tzdata==2021.5
 tzlocal==4.1

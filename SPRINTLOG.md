@@ -603,3 +603,22 @@ _Nothing merged during this sprint_
 - New release: v2.14.1 ([#1802]https://github.com/ScilifelabDataCentre/dds_web/pull/1802)
 - Edit documentation for new release procedure ([#1805]https://github.com/ScilifelabDataCentre/dds_web/pull/1805)
 - Extend Renovate configuration ([#1801](https://github.com/ScilifelabDataCentre/dds_web/pull/1801))
+
+## 2026-03-16 - 2026-03-27
+
+- Update Trivy GitHub Actions ([#1814]https://github.com/ScilifelabDataCentre/dds_web/pull/1814)
+
+## 2026-03-30 - 2026-04-10
+
+- Update Trivy GitHub Actions ([#1814]https://github.com/ScilifelabDataCentre/dds_web/pull/1814)
+- Bump flatted from 3.2.7 to 3.4.2 ([#1817]https://github.com/ScilifelabDataCentre/dds_web/pull/1817)
+- Update dependency cryptography to v46.0.6 ([#1816]https://github.com/ScilifelabDataCentre/dds_web/pull/1816)
+- Update dependency requests to v2.33.0 ([#1815]https://github.com/ScilifelabDataCentre/dds_web/pull/1815)
+- Update dependency marshmallow to v4 ([#1800]https://github.com/ScilifelabDataCentre/dds_web/pull/1800)
+- New version 2.14.2 ([#1820]https://github.com/ScilifelabDataCentre/dds_web/pull/1820)
+
+## 2026-03-13 - 2026-04-24
+
+- Bump immutable from 5.1.4 to 5.1.5 in /dds_web/static ([#1829]https://github.com/ScilifelabDataCentre/dds_web/pull/1829)
+- Bump pillow from 12.1.1 to 12.2.0 ([#1830]https://github.com/ScilifelabDataCentre/dds_web/pull/1830)
+- Bump minimatch and serve in /dds_web/static ([#1831]https://github.com/ScilifelabDataCentre/dds_web/pull/1831)
