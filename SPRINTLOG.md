@@ -620,3 +620,4 @@ _Nothing merged during this sprint_
 ## 2026-03-13 - 2026-04-24
 
 - Bump immutable from 5.1.4 to 5.1.5 in /dds_web/static ([#1829]https://github.com/ScilifelabDataCentre/dds_web/pull/1829)
+- Bump pillow from 12.1.1 to 12.2.0 ([#1830]https://github.com/ScilifelabDataCentre/dds_web/pull/1830)
