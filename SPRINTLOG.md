@@ -616,3 +616,7 @@ _Nothing merged during this sprint_
 - Update dependency requests to v2.33.0 ([#1815]https://github.com/ScilifelabDataCentre/dds_web/pull/1815)
 - Update dependency marshmallow to v4 ([#1800]https://github.com/ScilifelabDataCentre/dds_web/pull/1800)
 - New version 2.14.2 ([#1820]https://github.com/ScilifelabDataCentre/dds_web/pull/1820)
+
+## 2026-03-13 - 2026-04-24
+
+- Bump immutable from 5.1.4 to 5.1.5 in /dds_web/static ([#1829]https://github.com/ScilifelabDataCentre/dds_web/pull/1829)
