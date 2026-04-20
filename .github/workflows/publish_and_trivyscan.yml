@@ -33,7 +33,6 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
             updmap-sys &&
             pandoc
@@ -57,7 +56,6 @@ jobs:
           entrypoint: /bin/sh
           args: >-
             -c "
-            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
             tlmgr install cm-super fontaxes lato xkeyval &&
             updmap-sys &&
             pandoc
