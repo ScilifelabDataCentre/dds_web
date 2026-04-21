@@ -30,7 +30,7 @@ Flask-Migrate==3.1.0
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==3.0.5
 Flask-WTF==1.1.2
-flask_swagger_ui==4.11.1
+flask_swagger_ui==5.32.4
 freezegun==1.2.2
 idna==3.7
 itsdangerous==2.2.0
