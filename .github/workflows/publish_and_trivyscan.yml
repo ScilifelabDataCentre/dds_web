@@ -28,7 +28,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex:3.9
         with:
           entrypoint: /bin/sh
           args: >-
@@ -51,7 +51,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex:3.9
         with:
           entrypoint: /bin/sh
           args: >-
