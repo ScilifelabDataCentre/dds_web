@@ -42,7 +42,7 @@ Mako==1.2.2
 MarkupSafe==2.1.1
 marshmallow==4.2.2
 marshmallow-sqlalchemy==1.4.2
-packaging==21.3
+packaging==26.2
 Pillow==12.2.0 # required by qrcode
 pycparser==2.21
 PyMySQL==1.1.1
