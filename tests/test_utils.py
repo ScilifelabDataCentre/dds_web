@@ -1809,6 +1809,49 @@ def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_s3(
     assert "File not found in S3" in errors["file1.txt"]["error"]
 
 
+def test_add_uploaded_files_to_db_correct_failed_op_s3_error_not_404(
+    client: flask.testing.FlaskClient,
+):
+    """Test that non-404 S3 errors are returned for visibility."""
+    from botocore.exceptions import ClientError
+
+    # Prepare input data
+    proj_in_db = models.Project.query.first()
+    log = {
+        "file1.txt": {
+            "status": {"failed_op": "add_file_db"},
+            "path_remote": "path/to/file1.txt",
+            "subpath": "subpath",
+            "size_raw": 100,
+            "size_processed": 200,
+            "compressed": False,
+            "public_key": "public_key",
+            "salt": "salt",
+            "checksum": "checksum",
+        }
+    }
+
+    # Mock ApiS3Connector
+    mock_api_s3_conn = MagicMock()
+    mock_s3conn = mock_api_s3_conn.return_value.__enter__.return_value
+
+    # Call add_uploaded_files_to_db
+    with patch("dds_web.api.api_s3_connector.ApiS3Connector", mock_api_s3_conn):
+        mock_s3conn.resource.meta.client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "403", "Message": "Forbidden"}}, "operation_name"
+        )
+        files_added, errors = utils.add_uploaded_files_to_db(proj_in_db, log)
+
+    # check that the file is not added to the database
+    file = models.File.query.filter_by(name="file1.txt").first()
+    assert not file
+
+    # check that the error is returned and files_added is empty
+    assert file not in files_added
+    assert files_added == []
+    assert "S3 head_object failed (403): Forbidden" in errors["file1.txt"]["error"]
+
+
 def test_add_uploaded_files_to_db_correct_failed_op_file_not_found_in_db(
     client: flask.testing.FlaskClient,
 ):

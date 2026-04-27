@@ -42,6 +42,11 @@ def handle_validation_errors(func):
         try:
             result = func(*args, **kwargs)
         except marshmallow.exceptions.ValidationError as valerr:
+            flask.current_app.logger.warning(
+                "Validation error in %s: %s",
+                flask.request.endpoint,
+                valerr.messages,
+            )
             if "_schema" in valerr.messages:
                 return valerr.messages["_schema"][0], 400
             else:
