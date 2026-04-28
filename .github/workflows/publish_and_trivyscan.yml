@@ -27,13 +27,31 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      # pandoc/latex pinned by digest:
+      #
+      # We deliberately pin to the immutable digest of pandoc/latex:latest
+      # (TeX Live 2026, default repo https://mirror.ctan.org/systems/texlive/tlnet)
+      # rather than a minor-version tag. The minor-version tags (:3.6, :3.7, ...)
+      # bundle the TL release that was current at image build time, and once that
+      # TL year is frozen by the next release the image's tlmgr default repo
+      # silently switches to ftp://tug.org/historic/.../tlnet-final, which is
+      # unreachable from GitHub-hosted runners (FTP). Pinning to the digest of
+      # a recently-rebuilt :latest gives us reproducibility AND a working live
+      # tlnet mirror. Bump the digest deliberately when you want to roll forward.
+      #
+      # set -eo pipefail makes silent tlmgr install failures fail the step.
+      # kpsewhich lato.sty verifies the install actually succeeded before we
+      # hand off to pandoc, so a future regression surfaces here with a clear
+      # error instead of as a downstream LaTeX "File `lato.sty' not found".
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex@sha256:467bb9a70723627a34eb7003e46a1bb7c9344ea4580a46c4c978860784a6a754
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
+            set -eo pipefail &&
             tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
+            kpsewhich lato.sty &&
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-technical-overview.pdf
@@ -50,13 +68,18 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      # See the comment on the build_tech_overview job for why this image is
+      # pinned by digest rather than by minor version, and why the script uses
+      # set -eo pipefail + kpsewhich.
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex:3.2
+        uses: docker://pandoc/latex@sha256:467bb9a70723627a34eb7003e46a1bb7c9344ea4580a46c4c978860784a6a754
         with:
           entrypoint: /bin/sh
           args: >-
             -c "
+            set -eo pipefail &&
             tlmgr install cm-super fontaxes lato xkeyval &&
+            kpsewhich lato.sty &&
             updmap-sys &&
             pandoc
             --output=dds_web/static/dds-troubleshooting.pdf
