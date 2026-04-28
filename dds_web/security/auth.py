@@ -6,6 +6,8 @@
 
 # built in libraries
 import gc
+import smtplib
+import socket
 
 # Installed
 import datetime
@@ -23,6 +25,7 @@ from dds_web.errors import (
     AccessDeniedError,
     InviteError,
     TokenMissingError,
+    TwoFactorEmailError,
 )
 from dds_web.database import models
 import dds_web.utils
@@ -327,7 +330,16 @@ def __handle_multi_factor_authentication(user, mfa_auth_time_string):
 
 
 def send_hotp_email(user):
-    """Send one time code via email."""
+    """Send one time code via email.
+
+    Raises:
+        TwoFactorEmailError: If the SMTP / DNS / socket layer fails
+            while sending the email. Callers should treat this as a
+            transient failure and surface it as a 503 to the client
+            (or render an equivalent message in the web UI). It is
+            intentionally distinct from "no email needed to be sent"
+            (the cooldown / activation case), which still returns False.
+    """
     # Only send if
     # - not trying to activate hotp
     # or
@@ -344,7 +356,21 @@ def send_hotp_email(user):
 
         # Create and send email
         msg = dds_web.utils.create_one_time_password_email(user=user, hotp_value=hotp_value)
-        mail.send(msg)
+        try:
+            mail.send(msg)
+        except (smtplib.SMTPException, socket.gaierror, TimeoutError, OSError) as exc:
+            # Preserve the traceback for ops while keeping the user-facing
+            # response controlled. We log via the app logger (full traceback)
+            # and emit a structured action event so this can be alerted on.
+            flask.current_app.logger.exception(
+                "Failed to send HOTP email to user '%s'", user.username
+            )
+            action_logger.warning(
+                "hotp_email_send_failed",
+                user=user.username,
+                reason=type(exc).__name__,
+            )
+            raise TwoFactorEmailError() from exc
         return True
     return False
 

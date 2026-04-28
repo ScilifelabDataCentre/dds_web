@@ -115,6 +115,28 @@ class KeyOperationError(LoggedHTTPException):
         general_logger.warning(message)
 
 
+class TwoFactorEmailError(LoggedHTTPException):
+    """Errors raised when the one-time-code email cannot be sent.
+
+    Used to convert transient SMTP / DNS / socket failures during HOTP
+    email delivery into a controlled 503 response, instead of letting
+    the exception propagate as a generic 500.
+    """
+
+    code = http.HTTPStatus.SERVICE_UNAVAILABLE
+
+    def __init__(
+        self,
+        message=(
+            "We could not send your one-time code right now. "
+            "Please try again in a moment."
+        ),
+    ):
+        super().__init__(message)
+
+        general_logger.warning(message)
+
+
 class AuthenticationError(LoggedHTTPException):
     """Base class for errors due to authentication failure."""
 
