@@ -128,8 +128,7 @@ class TwoFactorEmailError(LoggedHTTPException):
     def __init__(
         self,
         message=(
-            "We could not send your one-time code right now. "
-            "Please try again in a moment."
+            "We could not send your one-time code right now. " "Please try again in a moment."
         ),
     ):
         super().__init__(message)

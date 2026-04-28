@@ -201,9 +201,7 @@ def test_password_reset(client: flask.testing.FlaskClient):
 # We exercise the three failure modes that send_hotp_email now catches.
 
 
-def _post_login_with_failing_mail(
-    client: flask.testing.FlaskClient, side_effect: Exception
-):
+def _post_login_with_failing_mail(client: flask.testing.FlaskClient, side_effect: Exception):
     """Helper: post valid credentials to /login while mail.send raises side_effect."""
     user_auth = UserAuth(USER_CREDENTIALS["researcher"])
 
@@ -250,9 +248,7 @@ def _assert_redirected_back_to_login(client, response):
 
 def test_login_redirects_back_when_mail_dns_fails(client):
     """socket.gaierror (DNS lookup failure) on mail.send must not 500."""
-    response = _post_login_with_failing_mail(
-        client, side_effect=socket.gaierror(-3, "Try again")
-    )
+    response = _post_login_with_failing_mail(client, side_effect=socket.gaierror(-3, "Try again"))
     _assert_redirected_back_to_login(client, response)
 
 

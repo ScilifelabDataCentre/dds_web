@@ -407,9 +407,7 @@ def login():
                     flask.flash("One-Time Code has been sent to your primary email.")
             except ddserr.TwoFactorEmailError as exc:
                 flask.flash(exc.description or str(exc), "danger")
-                return flask.redirect(
-                    flask.url_for("auth_blueprint.login", next=next_target)
-                )
+                return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(

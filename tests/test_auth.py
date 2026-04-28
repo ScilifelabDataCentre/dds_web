@@ -84,9 +84,7 @@ def _fresh_user_for_hotp() -> models.User:
         OSError("connection reset by peer"),
     ],
 )
-def test_send_hotp_email_raises_TwoFactorEmailError_on_mail_failure(
-    request_ctx_for_login, exc
-):
+def test_send_hotp_email_raises_TwoFactorEmailError_on_mail_failure(request_ctx_for_login, exc):
     """Each of the documented failure modes must surface as TwoFactorEmailError."""
     user = _fresh_user_for_hotp()
 
