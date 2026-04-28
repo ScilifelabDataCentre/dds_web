@@ -616,3 +616,14 @@ _Nothing merged during this sprint_
 - Update dependency requests to v2.33.0 ([#1815]https://github.com/ScilifelabDataCentre/dds_web/pull/1815)
 - Update dependency marshmallow to v4 ([#1800]https://github.com/ScilifelabDataCentre/dds_web/pull/1800)
 - New version 2.14.2 ([#1820]https://github.com/ScilifelabDataCentre/dds_web/pull/1820)
+
+## 2026-03-13 - 2026-04-24
+
+- Bump immutable from 5.1.4 to 5.1.5 in /dds_web/static ([#1829]https://github.com/ScilifelabDataCentre/dds_web/pull/1829)
+- Bump pillow from 12.1.1 to 12.2.0 ([#1830]https://github.com/ScilifelabDataCentre/dds_web/pull/1830)
+- Bump minimatch and serve in /dds_web/static ([#1831]https://github.com/ScilifelabDataCentre/dds_web/pull/1831)
+- Fix broken action ([#1832]https://github.com/ScilifelabDataCentre/dds_web/pull/1832)
+
+## 2026-04-27 - 2026-05-08
+
+- Fail gracefully when HOTP email cannot be sent ([#1834]https://github.com/ScilifelabDataCentre/dds_web/pull/1834)
