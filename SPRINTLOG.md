@@ -627,3 +627,4 @@ _Nothing merged during this sprint_
 ## 2026-04-27 - 2026-05-08
 
 - Fail gracefully when HOTP email cannot be sent ([#1834]https://github.com/ScilifelabDataCentre/dds_web/pull/1834)
+- Update dependency cryptography to v46.0.7 [SECURITY] ([#1824]https://github.com/ScilifelabDataCentre/dds_web/pull/1824)
