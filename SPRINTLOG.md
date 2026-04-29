@@ -623,3 +623,9 @@ _Nothing merged during this sprint_
 - Bump pillow from 12.1.1 to 12.2.0 ([#1830]https://github.com/ScilifelabDataCentre/dds_web/pull/1830)
 - Bump minimatch and serve in /dds_web/static ([#1831]https://github.com/ScilifelabDataCentre/dds_web/pull/1831)
 - Fix broken action ([#1832]https://github.com/ScilifelabDataCentre/dds_web/pull/1832)
+
+## 2026-04-27 - 2026-05-08
+
+- Fail gracefully when HOTP email cannot be sent ([#1834]https://github.com/ScilifelabDataCentre/dds_web/pull/1834)
+- Update dependency cryptography to v46.0.7 [SECURITY] ([#1824]https://github.com/ScilifelabDataCentre/dds_web/pull/1824)
+- Update dependency postcss to v8.5.10 [SECURITY] ([#1833]https://github.com/ScilifelabDataCentre/dds_web/pull/1833)
