@@ -632,3 +632,4 @@ _Nothing merged during this sprint_
 - Update dependency Mako to v1.3.11 [SECURITY] ([#1828]https://github.com/ScilifelabDataCentre/dds_web/pull/1828)
 - Correct the troubleshooting guide regarding TOTP reset/deactivation ([#1835]https://github.com/ScilifelabDataCentre/dds_web/pull/1835)
 - Update dependency Authlib to v1.6.11 [SECURITY] ([#1827]https://github.com/ScilifelabDataCentre/dds_web/pull/1827)
+- Update dependency pytest to v9 [SECURITY] ([#1826]https://github.com/ScilifelabDataCentre/dds_web/pull/1826)
