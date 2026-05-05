@@ -1,6 +1,24 @@
 Changelog
 ==========
 
+.. _2.14.2:
+
+2.14.2 - 2026-04-07
+~~~~~~~~~~~~~~~~~~~~
+
+- 🛡️ Dependencies
+    - Update dependency requests to v2.33.0 [SECURITY] ([#1815](https://github.com/ScilifelabDataCentre/dds_web/pull/1815))
+    - Update dependency cryptography to v46.0.6 [SECURITY] ([#1816](https://github.com/ScilifelabDataCentre/dds_web/pull/1816))
+    - Bump flatted from 3.2.7 to 3.4.2 in /dds\_web/static ([#1817](https://github.com/ScilifelabDataCentre/dds_web/pull/1817))
+    - Bump authlib from 1.6.6 to 1.6.9 ([#1812](https://github.com/ScilifelabDataCentre/dds_web/pull/1812))
+    - Update dependency Flask to v3 [SECURITY] ([#1675](https://github.com/ScilifelabDataCentre/dds_web/pull/1675))
+- 📌 Other Changes
+    - Update actions/download-artifact action to v8 ([#1784](https://github.com/ScilifelabDataCentre/dds_web/pull/1784))
+    - Update aquasecurity/trivy-action action to v0.34.0 [SECURITY] ([#1807](https://github.com/ScilifelabDataCentre/dds_web/pull/1807))
+    - Update release-drafter/release-drafter action to v7 ([#1808](https://github.com/ScilifelabDataCentre/dds_web/pull/1808))
+    - Update actions/setup-python action to v6 ([#1738](https://github.com/ScilifelabDataCentre/dds_web/pull/1738))
+    - Update actions/setup-node action to v6 ([#1737](https://github.com/ScilifelabDataCentre/dds_web/pull/1737))
+
 .. _2.14.1:
 
 2.14.1 - 2026-03-11
