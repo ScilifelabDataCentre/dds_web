@@ -106,6 +106,48 @@ def test_auth_correct_credentials(client):
         assert mock_mail_send.call_count == 0
 
 
+def test_encrypted_token_returns_503_when_mail_dns_fails(client):
+    """If sending the HOTP email fails (DNS / SMTP / socket layer), the
+    /user/encrypted_token endpoint must return 503 with a clear message,
+    not 500. Mirrors the behavior of the web /login redirect-with-flash
+    fix on the API side.
+    """
+    import socket as _socket
+
+    with unittest.mock.patch.object(
+        flask_mail.Mail,
+        "send",
+        side_effect=_socket.gaierror(-3, "Try again"),
+    ) as mock_mail_send:
+        response = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
+        assert mock_mail_send.call_count == 1
+
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+    assert "one-time code" in (response.json or {}).get("message", "").lower()
+
+
+def test_encrypted_token_returns_503_when_smtp_fails(client):
+    """smtplib.SMTPException is also caught and surfaced as 503."""
+    import smtplib as _smtplib
+
+    with unittest.mock.patch.object(
+        flask_mail.Mail,
+        "send",
+        side_effect=_smtplib.SMTPException("relay rejected"),
+    ):
+        response = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
+
+    assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+
+
 # Second Factor ################################################################### Second Factor #
 
 
