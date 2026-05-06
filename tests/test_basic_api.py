@@ -176,9 +176,9 @@ def test_encrypted_token_retry_after_mail_failure_actually_sends(client):
             auth=("researchuser", "password"),
             headers=tests.DEFAULT_HEADER,
         )
-        assert mock_second.call_count == 1, (
-            "Retry after mail failure must reach mail.send, not be silenced by cooldown"
-        )
+        assert (
+            mock_second.call_count == 1
+        ), "Retry after mail failure must reach mail.send, not be silenced by cooldown"
     assert response_2.status_code == http.HTTPStatus.OK
 
 

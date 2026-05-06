@@ -314,9 +314,9 @@ def test_login_retry_after_mail_failure_actually_sends(client):
         response_2 = client.post(
             DDSEndpoint.LOGIN, json=form_data, follow_redirects=True, headers=DEFAULT_HEADER
         )
-        assert mock_second.call_count == 1, (
-            "Retry after a failed send must call mail.send, not hit cooldown"
-        )
+        assert (
+            mock_second.call_count == 1
+        ), "Retry after a failed send must call mail.send, not hit cooldown"
 
     assert response_2.request.path == DDSEndpoint.CONFIRM_2FA
     with client.session_transaction() as session:
