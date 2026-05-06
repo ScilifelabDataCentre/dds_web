@@ -382,6 +382,10 @@ def send_hotp_email(user):
                     "Failed to roll back HOTP state for user '%s' after mail send failure",
                     user.username,
                 )
+                action_logger.error(
+                    "hotp_state_rollback_failed",
+                    user=user.username,
+                )
 
             # Preserve the traceback for ops while keeping the user-facing
             # response controlled. We log via the app logger (full traceback)
