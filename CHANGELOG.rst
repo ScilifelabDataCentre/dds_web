@@ -1,6 +1,23 @@
 Changelog
 ==========
 
+.. _2.14.3:
+
+2.14.3 - 2026-05-06
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - Correct the troubleshooting guide regarding TOTP reset/deactivation ([#1835](https://github.com/ScilifelabDataCentre/dds_web/pull/1835))
+    - Hms 2656 handle failed mail send ([#1834](https://github.com/ScilifelabDataCentre/dds_web/pull/1834))
+- 🛡️ Dependencies
+    - Update dependency Authlib to v1.6.11 [SECURITY] ([#1827](https://github.com/ScilifelabDataCentre/dds_web/pull/1827))
+    - Update dependency Mako to v1.3.11 [SECURITY] ([#1828](https://github.com/ScilifelabDataCentre/dds_web/pull/1828))
+    - Update dependency postcss to v8.5.10 [SECURITY] ([#1833](https://github.com/ScilifelabDataCentre/dds_web/pull/1833))
+    - Update dependency cryptography to v46.0.7 [SECURITY] ([#1824](https://github.com/ScilifelabDataCentre/dds_web/pull/1824))
+    - Bump minimatch and serve in /dds\_web/static ([#1831](https://github.com/ScilifelabDataCentre/dds_web/pull/1831))
+    - Bump pillow from 12.1.1 to 12.2.0 ([#1830](https://github.com/ScilifelabDataCentre/dds_web/pull/1830))
+    - Bump immutable from 5.1.4 to 5.1.5 in /dds\_web/static ([#1829](https://github.com/ScilifelabDataCentre/dds_web/pull/1829))
+
 .. _2.14.2:
 
 2.14.2 - 2026-04-07

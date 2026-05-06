@@ -6,6 +6,8 @@
 
 # built in libraries
 import gc
+import smtplib
+import socket
 
 # Installed
 import datetime
@@ -14,15 +16,17 @@ import flask
 import json
 import jwcrypto
 from jwcrypto import jwk, jwt
+import sqlalchemy
 import structlog
 
 # Own modules
-from dds_web import basic_auth, auth, mail
+from dds_web import basic_auth, auth, mail, db
 from dds_web.errors import (
     AuthenticationError,
     AccessDeniedError,
     InviteError,
     TokenMissingError,
+    TwoFactorEmailError,
 )
 from dds_web.database import models
 import dds_web.utils
@@ -327,7 +331,16 @@ def __handle_multi_factor_authentication(user, mfa_auth_time_string):
 
 
 def send_hotp_email(user):
-    """Send one time code via email."""
+    """Send one time code via email.
+
+    Raises:
+        TwoFactorEmailError: If the SMTP / DNS / socket layer fails
+            while sending the email. Callers should treat this as a
+            transient failure and surface it as a 503 to the client
+            (or render an equivalent message in the web UI). It is
+            intentionally distinct from "no email needed to be sent"
+            (the cooldown / activation case), which still returns False.
+    """
     # Only send if
     # - not trying to activate hotp
     # or
@@ -344,7 +357,49 @@ def send_hotp_email(user):
 
         # Create and send email
         msg = dds_web.utils.create_one_time_password_email(user=user, hotp_value=hotp_value)
-        mail.send(msg)
+        try:
+            mail.send(msg)
+        except (smtplib.SMTPException, socket.gaierror, TimeoutError, OSError) as exc:
+            # generate_HOTP_token() above committed `hotp_counter += 1` and
+            # `hotp_issue_time = now` to the user row. If we leave that state
+            # in place, an immediate retry will hit the 15-minute cooldown
+            # branch in this function (see the `elif` above), no email will
+            # be sent, and the user will be redirected to the code-entry page
+            # with no code en route. Roll the state back so a retry can issue
+            # a fresh code. We bump the counter further (via reset_current_HOTP)
+            # so the just-generated code is invalidated even if it somehow
+            # ends up delivered late.
+            try:
+                user.reset_current_HOTP()
+                db.session.commit()
+            except sqlalchemy.exc.SQLAlchemyError as rollback_exc:
+                # If the rollback commit itself fails, surface the original
+                # mail-send failure to the user rather than a confusing DB
+                # error. The cooldown will simply persist; the user will be
+                # locked out until it expires, which is no worse than today.
+                db.session.rollback()
+                flask.current_app.logger.exception(
+                    "Failed to roll back HOTP state for user '%s' after mail send failure",
+                    user.username,
+                )
+                action_logger.error(
+                    "hotp_state_rollback_failed",
+                    user=user.username,
+                    reason=type(rollback_exc).__name__,
+                )
+
+            # Preserve the traceback for ops while keeping the user-facing
+            # response controlled. We log via the app logger (full traceback)
+            # and emit a structured action event so this can be alerted on.
+            flask.current_app.logger.exception(
+                "Failed to send HOTP email to user '%s'", user.username
+            )
+            action_logger.warning(
+                "hotp_email_send_failed",
+                user=user.username,
+                reason=type(exc).__name__,
+            )
+            raise TwoFactorEmailError() from exc
         return True
     return False
 

@@ -196,10 +196,8 @@ lost access to it (e.g. due to a broken or lost device), the Data Centre can dea
 let you authenticate using the default email option. After this you can choose to activate the authenticator app method
 again.
 
-- Researcher role: Please contact a SciLifeLab unit responsible for one of your ongoing delivery projects and tell them
-  you need a reset of the 2FA method.
-- Unit Admin / Personnel: Please contact Data Centre and ask for a reset of the 2FA method. Inform them of the username
-  and email address of the affected account.
+Please contact Data Centre and ask for a reset of the 2FA method; complenent the request with the username
+and email address of the affected account.
 
 ## R. Windows: DDS freezes after message
 
