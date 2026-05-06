@@ -372,7 +372,7 @@ def send_hotp_email(user):
             try:
                 user.reset_current_HOTP()
                 db.session.commit()
-            except sqlalchemy.exc.SQLAlchemyError:
+            except sqlalchemy.exc.SQLAlchemyError as rollback_exc:
                 # If the rollback commit itself fails, surface the original
                 # mail-send failure to the user rather than a confusing DB
                 # error. The cooldown will simply persist; the user will be
@@ -385,6 +385,7 @@ def send_hotp_email(user):
                 action_logger.error(
                     "hotp_state_rollback_failed",
                     user=user.username,
+                    reason=type(rollback_exc).__name__,
                 )
 
             # Preserve the traceback for ops while keeping the user-facing
