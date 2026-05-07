@@ -7,6 +7,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~~~
 
 - 🐛 Bug Fixes
+    - Fix(auth): roll back HOTP state when one-time-code email send fails ([#1838](https://github.com/ScilifelabDataCentre/dds_web/pull/1838))
     - Correct the troubleshooting guide regarding TOTP reset/deactivation ([#1835](https://github.com/ScilifelabDataCentre/dds_web/pull/1835))
     - Hms 2656 handle failed mail send ([#1834](https://github.com/ScilifelabDataCentre/dds_web/pull/1834))
 - 🛡️ Dependencies
