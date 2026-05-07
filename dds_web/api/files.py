@@ -87,10 +87,11 @@ class NewFile(flask_restful.Resource):
         # Verify that project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
 
-        # Create new files
+        # Create new files (new_file is not attached via project.files so add explicitly)
         new_file = file_schemas.NewFileSchema().load(
             {**flask.request.get_json(silent=True), "project": project.public_id}
         )
+        db.session.add(new_file)
 
         try:
             db.session.commit()
