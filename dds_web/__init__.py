@@ -13,6 +13,7 @@ import multiprocessing
 
 # Installed
 import flask
+from jinja2 import ChoiceLoader, FileSystemLoader
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from logging.config import dictConfig
@@ -252,6 +253,15 @@ def create_app(testing=False, database_uri=None):
         """Construct the core application."""
         # Initiate app object
         app = flask.Flask(__name__, instance_relative_config=False)
+
+        # Brand override templates — checked before the default templates/ folder.
+        # Place only the files you want to override in templates_brand/; everything
+        # else is still served from the upstream templates/ directory.
+        _brand_templates = pathlib.Path(__file__).parent / "templates_brand"
+        app.jinja_loader = ChoiceLoader([
+            FileSystemLoader(str(_brand_templates)),
+            app.jinja_loader,
+        ])
 
         # All variables in the env that start with FLASK_* will be loaded into the app config
         # 'FLASK_' will be dropped, e.g. FLASK_TESTVAR will be loaded as TESTVAR

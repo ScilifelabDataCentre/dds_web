@@ -377,15 +377,15 @@ def delrequest_exists(email):
 def send_reset_email(email_row, token):
     """Generate password reset email."""
     msg = flask_mail.Message(
-        "WARNING! Password Reset Request for SciLifeLab Data Delivery System",
+        "WARNING! Password Reset Request for Epigenica Data Delivery System",
         recipients=[email_row.email],
     )
 
     # Need to attach the image to be able to use it
     msg.attach(
-        "scilifelab_logo.png",
+        "epigenica_logo_light_bg.png",
         "image/png",
-        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        open(os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb").read(),
         "inline",
         headers=[
             ["Content-ID", "<Logo>"],
@@ -408,9 +408,9 @@ def send_project_access_reset_email(email_row, email, token):
 
     # Need to attach the image to be able to use it
     msg.attach(
-        "scilifelab_logo.png",
+        "epigenica_logo_light_bg.png",
         "image/png",
-        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        open(os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb").read(),
         "inline",
         headers=[
             ["Content-ID", "<Logo>"],
@@ -511,10 +511,10 @@ def send_motd_to_user_list(users_to_send, subject, body, html):
                 subject=subject, recipients=[primary_email], body=body, html=html
             )
             msg.attach(
-                "scilifelab_logo.png",
+                "epigenica_logo_light_bg.png",
                 "image/png",
                 open(
-                    os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"),
+                    os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"),
                     "rb",
                 ).read(),
                 "inline",
@@ -535,9 +535,9 @@ def create_one_time_password_email(user, hotp_value):
     )
 
     msg.attach(
-        "scilifelab_logo.png",
+        "epigenica_logo_light_bg.png",
         "image/png",
-        open(os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb").read(),
+        open(os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb").read(),
         "inline",
         headers=[
             ["Content-ID", "<Logo>"],

@@ -1,0 +1,23 @@
+The following project is now available for your access in the Epigenica Data Delivery System (DDS) and you can now download your data.
+    - Project Title: {{project_title}}
+    - DDS project ID: {{project_id}}
+
+You were added to this project {% if unit_email %} on behalf of {% else %} by {% endif %} {{displayed_sender}}.
+
+To list the files in this project, run:
+    dds ls -p {{project_id}}
+
+To download all the files in this project to your current directory, run:
+    dds data get -p {{project_id}} -a --verify-checksum.
+
+For more information (including an installation guide), see the DDS CLI documentation here: https://scilifelabdatacentre.github.io/dds_cli/
+
+{% if unit_email %}
+If you experience issues, please contact {{displayed_sender}} at {{unit_email}}.
+{% else %}
+If you experience issues, please contact {{displayed_sender}}.
+{% endif %}
+
+Your access to this project will expire on {{deadline}}
+
+What is the DDS? The DDS is a system for Epigenica to deliver data to researchers in a fast, secure and simple way.

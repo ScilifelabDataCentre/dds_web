@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container p-0" style="margin-top: 30px; font-size: medium;">
+    <h2>Troubleshooting the DDS</h2>
+    </br>
+    <h4>Experiencing issues with the DDS?</h4>
+    <p>Please <strong>read the troubleshooting document</strong> which provides answers to previously asked questions and possible solutions to issues that have been reported. </p>
+    <p class="lead"><a class="btn btn-info" href="/static/dds-troubleshooting.pdf">Download the PDF</a>&nbsp;</p>
+    <br>
+    <h4>Did the troubleshooting document not help?</h4>
+    <p>Please <strong>go through the following steps</strong>:</p>
+    <ol>
+        <li>If the issue is related to the CLI, <strong>verify</strong> that you have the latest version installed: Open a terminal window, run <code>dds --version</code> and compare the displayed version to the latest one. The latest version can be found at <a href="https://pypi.org/project/dds-cli/">PyPI</a>.</li>
+        <li><strong>Look at</strong> the CLI documentation <a href="https://scilifelabdatacentre.github.io/dds_cli/">here</a>.</li>
+        <li><strong>Read</strong> through the sections in the <a href="/technical">technical overview</a> relevant to your issue and check the topics below for possible solutions.</li>
+    </ol>
+    <br>
+    <h4>Does the issue persist and/or the provided information not help?</h4>
+    <p>If you're a <b>data producer</b>, using the DDS for data deliveries to your users: contact <a href="mailto:nima.rafati@epigenica.se">nima.rafati@epigenica.se</a>.</p>
+    <p>If you're a <b>data recipient</b>, using the DDS to download your data: contact the Epigenica unit responsible for delivering the data to you.</p>
+    <p>Please <strong>provide the following information</strong>:</p>
+    <ul>
+        <li>Did the error/issue occur in the web interface or the CLI?</li>
+        <li>Web:</li>
+        <ul>
+            <li>What did you attempt to do?</li>
+            <li>When did this message/error appear? </li>
+            <li>Screenshot of the web page with the error.</li>
+        </ul>
+        <li>CLI</li>
+        <ul>
+            <li>What command did you run? Please copy and paste the command so that we get the exact command.</li>
+            <li>Copy and paste the full output that the terminal displayed after you ran the command. </li>
+        </ul>
+    </ul>
+</div>
+{% endblock %}

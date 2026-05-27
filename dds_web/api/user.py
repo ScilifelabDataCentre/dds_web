@@ -444,9 +444,9 @@ class AddUser(flask_restful.Resource):
 
         # Fill in email subject with sentence subject
         if mail_type == "invite":
-            subject = f"{displayed_sender} invites you to the SciLifeLab Data Delivery System"
+            subject = f"{displayed_sender} invites you to the Epigenica Data Delivery System"
         elif mail_type == "project_release":
-            subject = f"Project made available by {displayed_sender} in the SciLifeLab Data Delivery System"
+            subject = f"Project made available by {displayed_sender} in the Epigenica Data Delivery System"
             project_id = project.public_id
             project_title = project.title
             deadline = project.current_deadline.astimezone(datetime.timezone.utc).strftime(
@@ -462,10 +462,10 @@ class AddUser(flask_restful.Resource):
 
         # Need to attach the image to be able to use it
         msg.attach(
-            "scilifelab_logo.png",
+            "epigenica_logo_light_bg.png",
             "image/png",
             open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb"
             ).read(),
             "inline",
             headers=[
@@ -583,7 +583,7 @@ class DeleteUserSelf(flask_restful.Resource):
 
         # Create link for deletion request email
         link = flask.url_for("auth_blueprint.confirm_self_deletion", token=token, _external=True)
-        subject = f"Confirm deletion of your user account {username} in the SciLifeLab Data Delivery System"
+        subject = f"Confirm deletion of your user account {username} in the Epigenica Data Delivery System"
 
         msg = flask_mail.Message(
             subject,
@@ -592,10 +592,10 @@ class DeleteUserSelf(flask_restful.Resource):
 
         # Need to attach the image to be able to use it
         msg.attach(
-            "scilifelab_logo.png",
+            "epigenica_logo_light_bg.png",
             "image/png",
             open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb"
             ).read(),
             "inline",
             headers=[
@@ -1139,7 +1139,7 @@ class RequestTOTPActivation(flask_restful.Resource):
         recipients = [user.primary_email]
 
         # Fill in email subject with sentence subject
-        subject = f"Request to activate two-factor with authenticator app for SciLifeLab Data Delivery System"
+        subject = f"Request to activate two-factor with authenticator app for Epigenica Data Delivery System"
 
         msg = flask_mail.Message(
             subject,
@@ -1148,10 +1148,10 @@ class RequestTOTPActivation(flask_restful.Resource):
 
         # Need to attach the image to be able to use it
         msg.attach(
-            "scilifelab_logo.png",
+            "epigenica_logo_light_bg.png",
             "image/png",
             open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb"
             ).read(),
             "inline",
             headers=[
@@ -1204,7 +1204,7 @@ class RequestHOTPActivation(flask_restful.Resource):
         recipients = [user.primary_email]
 
         # Fill in email subject with sentence subject
-        subject = f"Request to activate two-factor authentication with email for SciLifeLab Data Delivery System"
+        subject = f"Request to activate two-factor authentication with email for Epigenica Data Delivery System"
 
         msg = flask_mail.Message(
             subject,
@@ -1213,10 +1213,10 @@ class RequestHOTPActivation(flask_restful.Resource):
 
         # Need to attach the image to be able to use it
         msg.attach(
-            "scilifelab_logo.png",
+            "epigenica_logo_light_bg.png",
             "image/png",
             open(
-                os.path.join(flask.current_app.static_folder, "img/scilifelab_logo.png"), "rb"
+                os.path.join(flask.current_app.static_folder, "img/epigenica_logo_light_bg.png"), "rb"
             ).read(),
             "inline",
             headers=[

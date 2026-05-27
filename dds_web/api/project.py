@@ -890,7 +890,7 @@ class RemoveContents(flask_restful.Resource):
         ) as sqlerr:
             error_msg = (
                 "Project bucket contents were deleted, but they were not deleted from the "
-                "database. Please contact SciLifeLab Data Centre."
+                "database. Please contact Epigenica support."
                 + (
                     "Database malfunction."
                     if isinstance(sqlerr, sqlalchemy.exc.OperationalError)

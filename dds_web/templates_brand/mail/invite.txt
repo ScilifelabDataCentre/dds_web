@@ -1,0 +1,9 @@
+You have been invited to join the Epigenica Data Delivery System (DDS).
+The DDS is a system for Epigenica to deliver data to researchers in a fast, secure and simple way.
+
+{% if unit_email %}
+The invite was sent to you on behalf of {{displayed_sender}} ({{unit_email}}).
+{% else %}
+The invite was sent to you by {{displayed_sender}}.
+{% endif %}
+Please copy paste the following link into your browser to create your account: {{link}}

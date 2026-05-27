@@ -92,7 +92,7 @@ jobs:
           path: dds_web/static/dds-troubleshooting.pdf
   push_to_registry:
     needs: [build_tech_overview, build_troubleshooting]
-    if: github.repository == 'ScilifelabDataCentre/dds_web'
+    if: github.repository == 'epigenica/dds_web'
     name: Push image
     runs-on: ubuntu-latest
     permissions:
@@ -126,7 +126,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/scilifelabdatacentre/dds-backend
+            ghcr.io/epigenica/dds-backend
       - name: Ensure lowercase name
         run: echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
       - name: Build for scan

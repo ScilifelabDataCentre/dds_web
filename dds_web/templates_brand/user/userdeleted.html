@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block page_title -%}
+Account deletion
+{%- endblock %}
+
+{% block body %}
+
+{% if initial %}
+<!-- TODO: Move to a flash message instead -->
+<h2>Account deletion completed</h2>
+{% else %}
+<h2>Your account is already deleted!</h2>
+{% endif %}
+<p>You have successfully deleted your account <strong>{{username}}</strong> at the <span>Epigenica Data Delivery
+        System</span>. Thank you for using our services. Feel free to sign up again, should you ever need to receive
+    data from us in the future!</p>
+
+{% endblock %}

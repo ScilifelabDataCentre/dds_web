@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block page_title -%}
+Log in to DDS
+{%- endblock %}
+
+{% block body %}
+
+<p class="lead">Please use the form below to log in to the Epigenica Data Delivery System.</p>
+<div class="row">
+    <div class="col-lg-6">
+        {% include "components/login_form.html" %}
+    </div>
+    <div class="col-lg-6">
+        <p>In order to get a DDS account you need an invitation from Epigenica.
+            Once you have received the invitation, you can register an account and log in to the system.</p>
+    </div>
+</div>
+{% endblock %}

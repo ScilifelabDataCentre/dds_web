@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<div class="row mb-5 pb-3">
+    <div class="col-lg-6">
+        <p class="lead" style="justify-content: start;">This instance of the Data Delivery System (DDS) is a cloud-based system for the delivery of data from Epigenica to their users. It consists of a command line interface (CLI) and a web interface.</p>
+        <br>
+        <div class="row">
+            <div class="col-xxl-8 offset-xxl-2 bg-light p-3" style="display: flex; flex-direction: column;">
+                {% if g.current_user %}
+                    <a class="btn btn-primary w-100 mb-2" href="{{ url_for('auth_blueprint.projects_info') }}">
+                        View projects
+                    </a>
+                    <a class="btn btn-success w-100" href="{{ url_for('auth_blueprint.logout_get') }}">
+                        Log out
+                    </a>
+                {% else %}
+                    {% include "components/login_form.html" %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 pt-5">
+        {% include "components/hero_image.svg" %}
+    </div>
+</div>
+
+<!-- <h2>Background</h2>
+<p class="lead">
+    Epigenica provides epigenomic profiling and analysis services to life scientists.
+</p>
+<p>
+    When a service or platform processes a project for a research group, large quantities of data can be generated.
+    The Data Delivery System (DDS) is designed for the simple and secure delivery of this data from Epigenica to their users.
+</p> -->
+
+<h2>How it works</h2>
+<p>
+    The DDS uses cloud computing object-storage provided by <a href="https://www.safespring.com/" target="_blank">Safespring</a>
+    to store the data ready for download.
+    The delivery system has built-in encryption and key management for highly secure yet user-friendly access to your
+    data.
+</p>
+
+{% endblock %}

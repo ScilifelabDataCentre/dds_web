@@ -4,6 +4,9 @@
 // Import our variables - stuff like colours etc
 @import "variables";
 
+// Brand-specific overrides (not present in upstream — safe to sync)
+@import "brand_overrides";
+
 //
 // Bootstrap-5-dark
 // Based on bootstrap-night.scss with fixed import paths
