@@ -635,3 +635,7 @@ _Nothing merged during this sprint_
 - Update dependency pytest to v9 [SECURITY] ([#1826]https://github.com/ScilifelabDataCentre/dds_web/pull/1826)
 - New version v2.14.3 ([#1837]https://github.com/ScilifelabDataCentre/dds_web/pull/1837)
 - Fix(auth): roll back HOTP state when one-time-code email send fails ([#1838]https://github.com/ScilifelabDataCentre/dds_web/pull/1838)
+
+## 2026-05-25 - 2026-06-05
+
+- Bump mako from 1.3.11 to 1.3.12 ([#1847]https://github.com/ScilifelabDataCentre/dds_web/pull/1847)
