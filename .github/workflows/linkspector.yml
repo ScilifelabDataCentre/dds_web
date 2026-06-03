@@ -18,8 +18,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Install linkspector
+        run: npm install -g @umbrelladocs/linkspector
       - name: Run linkspector
-        uses: umbrelladocs/action-linkspector@v1
+        uses: umbrelladocs/action-linkspector@v1.5.2
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
