@@ -642,3 +642,4 @@ _Nothing merged during this sprint_
 - Bump fast-uri from 3.1.0 to 3.1.2 in /dds_web/static ([#1848]https://github.com/ScilifelabDataCentre/dds_web/pull/1848)
 - Bump urllib3 from 2.6.3 to 2.7.0 ([#1849]https://github.com/ScilifelabDataCentre/dds_web/pull/1849)
 - Update dependency idna to v3.15 [SECURITY] ([#1845]https://github.com/ScilifelabDataCentre/dds_web/pull/1845)
+- Update dependency Authlib to v1.6.12 [SECURITY] ([#1844]https://github.com/ScilifelabDataCentre/dds_web/pull/1844)
