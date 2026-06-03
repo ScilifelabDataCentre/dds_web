@@ -1969,10 +1969,10 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 
-    # Verify that there's now a reporting row
-    assert Reporting.query.count() == 1
-    row = Reporting.query.first()
-    verify_reporting_row(row=row, time_date=first_time)
+        # Verify that there's now a reporting row
+        assert Reporting.query.count() == 1
+        row = Reporting.query.first()
+        verify_reporting_row(row=row, time_date=first_time)
 
     # Check that an exception is raised if the command is run on the same day
     with freezegun.freeze_time(first_time):
@@ -1993,11 +1993,11 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 
-    # Verify that there's now a reporting row
-    assert Reporting.query.count() == 2
-    reporting_rows = Reporting.query.all()
-    for row in reporting_rows:
-        verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
+        # Verify that there's now a reporting row
+        assert Reporting.query.count() == 2
+        reporting_rows = Reporting.query.all()
+        for row in reporting_rows:
+            verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
 
 
 def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):
