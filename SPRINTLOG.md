@@ -641,3 +641,4 @@ _Nothing merged during this sprint_
 - Bump mako from 1.3.11 to 1.3.12 ([#1847]https://github.com/ScilifelabDataCentre/dds_web/pull/1847)
 - Bump fast-uri from 3.1.0 to 3.1.2 in /dds_web/static ([#1848]https://github.com/ScilifelabDataCentre/dds_web/pull/1848)
 - Bump urllib3 from 2.6.3 to 2.7.0 ([#1849]https://github.com/ScilifelabDataCentre/dds_web/pull/1849)
+- Update dependency idna to v3.15 [SECURITY] ([#1845]https://github.com/ScilifelabDataCentre/dds_web/pull/1845)
