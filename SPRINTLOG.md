@@ -643,5 +643,4 @@ _Nothing merged during this sprint_
 - Bump urllib3 from 2.6.3 to 2.7.0 ([#1849]https://github.com/ScilifelabDataCentre/dds_web/pull/1849)
 - Update dependency idna to v3.15 [SECURITY] ([#1845]https://github.com/ScilifelabDataCentre/dds_web/pull/1845)
 - Update dependency Authlib to v1.6.12 [SECURITY] ([#1844]https://github.com/ScilifelabDataCentre/dds_web/pull/1844)
-- Update dependency Flask-HTTPAuth to v4.8.1 [SECURITY]
- ([#1818]https://github.com/ScilifelabDataCentre/dds_web/pull/1818)
+- Update dependency Flask-HTTPAuth to v4.8.1 [SECURITY] ([#1818]https://github.com/ScilifelabDataCentre/dds_web/pull/1818)
