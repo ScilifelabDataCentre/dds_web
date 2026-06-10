@@ -1329,6 +1329,7 @@ class ProjectUploadComplete(flask_restful.Resource):
     def post(self):
         project = project_schemas.ProjectRequiredSchema().load(flask.request.args)
         check_eligibility_for_upload(status=project.current_status)
+        # Dirty the row so the before_update listener in models.py sets date_updated and last_updated_by.
         project.date_updated = dds_web.utils.current_time()
         try:
             db.session.commit()
