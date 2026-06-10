@@ -467,9 +467,9 @@ def test_proj_upload_complete_unauthorized_roles_denied(client):
             headers=tests.UserAuth(tests.USER_CREDENTIALS[role]).token(client),
             query_string={"project": "file_testing_project"},
         )
-        assert response.status_code == http.HTTPStatus.FORBIDDEN, (
-            f"Expected 403 for role '{role}', got {response.status_code}"
-        )
+        assert (
+            response.status_code == http.HTTPStatus.FORBIDDEN
+        ), f"Expected 403 for role '{role}', got {response.status_code}"
 
 
 def test_new_file(client):
