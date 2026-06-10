@@ -394,23 +394,32 @@ def test_new_file_checksum_none(client):
 
 def test_proj_upload_complete_updates_timestamp(client):
     """POST /proj/upload/complete refreshes date_updated and last_updated_by."""
+    import freezegun
+    import datetime
+
     project_1 = project_row(project_id="file_testing_project")
     assert project_1
-    db.session.refresh(project_1)
-    before = project_1.date_updated
 
-    response = client.post(
-        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
-        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
-        query_string={"project": "file_testing_project"},
-    )
+    frozen_before = datetime.datetime(2000, 1, 1, 12, 0, 0)
+    frozen_after = datetime.datetime(2000, 1, 2, 12, 0, 0)
+
+    with freezegun.freeze_time(frozen_before):
+        project_1.date_updated = frozen_before
+        db.session.commit()
+
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    with freezegun.freeze_time(frozen_after):
+        response = client.post(
+            tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+            headers=token,
+            query_string={"project": "file_testing_project"},
+        )
     assert response.status_code == http.HTTPStatus.OK
     assert response.json.get("message") == "Project upload timestamp updated."
 
     db.session.refresh(project_1)
-    assert project_1.date_updated is not None
-    if before is not None:
-        assert project_1.date_updated >= before
+    assert project_1.date_updated == frozen_after
     assert project_1.last_updated_by == "unitadmin"
 
 
