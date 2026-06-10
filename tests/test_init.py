@@ -317,6 +317,7 @@ def test_block_if_maintenance_active_none_approved_users(client: flask.testing.F
         assert response.json and response.json.get("message") == "Maintenance of DDS is ongoing."
 
         # ProjectUploadComplete - "/proj/upload/complete"
+        # No project param needed — maintenance middleware blocks before the handler runs.
         response = client.post(
             DDSEndpoint.PROJ_UPLOAD_COMPLETE,
             headers=token,
@@ -639,6 +640,7 @@ def test_block_if_maintenance_active_superadmin_ok(client: flask.testing.FlaskCl
     assert response.status_code == http.HTTPStatus.BAD_REQUEST
 
     # ProjectUploadComplete - "/proj/upload/complete"
+    # No project param needed — role check fires before schema validation.
     response = client.post(
         DDSEndpoint.PROJ_UPLOAD_COMPLETE,
         headers=token,
