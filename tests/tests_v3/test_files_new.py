@@ -414,6 +414,29 @@ def test_proj_upload_complete_updates_timestamp(client):
     assert project_1.last_updated_by == "unitadmin"
 
 
+def test_proj_upload_complete_unit_personnel_allowed(client):
+    """Unit Personnel (non-admin unit user) can call POST /proj/upload/complete."""
+    response = client.post(
+        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unituser"]).token(client),
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+
+def test_proj_upload_complete_unauthorized_roles_denied(client):
+    """Researcher and Project Owner cannot call POST /proj/upload/complete."""
+    for role in ("researcher", "projectowner"):
+        response = client.post(
+            tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+            headers=tests.UserAuth(tests.USER_CREDENTIALS[role]).token(client),
+            query_string={"project": "file_testing_project"},
+        )
+        assert response.status_code == http.HTTPStatus.FORBIDDEN, (
+            f"Expected 403 for role '{role}', got {response.status_code}"
+        )
+
+
 def test_new_file(client):
     """Add and overwrite file to database."""
 
