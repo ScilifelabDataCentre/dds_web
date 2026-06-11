@@ -177,11 +177,12 @@ class NewFile(flask_restful.Resource):
                 size_stored=file_info.get("size_processed"),
                 time_uploaded=new_timestamp,
                 active_file=existing_file.id,
-                project_id=project,
+                project_id=project.id,  # explicit integer FK, not the ORM object
             )
 
-            # Update foreign keys and relationships
-            project.file_versions.append(new_version)
+            # Set FK directly so we do not modify the project row (avoids UPDATE on projects
+            # and reduces lock contention during concurrent PUT /file/new).
+            new_version.project_id = project.id
             existing_file.versions.append(new_version)
 
             db.session.add(new_version)
