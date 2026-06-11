@@ -1,4 +1,4 @@
-# Linkspector: Verify links in MD files
+# Lychee: Verify links in MD files
 ---
 name: Linkspector
 on:
@@ -14,15 +14,13 @@ permissions:
   pull-requests: write
 jobs:
   check-links:
-    name: runner / linkspector
+    name: runner / lychee
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install linkspector
-        run: npm install -g @umbrelladocs/linkspector
-      - name: Run linkspector
-        uses: umbrelladocs/action-linkspector@v1.5.2
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
         with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
-          filter_mode: file
+          args: --verbose --no-progress '**/*.md'
+          fail: true
+          github-token: ${{ secrets.github_token }}
