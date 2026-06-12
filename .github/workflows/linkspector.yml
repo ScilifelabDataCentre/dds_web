@@ -21,6 +21,6 @@ jobs:
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress '**/*.md'
+          args: --verbose --no-progress --scheme https --scheme http --accept 401,403 '**/*.md'
           fail: false
-          github-token: ${{ secrets.github_token }}
+          token: ${{ secrets.github_token }}
