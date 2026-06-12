@@ -647,4 +647,5 @@ _Nothing merged during this sprint_
 
 ## 2026-06-08 - 2026-06-19
 
+- Replace linkspector with lychee to remove Chrome/puppeteer dependency ([#1852]https://github.com/ScilifelabDataCentre/dds_web/pull/1852)
 - Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
