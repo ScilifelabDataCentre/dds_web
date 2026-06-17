@@ -644,3 +644,7 @@ _Nothing merged during this sprint_
 - Update dependency idna to v3.15 [SECURITY] ([#1845]https://github.com/ScilifelabDataCentre/dds_web/pull/1845)
 - Update dependency Authlib to v1.6.12 [SECURITY] ([#1844]https://github.com/ScilifelabDataCentre/dds_web/pull/1844)
 - Update dependency Flask-HTTPAuth to v4.8.1 [SECURITY] ([#1818]https://github.com/ScilifelabDataCentre/dds_web/pull/1818)
+
+## 2026-06-08 - 2026-06-19
+
+- Replace linkspector with lychee to remove Chrome/puppeteer dependency ([#1852]https://github.com/ScilifelabDataCentre/dds_web/pull/1852)
