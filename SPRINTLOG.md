@@ -653,3 +653,4 @@ _Nothing merged during this sprint_
 
 - Replace pandoc/latex Docker action with apt for PDF builds ([#1854]https://github.com/ScilifelabDataCentre/dds_web/pull/1854)
 - Update dependency cryptography to v48 [SECURITY] ([#1853]https://github.com/ScilifelabDataCentre/dds_web/pull/1853)
+- Update dependency jwcrypto to v1.5.7 [SECURITY] ([#1850]https://github.com/ScilifelabDataCentre/dds_web/pull/1850)
