@@ -67,3 +67,53 @@ def test_proj_upload_complete_unauthorized_roles_denied(client):
         assert (
             response.status_code == http.HTTPStatus.FORBIDDEN
         ), f"Expected 403 for role '{role}', got {response.status_code}"
+
+
+def test_proj_upload_complete_no_update_if_available(client, boto3_session):
+    """POST /proj/upload/complete returns 400 when project status is Available."""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    # Move project to Available
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+        query_string={"project": "file_testing_project"},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    response = client.post(
+        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+        headers=token,
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+
+
+def test_proj_upload_complete_no_update_if_expired(client, boto3_session, mock_queue_redis):
+    """POST /proj/upload/complete returns 400 when project status is Expired."""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    # Move project to Available then Expired
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+        query_string={"project": "file_testing_project"},
+        json={"new_status": "Available"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    response = client.post(
+        tests.DDSEndpoint.PROJECT_STATUS,
+        headers=token,
+        query_string={"project": "file_testing_project"},
+        json={"new_status": "Expired"},
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    response = client.post(
+        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+        headers=token,
+        query_string={"project": "file_testing_project"},
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
