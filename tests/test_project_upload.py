@@ -6,6 +6,8 @@ import datetime
 
 # Installed
 import freezegun
+import sqlalchemy
+from unittest.mock import patch
 
 # Own
 from dds_web import db
@@ -67,6 +69,22 @@ def test_proj_upload_complete_unauthorized_roles_denied(client):
         assert (
             response.status_code == http.HTTPStatus.FORBIDDEN
         ), f"Expected 403 for role '{role}', got {response.status_code}"
+
+
+def test_proj_upload_complete_db_failure(client):
+    """POST /proj/upload/complete returns 500 on database error."""
+    token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
+
+    with patch("dds_web.db.session.commit") as mock_commit:
+        mock_commit.side_effect = sqlalchemy.exc.SQLAlchemyError()
+
+        response = client.post(
+            tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+            headers=token,
+            query_string={"project": "file_testing_project"},
+        )
+    assert response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Failed to update project timestamp after upload" in response.json["message"]
 
 
 def test_proj_upload_complete_no_update_if_available(client, boto3_session):
