@@ -71,6 +71,16 @@ def test_proj_upload_complete_unauthorized_roles_denied(client):
         ), f"Expected 403 for role '{role}', got {response.status_code}"
 
 
+def test_proj_upload_complete_missing_project(client):
+    """POST /proj/upload/complete returns 400 when project query param is missing."""
+    response = client.post(
+        tests.DDSEndpoint.PROJ_UPLOAD_COMPLETE,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+    )
+    assert response.status_code == http.HTTPStatus.BAD_REQUEST
+    assert response.json.get("project", {}).get("message") == "Project ID required."
+
+
 def test_proj_upload_complete_db_failure(client):
     """POST /proj/upload/complete returns 500 on database error."""
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
