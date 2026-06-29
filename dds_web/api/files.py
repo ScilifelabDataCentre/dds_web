@@ -177,7 +177,6 @@ class NewFile(flask_restful.Resource):
                 size_stored=file_info.get("size_processed"),
                 time_uploaded=new_timestamp,
                 active_file=existing_file.id,
-                project_id=project,
             )
 
             # Set FK directly so we do not modify the project row (avoids UPDATE on projects
