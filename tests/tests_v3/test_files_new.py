@@ -465,6 +465,44 @@ def test_new_file(client):
     assert f"File '{updated_file['name']}' updated in db." in response.json["message"]
 
 
+def test_new_file_put_version_linked_to_file_and_project(client):
+    """PUT /file/new creates a Version row tied to both the file and the project."""
+    project_1 = project_row(project_id="file_testing_project")
+    assert project_1
+
+    # First add the file
+    response = client.post(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=FIRST_NEW_FILE,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Overwrite the file via PUT
+    updated_file = {**FIRST_NEW_FILE, "size": 1200, "size_processed": 600}
+    response = client.put(
+        tests.DDSEndpoint.FILE_NEW,
+        headers=tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client),
+        query_string={"project": "file_testing_project"},
+        json=updated_file,
+    )
+    assert response.status_code == http.HTTPStatus.OK
+
+    # Fetch the file row and verify the new version is linked correctly
+    file_row = models.File.query.filter_by(
+        name=FIRST_NEW_FILE["name"], project_id=project_1.id
+    ).one_or_none()
+    assert file_row is not None
+
+    new_version = models.Version.query.filter_by(
+        active_file=file_row.id, time_deleted=None
+    ).one_or_none()
+    assert new_version is not None
+    assert new_version.active_file == file_row.id
+    assert new_version.project_id == project_1.id
+
+
 def test_update_nonexistent_file(client):
     """Try to update a non existent file"""
     response = client.put(
