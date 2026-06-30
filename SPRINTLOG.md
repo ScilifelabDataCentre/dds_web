@@ -656,4 +656,3 @@ _Nothing merged during this sprint_
 - Update dependency jwcrypto to v1.5.7 [SECURITY] ([#1850]https://github.com/ScilifelabDataCentre/dds_web/pull/1850)
 - Bump shell-quote from 1.8.1 to 1.8.4 in /dds_web/static ([#1851]https://github.com/ScilifelabDataCentre/dds_web/pull/1851)
 - Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
-
