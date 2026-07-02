@@ -397,9 +397,17 @@ def login():
 
         # Correct credentials still needs 2fa
         if not user.totp_enabled:
-            # Send 2fa token to user's email
-            if dds_web.security.auth.send_hotp_email(user):
-                flask.flash("One-Time Code has been sent to your primary email.")
+            # Send 2fa token to user's email. If the SMTP / DNS layer
+            # is having a transient hiccup we don't want to land the
+            # user on the "enter your code" page with no code en route,
+            # nor crash with a 500: flash a friendly message and keep
+            # them on /login so they can retry.
+            try:
+                if dds_web.security.auth.send_hotp_email(user):
+                    flask.flash("One-Time Code has been sent to your primary email.")
+            except ddserr.TwoFactorEmailError as exc:
+                flask.flash(exc.description or str(exc), "danger")
+                return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(

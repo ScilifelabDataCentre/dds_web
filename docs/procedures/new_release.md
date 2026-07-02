@@ -20,23 +20,23 @@ When changes are pushed to `dev` or `master`, a Draft Release is created/updated
     > - Confirm that new features / functionality works as it should.
     > - Confirm that the development instance works together with the CLI
 
-2.  Create a PR from `dev` to `master` and verify that the PRs included in the changes have the correct labels.
+2.  Create a PR from `dev` to `master` named "New release: M.M.P" and verify that the PRs included in the changes have the correct labels.
 
     > Check out the [Release Drafter config file](../../.github/release-drafter.yml) and/or the [PR template](../../.github/pull_request_template.md) for info on which code changes give which labels.
 
-3.  Check the release draft: Does the suggestion version seem appropriate? If not: Check the PRs and their labels, again.
+    > Check the release draft: Does the suggestion version seem appropriate? If not: Check the PRs and their labels, again.
 
-    > **Note** that a _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
+    > **Note:** _major version upgrade SHOULD NEVER BE DONE UNLESS THE CLI ALSO HAS THIS IDENTICAL CHANGE_
 
-4.  Fork a new branch from `dev`: `new-version_[new version]`
-5.  Update the version in [`version.py`](../../dds_web/version.py) and [`tests/test_version.py`](../../tests/test_version.py)
-6.  Update the [changelog](../../CHANGELOG.rst).
+3.  Fork a new branch from `dev`: `new-version_[new version]` and:
 
-    > Copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
+    > - Update the version in [`version.py`](../../dds_web/version.py) and [`tests/test_version.py`](../../tests/test_version.py)
+    > - Update the [changelog](../../CHANGELOG.rst): copy-paste the contents of the release draft into the top of the changelog; Follow the same structure/format as previous versions.
 
-7.  Push the changelog and version to the `new-version_[new version]` branch
-8.  Create a new PR from `new-version_[new version]` to `dev`, and verify that the new images look OK.
-9.  Create a PR from `dev` to `master`
+    > - Push the `new-version_[new version]` branch to Github and create a new PR from `new-version_[new version]` to `dev`
+    > - Verify that the new images look OK. Merge into `dev`
+
+4.  Return to the PR from `dev` to `master`
 
     > **Do the changes affect the CLI in any way?**
     > If yes:
@@ -49,10 +49,10 @@ When changes are pushed to `dev` or `master`, a Draft Release is created/updated
     > - All changes should be approved in the PRs to dev so reviewing the changes a second time in this PR is not necessary.Instead, the team should look through the code just to see if something looks weird.
     > - When there's at least one approval: Merge it.
 
-10. [Publish the Release Draft](https://github.com/ScilifelabDataCentre/dds_web/releases)
+5.  [Publish the Release Draft](https://github.com/ScilifelabDataCentre/dds_web/releases)
 
     > A new image is automatically published to GitHub Container Repository (GHCR).
 
-11. Redeploy the production instance during a maintenance window.
+6.  Redeploy the production instance during a maintenance window.
 
     > Valentin, Alvaro: Please suggest a guide here (if needed). Could be good for new team members.

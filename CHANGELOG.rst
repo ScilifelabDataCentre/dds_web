@@ -1,6 +1,42 @@
 Changelog
 ==========
 
+.. _2.14.3:
+
+2.14.3 - 2026-05-06
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - Fix(auth): roll back HOTP state when one-time-code email send fails ([#1838](https://github.com/ScilifelabDataCentre/dds_web/pull/1838))
+    - Correct the troubleshooting guide regarding TOTP reset/deactivation ([#1835](https://github.com/ScilifelabDataCentre/dds_web/pull/1835))
+    - Hms 2656 handle failed mail send ([#1834](https://github.com/ScilifelabDataCentre/dds_web/pull/1834))
+- 🛡️ Dependencies
+    - Update dependency Authlib to v1.6.11 [SECURITY] ([#1827](https://github.com/ScilifelabDataCentre/dds_web/pull/1827))
+    - Update dependency Mako to v1.3.11 [SECURITY] ([#1828](https://github.com/ScilifelabDataCentre/dds_web/pull/1828))
+    - Update dependency postcss to v8.5.10 [SECURITY] ([#1833](https://github.com/ScilifelabDataCentre/dds_web/pull/1833))
+    - Update dependency cryptography to v46.0.7 [SECURITY] ([#1824](https://github.com/ScilifelabDataCentre/dds_web/pull/1824))
+    - Bump minimatch and serve in /dds\_web/static ([#1831](https://github.com/ScilifelabDataCentre/dds_web/pull/1831))
+    - Bump pillow from 12.1.1 to 12.2.0 ([#1830](https://github.com/ScilifelabDataCentre/dds_web/pull/1830))
+    - Bump immutable from 5.1.4 to 5.1.5 in /dds\_web/static ([#1829](https://github.com/ScilifelabDataCentre/dds_web/pull/1829))
+
+.. _2.14.2:
+
+2.14.2 - 2026-04-07
+~~~~~~~~~~~~~~~~~~~~
+
+- 🛡️ Dependencies
+    - Update dependency requests to v2.33.0 [SECURITY] ([#1815](https://github.com/ScilifelabDataCentre/dds_web/pull/1815))
+    - Update dependency cryptography to v46.0.6 [SECURITY] ([#1816](https://github.com/ScilifelabDataCentre/dds_web/pull/1816))
+    - Bump flatted from 3.2.7 to 3.4.2 in /dds\_web/static ([#1817](https://github.com/ScilifelabDataCentre/dds_web/pull/1817))
+    - Bump authlib from 1.6.6 to 1.6.9 ([#1812](https://github.com/ScilifelabDataCentre/dds_web/pull/1812))
+    - Update dependency Flask to v3 [SECURITY] ([#1675](https://github.com/ScilifelabDataCentre/dds_web/pull/1675))
+- 📌 Other Changes
+    - Update actions/download-artifact action to v8 ([#1784](https://github.com/ScilifelabDataCentre/dds_web/pull/1784))
+    - Update aquasecurity/trivy-action action to v0.34.0 [SECURITY] ([#1807](https://github.com/ScilifelabDataCentre/dds_web/pull/1807))
+    - Update release-drafter/release-drafter action to v7 ([#1808](https://github.com/ScilifelabDataCentre/dds_web/pull/1808))
+    - Update actions/setup-python action to v6 ([#1738](https://github.com/ScilifelabDataCentre/dds_web/pull/1738))
+    - Update actions/setup-node action to v6 ([#1737](https://github.com/ScilifelabDataCentre/dds_web/pull/1737))
+
 .. _2.14.1:
 
 2.14.1 - 2026-03-11

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["replacements:all", "workarounds:all", "helpers:githubDigestChangelogs"],
+  "labels": ["type: dependency"],
+  "abandonmentThreshold": "2 years",
+  "prConcurrentLimit": 5,
+  "timezone": "Europe/Stockholm",
+  "schedule": ["* 18-23,0-5 * * 1-5"],
+  "packageRules": [
+    {
+      "matchJsonata": ["isAbandoned=true"],
+      "addLabels": ["status:abandoned"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchFileNames": ["dds_web/static/package.json", "dds_web/static/package-lock.json"],
+      "addLabels": ["npm"]
+    },
+    {
+      "matchFileNames": ["Dockerfiles/**"],
+      "addLabels": ["docker"]
+    },
+    {
+      "matchManagers": ["pip_requirements"],
+      "addLabels": ["python"]
+    },
+    {
+      "matchFileNames": ["tests/**"],
+      "labels": ["skip-changelog", "tests"]
+    },
+    {
+      "matchFileNames": [".github/workflows/**"],
+      "labels": ["skip-changelog", "github-actions"]
+    }
+  ]
+}

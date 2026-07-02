@@ -43,7 +43,7 @@ def test_fix_access_no_token(client):
     response = client.post(tests.DDSEndpoint.PROJECT_ACCESS, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
-    assert "No token" in response.json.get("message")
+    assert "Missing or incorrect credentials" in response.json.get("message")
 
 
 def test_fix_access_researcher_not_allowed(client):

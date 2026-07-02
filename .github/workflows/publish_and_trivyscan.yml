@@ -27,19 +27,27 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      # We use the ubuntu runner + apt rather than the pandoc/latex Docker action.
+      # The Docker-based approach requires tlmgr to install extra LaTeX packages at
+      # runtime, which depends on a reachable CTAN mirror serving a compatible TeX
+      # Live epoch. This breaks silently when the pinned image ages past the current
+      # TL year (tlmgr switches to ftp://tug.org/historic/, unreachable from GH
+      # runners) and also breaks when using :latest (mirror works but image changes
+      # unpredictably). apt packages are stable, versioned with the Ubuntu LTS, and
+      # require no runtime mirror access.
+      - name: Install pandoc and LaTeX dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            pandoc \
+            lmodern \
+            librsvg2-bin \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-fonts-recommended
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex:3.2
-        with:
-          entrypoint: /bin/sh
-          args: >-
-            -c "
-            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
-            updmap-sys &&
-            pandoc
-            --output=dds_web/static/dds-technical-overview.pdf
-            docs/technical-overview.md
-            "
+        run: |
+          pandoc --output=dds_web/static/dds-technical-overview.pdf docs/technical-overview.md
       - name: Upload technical overview PDF
         uses: actions/upload-artifact@v7
         with:
@@ -51,19 +59,20 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      # See the comment on the build_tech_overview job for why apt is used
+      # rather than the pandoc/latex Docker action.
+      - name: Install pandoc and LaTeX dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            pandoc \
+            lmodern \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-fonts-recommended
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex:3.2
-        with:
-          entrypoint: /bin/sh
-          args: >-
-            -c "
-            tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final &&
-            tlmgr install cm-super fontaxes lato xkeyval &&
-            updmap-sys &&
-            pandoc
-            --output=dds_web/static/dds-troubleshooting.pdf
-            docs/troubleshooting.md
-            "
+        run: |
+          pandoc --output=dds_web/static/dds-troubleshooting.pdf docs/troubleshooting.md
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v7
         with:
@@ -91,12 +100,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download technical overview PDF
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: technical-overview-pdf
           path: dds_web/static
       - name: Download troubleshooting PDF
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: troubleshooting-pdf
           path: dds_web/static
@@ -116,9 +125,9 @@ jobs:
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
       - name: Install Trivy
-        uses: aquasecurity/setup-trivy@v0.2.5
+        uses: aquasecurity/setup-trivy@v0.2.6
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.35.0
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
