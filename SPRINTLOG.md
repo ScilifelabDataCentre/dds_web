@@ -655,4 +655,7 @@ _Nothing merged during this sprint_
 - Update dependency cryptography to v48 [SECURITY] ([#1853]https://github.com/ScilifelabDataCentre/dds_web/pull/1853)
 - Update dependency jwcrypto to v1.5.7 [SECURITY] ([#1850]https://github.com/ScilifelabDataCentre/dds_web/pull/1850)
 - Bump shell-quote from 1.8.1 to 1.8.4 in /dds_web/static ([#1851]https://github.com/ScilifelabDataCentre/dds_web/pull/1851)
+
+## 2026-08-03 - 2026-08-14
+
 - Update dependency sass to v1.98.0([#1799]https://github.com/ScilifelabDataCentre/dds_web/pull/1799)
