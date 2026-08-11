@@ -659,3 +659,4 @@ _Nothing merged during this sprint_
 ## 2026-08-03 - 2026-08-14
 
 - Update dependency sass to v1.98.0([#1799]https://github.com/ScilifelabDataCentre/dds_web/pull/1799)
+- Update dependency cryptography to v50 [SECURITY] ([#1857]https://github.com/ScilifelabDataCentre/dds_web/pull/1857)
