@@ -661,3 +661,4 @@ _Nothing merged during this sprint_
 - Update dependency sass to v1.98.0([#1799]https://github.com/ScilifelabDataCentre/dds_web/pull/1799)
 - Update dependency cryptography to v50 [SECURITY] ([#1857]https://github.com/ScilifelabDataCentre/dds_web/pull/1857)
 - Update dependency Pillow to v12.3.0 [SECURITY] ([#1855]https://github.com/ScilifelabDataCentre/dds_web/pull/1855)
+- Update dependency pytz to v2026 ([#1791]https://github.com/ScilifelabDataCentre/dds_web/pull/1791)
