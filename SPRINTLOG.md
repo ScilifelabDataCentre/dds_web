@@ -665,3 +665,4 @@ _Nothing merged during this sprint_
 ## 2026-08-17 - 2026-08-28
 
 - Update dependency pytz to v2026 ([#1791]https://github.com/ScilifelabDataCentre/dds_web/pull/1791)
+- Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
