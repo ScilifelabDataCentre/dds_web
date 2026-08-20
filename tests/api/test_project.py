@@ -2121,7 +2121,7 @@ def test_set_busy_no_token(module_client):
     response = module_client.put(tests.DDSEndpoint.PROJECT_BUSY, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
-    assert "No token" in response.json.get("message")
+    assert "Missing or incorrect credentials" in response.json.get("message")
 
 
 def test_set_busy_invalid_version(module_client):
