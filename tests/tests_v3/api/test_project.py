@@ -2178,7 +2178,7 @@ def test_set_busy_no_token(module_client):
     response = module_client.put(tests.DDSEndpoint.PROJECT_BUSY, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
-    assert "No token" in response.json.get("message")
+    assert "Missing or incorrect credentials" in response.json.get("message")
 
 
 # This test should be removed due to removing the put method. -> Class ProjectBusy in dds_web/api/project.py
