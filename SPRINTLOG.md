@@ -666,3 +666,4 @@ _Nothing merged during this sprint_
 
 - Update dependency pytz to v2026 ([#1791]https://github.com/ScilifelabDataCentre/dds_web/pull/1791)
 - Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
+- New vesrion v2.15.0 ([#1859]https://github.com/ScilifelabDataCentre/dds_web/pull/1859)
