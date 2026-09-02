@@ -140,9 +140,10 @@ class NewFileSchema(project_schemas.ProjectRequiredSchema):
         )
 
         project = data.get("project_row")
-        # Update foreign keys
-        project.file_versions.append(new_version)
-        project.files.append(new_file)
+        # Set FKs directly so we do not modify the project row (avoids UPDATE on projects
+        # and reduces lock contention during concurrent POST /file/new).
+        new_file.project_id = project.id
+        new_version.project_id = project.id
         new_file.versions.append(new_version)
 
         return new_file

@@ -148,6 +148,40 @@ def test_encrypted_token_returns_503_when_smtp_fails(client):
     assert response.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
 
 
+def test_encrypted_token_retry_after_mail_failure_actually_sends(client):
+    """Regression: a failed mail.send on /user/encrypted_token must roll back
+    the HOTP state so that an immediate retry reaches mail.send again, instead
+    of being silenced by the 15-minute cooldown branch in send_hotp_email.
+    """
+    import socket as _socket
+
+    # First call: mail.send fails -> 503, HOTP state must be rolled back.
+    with unittest.mock.patch.object(
+        flask_mail.Mail,
+        "send",
+        side_effect=_socket.gaierror(-3, "Try again"),
+    ) as mock_first:
+        response_1 = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
+        assert mock_first.call_count == 1
+    assert response_1.status_code == http.HTTPStatus.SERVICE_UNAVAILABLE
+
+    # Immediate retry: mail.send must be called again (not silenced by cooldown).
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_second:
+        response_2 = client.get(
+            tests.DDSEndpoint.ENCRYPTED_TOKEN,
+            auth=("researchuser", "password"),
+            headers=tests.DEFAULT_HEADER,
+        )
+        assert (
+            mock_second.call_count == 1
+        ), "Retry after mail failure must reach mail.send, not be silenced by cooldown"
+    assert response_2.status_code == http.HTTPStatus.OK
+
+
 # Second Factor ################################################################### Second Factor #
 
 

@@ -119,3 +119,58 @@ def test_send_hotp_email_returns_True_on_successful_send(request_ctx_for_login):
         assert mock_mail_send.call_count == 1
 
     assert result is True
+
+
+def test_send_hotp_email_resets_hotp_state_on_mail_failure(request_ctx_for_login):
+    """Regression: a transient mail-send failure must roll back the HOTP state.
+
+    generate_HOTP_token() commits hotp_issue_time = now and bumps hotp_counter
+    BEFORE mail.send is attempted. If we left that committed state in place
+    when mail.send fails, the next call to send_hotp_email within 15 minutes
+    would silently hit the cooldown branch and return False without sending
+    another email -- locking the user out for the cooldown window despite
+    the UI telling them to retry.
+
+    After a failure, hotp_issue_time must be None so a retry takes the
+    email-sending branch again.
+    """
+    user = _fresh_user_for_hotp()
+    counter_before = user.hotp_counter
+
+    with unittest.mock.patch.object(
+        flask_mail.Mail, "send", side_effect=socket.gaierror(-3, "Try again")
+    ):
+        with pytest.raises(TwoFactorEmailError):
+            send_hotp_email(user)
+
+    db.session.refresh(user)
+    assert (
+        user.hotp_issue_time is None
+    ), "hotp_issue_time should be reset so retry is not silenced by cooldown"
+    # reset_current_HOTP() bumps the counter on top of generate_HOTP_token()'s
+    # bump, invalidating the just-generated code in case of late delivery.
+    assert user.hotp_counter > counter_before
+
+
+def test_send_hotp_email_retry_after_failure_actually_sends(request_ctx_for_login):
+    """Regression: a retry within the cooldown window after a failed send
+    must actually call mail.send again, not be silenced by the cooldown."""
+    user = _fresh_user_for_hotp()
+
+    # First attempt: mail.send fails -> TwoFactorEmailError, state rolled back.
+    with unittest.mock.patch.object(
+        flask_mail.Mail, "send", side_effect=socket.gaierror(-3, "Try again")
+    ):
+        with pytest.raises(TwoFactorEmailError):
+            send_hotp_email(user)
+
+    db.session.refresh(user)
+
+    # Immediate retry (well under 15 minutes): mail.send must be called again.
+    with unittest.mock.patch.object(flask_mail.Mail, "send") as mock_mail_send:
+        result = send_hotp_email(user)
+        assert (
+            mock_mail_send.call_count == 1
+        ), "Retry after mail failure must reach mail.send, not be silenced by cooldown"
+
+    assert result is True
