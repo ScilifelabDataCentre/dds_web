@@ -26,7 +26,7 @@ Flask-Limiter==2.1.3
 Flask-Login==0.6.3
 Flask-Mail==0.9.1
 flask-marshmallow==1.4.0
-Flask-Migrate==3.1.0
+Flask-Migrate==4.1.0
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==3.0.5
 Flask-WTF==1.1.2
