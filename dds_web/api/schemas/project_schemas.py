@@ -182,6 +182,8 @@ class CreateProjectSchema(marshmallow.Schema):
                 )
             )
 
+            # Persist project before creating key rows so SA 2.0 can resolve FKs on flush.
+            db.session.add(new_project)
             generate_project_key_pair(current_user, new_project)
             db.session.flush()
 

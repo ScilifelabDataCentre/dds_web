@@ -337,7 +337,7 @@ def create_app(testing=False, database_uri=None):
 
         @login_manager.user_loader
         def load_user(user_id):
-            return models.User.query.get(user_id)
+            return db.session.get(models.User, user_id)
 
         if app.config["REVERSE_PROXY"]:
             app.wsgi_app = ProxyFix(app.wsgi_app)

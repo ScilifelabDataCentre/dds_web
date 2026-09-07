@@ -3,6 +3,7 @@ import http
 import flask
 
 import tests
+from dds_web import db
 from dds_web.database import models
 from tests.test_login_web import successful_web_login
 
@@ -26,7 +27,7 @@ def test_unsuccessful_user_change_password_with_login_nonlatin1(client):
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
 
     # Verify current password
-    user = models.User.query.get(user_auth.username)
+    user = db.session.get(models.User, user_auth.username)
     assert user.verify_password("password")
 
     # Get and verify variables
@@ -85,7 +86,7 @@ def test_unsuccessful_user_change_password_with_login_nonlatin1(client):
 def test_successful_user_change_password_with_login(client):
     user_auth = tests.UserAuth(tests.USER_CREDENTIALS["researcher"])
 
-    user = models.User.query.get(user_auth.username)
+    user = db.session.get(models.User, user_auth.username)
     assert user.verify_password("password")
 
     public_key_initial = user.public_key

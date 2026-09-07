@@ -381,7 +381,7 @@ def login():
     form = forms.LoginForm()
     if form.validate_on_submit():
         # Get user from database
-        user = models.User.query.get(form.username.data)
+        user = db.session.get(models.User, form.username.data)
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
