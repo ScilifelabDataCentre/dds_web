@@ -671,3 +671,4 @@ _Nothing merged during this sprint_
 ## 2026-09-31 - 2026-09-11
 
 - Update dependency SQLAlchemy to v2 ([#1772]https://github.com/ScilifelabDataCentre/dds_web/pull/1772)
+- Update dependency jwcrypto to v1.5.9 [SECURITY] ([#1861]https://github.com/ScilifelabDataCentre/dds_web/pull/1861)
