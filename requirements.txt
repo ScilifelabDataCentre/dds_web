@@ -1,4 +1,4 @@
-alembic==1.14.1
+alembic==1.20.0
 aniso8601==9.0.1
 APScheduler==3.9.1
 argon2-cffi==21.3.0
