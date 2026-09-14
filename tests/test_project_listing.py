@@ -38,7 +38,7 @@ def test_list_proj_no_token(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
-    assert "No token" in response_json.get("message")
+    assert "Missing or incorrect credentials" in response_json.get("message")
 
 
 def test_deleted_user_when_listing_projects(client):
@@ -222,7 +222,7 @@ def test_proj_public_no_token(client):
     )
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
-    assert "No token" in response_json.get("message")
+    assert "Missing or incorrect credentials" in response_json.get("message")
 
 
 def test_proj_public_insufficient_credentials(client):
