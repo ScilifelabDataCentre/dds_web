@@ -667,3 +667,12 @@ _Nothing merged during this sprint_
 - Update dependency pytz to v2026 ([#1791]https://github.com/ScilifelabDataCentre/dds_web/pull/1791)
 - Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
 - New vesrion v2.15.0 ([#1859]https://github.com/ScilifelabDataCentre/dds_web/pull/1859)
+
+## 2026-08-31 - 2026-09-11
+
+- Update dependency SQLAlchemy to v2 ([#1772]https://github.com/ScilifelabDataCentre/dds_web/pull/1772)
+- Update dependency jwcrypto to v1.5.9 [SECURITY] ([#1861]https://github.com/ScilifelabDataCentre/dds_web/pull/1861)
+
+## 2026-09-14 - 2026-09-25
+
+- Bump immutable from 5.1.5 to 5.1.9 in /dds_web/static ([#1862]https://github.com/ScilifelabDataCentre/dds_web/pull/1862)
