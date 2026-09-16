@@ -678,3 +678,4 @@ _Nothing merged during this sprint_
 - Bump immutable from 5.1.5 to 5.1.9 in /dds_web/static ([#1862]https://github.com/ScilifelabDataCentre/dds_web/pull/1862)
 - Bump fast-uri from 3.1.2 to 3.1.8 in /dds_web/static ([#1863]https://github.com/ScilifelabDataCentre/dds_web/pull/1863)
 - Bump postcss from 8.5.10 to 8.5.28 in /dds_web/static ([#1864]https://github.com/ScilifelabDataCentre/dds_web/pull/1864)
+- Bump shell-quote from 1.8.4 to 1.10.0 in /dds_web/static ([#1865]https://github.com/ScilifelabDataCentre/dds_web/pull/1865)
