@@ -679,5 +679,4 @@ _Nothing merged during this sprint_
 - Bump fast-uri from 3.1.2 to 3.1.8 in /dds_web/static ([#1863]https://github.com/ScilifelabDataCentre/dds_web/pull/1863)
 - Bump postcss from 8.5.10 to 8.5.28 in /dds_web/static ([#1864]https://github.com/ScilifelabDataCentre/dds_web/pull/1864)
 - Bump shell-quote from 1.8.4 to 1.10.0 in /dds_web/static ([#1865]https://github.com/ScilifelabDataCentre/dds_web/pull/1865)
-- Bump brace-expansion from 1.1.12 to 1.1.21 in /dds_web/static- #1866
- ([#1866]https://github.com/ScilifelabDataCentre/dds_web/pull/1866)
+- Bump brace-expansion from 1.1.12 to 1.1.21 in /dds_web/static ([#1866]https://github.com/ScilifelabDataCentre/dds_web/pull/1866)
