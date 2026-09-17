@@ -681,3 +681,4 @@ _Nothing merged during this sprint_
 - Bump shell-quote from 1.8.4 to 1.10.0 in /dds_web/static ([#1865]https://github.com/ScilifelabDataCentre/dds_web/pull/1865)
 - Bump brace-expansion from 1.1.12 to 1.1.21 in /dds_web/static ([#1866]https://github.com/ScilifelabDataCentre/dds_web/pull/1866)
 - Bump browserslist from 4.28.1 to 4.29.0 in /dds_web/static ([#1867]https://github.com/ScilifelabDataCentre/dds_web/pull/1867)
+- Update dependency jwcrypto to v1.6.1 [SECURITY] ([#1868]https://github.com/ScilifelabDataCentre/dds_web/pull/1868)
