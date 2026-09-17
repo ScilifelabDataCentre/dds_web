@@ -24,7 +24,7 @@ from dds_web.errors import UserDeletionError, DatabaseError
 
 def test_remove_user_self_deletion_request_no_request(client):
 
-    user = models.User.query.get("researchuser2")
+    user = db.session.get(models.User, "researchuser2")
     assert user
 
     # Mock the database session
@@ -50,7 +50,7 @@ def test_remove_user_self_deletion_request_no_request(client):
 
 def test_remove_user_self_deletion_request_database_error(client):
 
-    user = models.User.query.get("delete_me_researcher")
+    user = db.session.get(models.User, "delete_me_researcher")
     assert user
 
     # Mock the database session and exceptions

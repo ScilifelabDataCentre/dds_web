@@ -27,36 +27,27 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-      # pandoc/latex pinned by digest:
-      #
-      # We deliberately pin to the immutable digest of pandoc/latex:latest
-      # (TeX Live 2026, default repo https://mirror.ctan.org/systems/texlive/tlnet)
-      # rather than a minor-version tag. The minor-version tags (:3.6, :3.7, ...)
-      # bundle the TL release that was current at image build time, and once that
-      # TL year is frozen by the next release the image's tlmgr default repo
-      # silently switches to ftp://tug.org/historic/.../tlnet-final, which is
-      # unreachable from GitHub-hosted runners (FTP). Pinning to the digest of
-      # a recently-rebuilt :latest gives us reproducibility AND a working live
-      # tlnet mirror. Bump the digest deliberately when you want to roll forward.
-      #
-      # set -eo pipefail makes silent tlmgr install failures fail the step.
-      # kpsewhich lato.sty verifies the install actually succeeded before we
-      # hand off to pandoc, so a future regression surfaces here with a clear
-      # error instead of as a downstream LaTeX "File `lato.sty' not found".
+      # We use the ubuntu runner + apt rather than the pandoc/latex Docker action.
+      # The Docker-based approach requires tlmgr to install extra LaTeX packages at
+      # runtime, which depends on a reachable CTAN mirror serving a compatible TeX
+      # Live epoch. This breaks silently when the pinned image ages past the current
+      # TL year (tlmgr switches to ftp://tug.org/historic/, unreachable from GH
+      # runners) and also breaks when using :latest (mirror works but image changes
+      # unpredictably). apt packages are stable, versioned with the Ubuntu LTS, and
+      # require no runtime mirror access.
+      - name: Install pandoc and LaTeX dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            pandoc \
+            lmodern \
+            librsvg2-bin \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-fonts-recommended
       - name: Build tech overview PDF
-        uses: docker://pandoc/latex@sha256:467bb9a70723627a34eb7003e46a1bb7c9344ea4580a46c4c978860784a6a754
-        with:
-          entrypoint: /bin/sh
-          args: >-
-            -c "
-            set -eo pipefail &&
-            tlmgr install cm-super fontaxes lato pdflscape xkeyval &&
-            kpsewhich lato.sty &&
-            updmap-sys &&
-            pandoc
-            --output=dds_web/static/dds-technical-overview.pdf
-            docs/technical-overview.md
-            "
+        run: |
+          pandoc --output=dds_web/static/dds-technical-overview.pdf docs/technical-overview.md
       - name: Upload technical overview PDF
         uses: actions/upload-artifact@v7
         with:
@@ -68,23 +59,20 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-      # See the comment on the build_tech_overview job for why this image is
-      # pinned by digest rather than by minor version, and why the script uses
-      # set -eo pipefail + kpsewhich.
+      # See the comment on the build_tech_overview job for why apt is used
+      # rather than the pandoc/latex Docker action.
+      - name: Install pandoc and LaTeX dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            pandoc \
+            lmodern \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-fonts-recommended
       - name: Build troubleshooting guide
-        uses: docker://pandoc/latex@sha256:467bb9a70723627a34eb7003e46a1bb7c9344ea4580a46c4c978860784a6a754
-        with:
-          entrypoint: /bin/sh
-          args: >-
-            -c "
-            set -eo pipefail &&
-            tlmgr install cm-super fontaxes lato xkeyval &&
-            kpsewhich lato.sty &&
-            updmap-sys &&
-            pandoc
-            --output=dds_web/static/dds-troubleshooting.pdf
-            docs/troubleshooting.md
-            "
+        run: |
+          pandoc --output=dds_web/static/dds-troubleshooting.pdf docs/troubleshooting.md
       - name: Upload troubleshooting PDF
         uses: actions/upload-artifact@v7
         with:
