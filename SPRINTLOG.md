@@ -680,3 +680,4 @@ _Nothing merged during this sprint_
 - Bump postcss from 8.5.10 to 8.5.28 in /dds_web/static ([#1864]https://github.com/ScilifelabDataCentre/dds_web/pull/1864)
 - Bump shell-quote from 1.8.4 to 1.10.0 in /dds_web/static ([#1865]https://github.com/ScilifelabDataCentre/dds_web/pull/1865)
 - Bump brace-expansion from 1.1.12 to 1.1.21 in /dds_web/static ([#1866]https://github.com/ScilifelabDataCentre/dds_web/pull/1866)
+- Bump browserslist from 4.28.1 to 4.29.0 in /dds_web/static ([#1867]https://github.com/ScilifelabDataCentre/dds_web/pull/1867)
