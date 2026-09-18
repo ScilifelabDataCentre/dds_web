@@ -683,3 +683,4 @@ _Nothing merged during this sprint_
 - Bump browserslist from 4.28.1 to 4.29.0 in /dds_web/static ([#1867]https://github.com/ScilifelabDataCentre/dds_web/pull/1867)
 - Update dependency jwcrypto to v1.6.1 [SECURITY] ([#1868]https://github.com/ScilifelabDataCentre/dds_web/pull/1868)
 - Update dependency ubuntu to v24 ([#1779]https://github.com/ScilifelabDataCentre/dds_web/pull/1779)
+- Remove unused APScheduler, Flask-APScheduler, and tzlocal ([#1778]https://github.com/ScilifelabDataCentre/dds_web/pull/1778)
