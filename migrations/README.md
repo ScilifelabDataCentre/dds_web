@@ -50,6 +50,7 @@ Now, a new migration will have been generated in the `migrations/versions` direc
 
 > **NB!** Keep an eye out for leftover `apscheduler` tables and indexes in older databases, and **make sure they are not included in the migration**.
 > Cronjobs no longer use APScheduler (they run via Flask commands / Kubernetes).
+
 For reference on available operations and customization options, check the [Alembic Documentation](https://alembic.sqlalchemy.org/en/latest/ops.html).
 
 ### 5. Test the migration
