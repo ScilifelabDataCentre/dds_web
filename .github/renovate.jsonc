@@ -1,0 +1,44 @@
+// Renovate configuration for this repository
+// Extends the custom preset defined in .config/renovate/default.jsonc
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json", // Provides editor autocomplete and validation for Renovate config
+  "extends": [
+    "github>ScilifelabDataCentre/data-centre-template//.config/renovate/default.jsonc#v1.1.2",
+    // "replacements:all", // already in effect via config:recommended via preset
+    // "workarounds:all", // same here
+    // "helpers:githubDigestChangelogs" // same here
+  ],
+  // "labels": ["type: dependency"], // via preset
+  "abandonmentThreshold": "2 years", // Q1: do we want 2 years or the default 1?
+  "prConcurrentLimit": 5, // override the default 10
+  // "timezone": "Europe/Stockholm", // via preset
+  "schedule": ["* 18-23,0-5 * * 1-5"], // Q2: Do we want this or the default schedule? 
+  "packageRules": [
+    {
+      "matchJsonata": ["isAbandoned=true"], // I don't think this ever happens because abandoned dont get prs?
+      "addLabels": ["status:abandoned"]
+    },
+    {
+      "matchManagers": ["npm"], // any reason to have this instead of the default via preset?
+      "matchFileNames": ["dds_web/static/package.json", "dds_web/static/package-lock.json"],
+      "addLabels": ["npm"]
+    },
+    {
+      "matchFileNames": ["Dockerfiles/**"], // same question
+      "addLabels": ["docker"]
+    },
+    {
+      "matchManagers": ["pip_requirements"], // same question
+      "addLabels": ["python"]
+    },
+    // Label tests
+    {
+      "matchFileNames": ["tests/**"],
+      "labels": ["skip-changelog", "tests"]
+    },
+    {
+      "matchFileNames": [".github/workflows/**"], // matchManagers instead? also addLabels? 
+      "labels": ["skip-changelog", "github-actions"]
+    }
+  ]
+}
