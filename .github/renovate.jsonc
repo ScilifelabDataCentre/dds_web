@@ -5,9 +5,7 @@
   "extends": [
     "github>ScilifelabDataCentre/data-centre-template//.config/renovate/default.jsonc#v1.1.2",
   ],
-  "abandonmentThreshold": "2 years", // Q1: do we want 2 years or the default 1?
-  "prConcurrentLimit": 5, // override the default 10
-  "schedule": ["* 18-23,0-5 * * 1-5"], // Q2: Do we want this or the default schedule? 
+  "prConcurrentLimit": 5, // Override the default 10
   "packageRules": [
     // Label abandoned packages
     // E.g. dep last published 3.2 two years ago, you're on 3.0 --> update PR but flag as
