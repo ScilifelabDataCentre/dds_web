@@ -4,41 +4,29 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json", // Provides editor autocomplete and validation for Renovate config
   "extends": [
     "github>ScilifelabDataCentre/data-centre-template//.config/renovate/default.jsonc#v1.1.2",
-    // "replacements:all", // already in effect via config:recommended via preset
-    // "workarounds:all", // same here
-    // "helpers:githubDigestChangelogs" // same here
   ],
-  // "labels": ["type: dependency"], // via preset
   "abandonmentThreshold": "2 years", // Q1: do we want 2 years or the default 1?
   "prConcurrentLimit": 5, // override the default 10
-  // "timezone": "Europe/Stockholm", // via preset
   "schedule": ["* 18-23,0-5 * * 1-5"], // Q2: Do we want this or the default schedule? 
   "packageRules": [
+    // Label abandoned packages
+    // E.g. dep last published 3.2 two years ago, you're on 3.0 --> update PR but flag as
     {
-      "matchJsonata": ["isAbandoned=true"], // I don't think this ever happens because abandoned dont get prs?
-      "addLabels": ["status:abandoned"]
+      "description": "Label abandoned packages",
+      "matchJsonata": ["isAbandoned=true"],
+      "addLabels": ["status: abandoned"]
     },
+    // Tests rule: Label
     {
-      "matchManagers": ["npm"], // any reason to have this instead of the default via preset?
-      "matchFileNames": ["dds_web/static/package.json", "dds_web/static/package-lock.json"],
-      "addLabels": ["npm"]
-    },
-    {
-      "matchFileNames": ["Dockerfiles/**"], // same question
-      "addLabels": ["docker"]
-    },
-    {
-      "matchManagers": ["pip_requirements"], // same question
-      "addLabels": ["python"]
-    },
-    // Label tests
-    {
+      "description": "Label all files in the test directory",
       "matchFileNames": ["tests/**"],
-      "labels": ["skip-changelog", "tests"]
+      "addLabels": ["skip-changelog", "tests"]
     },
+    // GitHub Actions rule: Add additional label
     {
-      "matchFileNames": [".github/workflows/**"], // matchManagers instead? also addLabels? 
-      "labels": ["skip-changelog", "github-actions"]
+      "description": "Label all GitHub Action updates with skip-changelog since they're usually irrelevant for end users",
+      "matchManagers": ["github-actions"],
+      "addLabels": ["skip-changelog"] // Adds to preset label
     }
   ]
 }
