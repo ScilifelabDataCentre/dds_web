@@ -1,0 +1,39 @@
+# Validate the Renovate configuration in .config/renovate/
+# Adjust the paths to your own config files as needed, both in paths: and in run: below.
+---
+name: Validate Renovate config
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/renovate-validate.yml"
+      - ".github/renovate.jsonc"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false # We don't need the token in subsequent steps
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Validate preset
+        # Pin 43 to match instance, but not exact version
+        # First enable globstar to allow recursive search
+        # --yes to automatically install renovate-config-validator if not present
+        # --no-global because we are validating a shared config preset
+        # --strict to fail if scanned config needs migration
+        # cspell:ignore shopt
+        run: |
+          shopt -s globstar
+          npx --yes --package renovate@43 -- renovate-config-validator --no-global --strict \
+            .github/renovate.jsonc
