@@ -28,7 +28,7 @@
       "addLabels": ["skip-changelog"], // Adds to preset label
     },
     // Group digest updates for GitHub Actions to reduce noise
-    // pinDigest is for the initial pinning of the action/image to a digest
+    // pinDigest is for the initial pinning of the action to a digest
     {
       "description": "Group digest updates for GitHub Actions (minor and patch are grouped in the preset)",
       "matchManagers": ["github-actions"],
