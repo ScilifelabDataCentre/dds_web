@@ -34,7 +34,7 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["digest", "pinDigest"],
       "groupName": "GitHub Actions (digest)",
-      "groupSlug": "github-actions-digest"
+      "groupSlug": "github-actions-digest",
     },
   ],
 }
