@@ -667,3 +667,21 @@ _Nothing merged during this sprint_
 - Update dependency pytz to v2026 ([#1791]https://github.com/ScilifelabDataCentre/dds_web/pull/1791)
 - Reduce DB contention: skip project UPDATE when registering new files ([#1813]https://github.com/ScilifelabDataCentre/dds_web/pull/1813)
 - New vesrion v2.15.0 ([#1859]https://github.com/ScilifelabDataCentre/dds_web/pull/1859)
+
+## 2026-08-31 - 2026-09-11
+
+- Update dependency SQLAlchemy to v2 ([#1772]https://github.com/ScilifelabDataCentre/dds_web/pull/1772)
+- Update dependency jwcrypto to v1.5.9 [SECURITY] ([#1861]https://github.com/ScilifelabDataCentre/dds_web/pull/1861)
+
+## 2026-09-14 - 2026-09-25
+
+- Bump immutable from 5.1.5 to 5.1.9 in /dds_web/static ([#1862]https://github.com/ScilifelabDataCentre/dds_web/pull/1862)
+- Bump fast-uri from 3.1.2 to 3.1.8 in /dds_web/static ([#1863]https://github.com/ScilifelabDataCentre/dds_web/pull/1863)
+- Bump postcss from 8.5.10 to 8.5.28 in /dds_web/static ([#1864]https://github.com/ScilifelabDataCentre/dds_web/pull/1864)
+- Bump shell-quote from 1.8.4 to 1.10.0 in /dds_web/static ([#1865]https://github.com/ScilifelabDataCentre/dds_web/pull/1865)
+- Bump brace-expansion from 1.1.12 to 1.1.21 in /dds_web/static ([#1866]https://github.com/ScilifelabDataCentre/dds_web/pull/1866)
+- Bump browserslist from 4.28.1 to 4.29.0 in /dds_web/static ([#1867]https://github.com/ScilifelabDataCentre/dds_web/pull/1867)
+- Update dependency jwcrypto to v1.6.1 [SECURITY] ([#1868]https://github.com/ScilifelabDataCentre/dds_web/pull/1868)
+- Update dependency ubuntu to v24 ([#1779]https://github.com/ScilifelabDataCentre/dds_web/pull/1779)
+- Remove unused APScheduler, Flask-APScheduler, and tzlocal ([#1778]https://github.com/ScilifelabDataCentre/dds_web/pull/1778)
+- New version 2.15.1 ([#1872]https://github.com/ScilifelabDataCentre/dds_web/pull/1872)

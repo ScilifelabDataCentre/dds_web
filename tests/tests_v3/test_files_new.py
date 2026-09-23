@@ -603,13 +603,14 @@ def test_match_file_endpoint(client):
     assert response.json["files"] is None
 
     # Match but error in db
-    db_files_error_mock = MagicMock(
-        side_effect=sqlalchemy.exc.OperationalError("OperationalError", "test", "sqlalchemy")
-    )
-
+    # Patch the query object: SA 2.0 makes InstrumentedAttribute.in_ read-only,
+    # so patching File.name.in_ directly no longer works.
     token = tests.UserAuth(tests.USER_CREDENTIALS["unitadmin"]).token(client)
     query_files = {"files": [FIRST_NEW_FILE["name"]]}
-    with patch("dds_web.database.models.File.name.in_", db_files_error_mock):
+    with patch("dds_web.database.models.File.query") as mock_query:
+        mock_query.filter.side_effect = sqlalchemy.exc.OperationalError(
+            "OperationalError", "test", "sqlalchemy"
+        )
         response = client.get(
             tests.DDSEndpoint.FILE_MATCH,
             headers=token,
