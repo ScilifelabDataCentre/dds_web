@@ -1,0 +1,40 @@
+// Renovate configuration for this repository
+// Extends the custom preset defined in .config/renovate/default.jsonc
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json", // Provides editor autocomplete and validation for Renovate config
+  "extends": [
+    "github>ScilifelabDataCentre/data-centre-template//.config/renovate/default.jsonc#v1.1.2", // Custom preset for the Data Centre
+    "helpers:pinGitHubActionDigests", // Pin GitHub Actions to digest to avoid unexpected changed
+  ],
+  "prConcurrentLimit": 5, // Override the default 10
+  "packageRules": [
+    // Label abandoned packages
+    // E.g. dep last published 3.2 two years ago, you're on 3.0 --> update PR but flag as
+    {
+      "description": "Label abandoned packages",
+      "matchJsonata": ["isAbandoned=true"],
+      "addLabels": ["status: abandoned"],
+    },
+    // Tests rule: Label
+    {
+      "description": "Label all files in the test directory",
+      "matchFileNames": ["tests/**"],
+      "addLabels": ["skip-changelog", "tests"],
+    },
+    // GitHub Actions rule: Add additional label
+    {
+      "description": "Label all GitHub Action updates with skip-changelog since they're usually irrelevant for end users",
+      "matchManagers": ["github-actions"],
+      "addLabels": ["skip-changelog"], // Adds to preset label
+    },
+    // Group digest updates for GitHub Actions to reduce noise
+    // pinDigest is for the initial pinning of the action to a digest
+    {
+      "description": "Group digest updates for GitHub Actions (minor and patch are grouped in the preset)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "groupName": "GitHub Actions (digest)",
+      "groupSlug": "github-actions-digest",
+    },
+  ],
+}
