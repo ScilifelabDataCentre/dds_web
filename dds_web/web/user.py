@@ -579,8 +579,12 @@ def reset_password(token):
 def password_reset_completed():
     """Landing page after password reset"""
 
-    token = flask.session["reset_token"]
-    flask.session.pop("reset_token", None)
+    # Token is only in the session directly after a successful reset (consumed on first visit),
+    # so revisiting the page (refresh, back button, bookmark) should not crash
+    token = flask.session.pop("reset_token", None)
+    if not token:
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
+
     try:
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
