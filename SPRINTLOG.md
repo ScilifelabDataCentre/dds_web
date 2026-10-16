@@ -690,3 +690,4 @@ _Nothing merged during this sprint_
 ## 2026-10-12 - 2026-10-23
 
 - Switch MinIO dev images to pgsty/minio fork ([#1876]https://github.com/ScilifelabDataCentre/dds_web/pull/1876)
+- Fix 500 error when revisiting password reset completed page ([#1878]https://github.com/ScilifelabDataCentre/dds_web/pull/1878)
