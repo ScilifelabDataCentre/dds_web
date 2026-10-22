@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # We use the ubuntu runner + apt rather than the pandoc/latex Docker action.
       # The Docker-based approach requires tlmgr to install extra LaTeX packages at
       # runtime, which depends on a reachable CTAN mirror serving a compatible TeX
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # See the comment on the build_tech_overview job for why apt is used
       # rather than the pandoc/latex Docker action.
       - name: Install pandoc and LaTeX dependencies
@@ -92,7 +92,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Log in to Github Container Repository
         uses: docker/login-action@v4
         with:
@@ -125,9 +125,9 @@ jobs:
           push: false
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
       - name: Install Trivy
-        uses: aquasecurity/setup-trivy@v0.2.6
+        uses: aquasecurity/setup-trivy@v0.3.1
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
