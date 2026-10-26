@@ -699,3 +699,4 @@ _Nothing merged during this sprint_
 ## 2026-10-26 - 2026-11-06
 
 - Update dependency Pillow to v13 [SECURITY] ([#1884]https://github.com/ScilifelabDataCentre/dds_web/pull/1884)
+- Update dependency certifi to v2026 [SECURITY] ([#1883]https://github.com/ScilifelabDataCentre/dds_web/pull/1883)
