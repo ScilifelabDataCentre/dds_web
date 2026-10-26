@@ -695,3 +695,7 @@ _Nothing merged during this sprint_
 - Update dependency Werkzeug to v3.1.9 [SECURITY] ([#1877]https://github.com/ScilifelabDataCentre/dds_web/pull/1877)
 - Bump GitHub Actions used in CI workflows ([#1881]https://github.com/ScilifelabDataCentre/dds_web/pull/1881)
 - Make the test capfd wrapper return out/err like pytest’s CaptureResult ([#1882]https://github.com/ScilifelabDataCentre/dds_web/pull/1882)
+
+## 2026-10-26 - 2026-11-06
+
+- Update dependency Pillow to v13 [SECURITY] ([#1884]https://github.com/ScilifelabDataCentre/dds_web/pull/1884)
