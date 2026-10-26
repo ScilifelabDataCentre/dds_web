@@ -1,6 +1,102 @@
 Changelog
 ==========
 
+.. _2.15.1:
+
+2.15.1 - 2026-09-22
+~~~~~~~~~~~~~~~~~~~~
+
+- 🛡️ Dependencies
+    - Remove unused APScheduler, Flask-APScheduler, and tzlocal  ([#1778](https://github.com/ScilifelabDataCentre/dds_web/pull/1778))
+    - Update dependency ubuntu to v24 ([#1779](https://github.com/ScilifelabDataCentre/dds_web/pull/1779))
+    - Update dependency jwcrypto to v1.6.1 [SECURITY] ([#1868](https://github.com/ScilifelabDataCentre/dds_web/pull/1868))
+    - Bump browserslist from 4.28.1 to 4.29.0 in /dds\_web/static ([#1867](https://github.com/ScilifelabDataCentre/dds_web/pull/1867))
+    - Bump brace-expansion from 1.1.12 to 1.1.21 in /dds\_web/static ([#1866](https://github.com/ScilifelabDataCentre/dds_web/pull/1866))
+    - Bump shell-quote from 1.8.4 to 1.10.0 in /dds\_web/static ([#1865](https://github.com/ScilifelabDataCentre/dds_web/pull/1865))
+    - Bump postcss from 8.5.10 to 8.5.28 in /dds\_web/static ([#1864](https://github.com/ScilifelabDataCentre/dds_web/pull/1864))
+    - Bump fast-uri from 3.1.2 to 3.1.8 in /dds\_web/static ([#1863](https://github.com/ScilifelabDataCentre/dds_web/pull/1863))
+    - Bump immutable from 5.1.5 to 5.1.9 in /dds\_web/static ([#1862](https://github.com/ScilifelabDataCentre/dds_web/pull/1862))
+    - Update dependency jwcrypto to v1.5.9 [SECURITY] ([#1861](https://github.com/ScilifelabDataCentre/dds_web/pull/1861))
+    - Update dependency SQLAlchemy to v2 ([#1772](https://github.com/ScilifelabDataCentre/dds_web/pull/1772))
+
+.. _2.15.0:
+
+2.15.0 - 2026-08-20
+~~~~~~~~~~~~~~~~~~~~
+
+- 🚀 Features
+    - Reduce DB contention: skip project UPDATE when registering new files ([#1813](https://github.com/ScilifelabDataCentre/dds_web/pull/1813))
+- 🐛 Bug Fixes
+    - Replace linkspector with lychee to remove Chrome/puppeteer depend… ([#1852](https://github.com/ScilifelabDataCentre/dds_web/pull/1852))
+- 🛡️ Dependencies
+    - Update dependency pytz to v2026 ([#1791](https://github.com/ScilifelabDataCentre/dds_web/pull/1791))
+    - Update dependency Pillow to v12.3.0 [SECURITY] ([#1855](https://github.com/ScilifelabDataCentre/dds_web/pull/1855))
+    - Update dependency cryptography to v50 [SECURITY] ([#1857](https://github.com/ScilifelabDataCentre/dds_web/pull/1857))
+    - Update dependency sass to v1.98.0 ([#1799](https://github.com/ScilifelabDataCentre/dds_web/pull/1799))
+    - Bump shell-quote from 1.8.1 to 1.8.4 in /dds\_web/static ([#1851](https://github.com/ScilifelabDataCentre/dds_web/pull/1851))
+    - Update dependency jwcrypto to v1.5.7 [SECURITY] ([#1850](https://github.com/ScilifelabDataCentre/dds_web/pull/1850))
+    - Update dependency cryptography to v48 [SECURITY] ([#1853](https://github.com/ScilifelabDataCentre/dds_web/pull/1853))
+    - Update dependency Flask-HTTPAuth to v4.8.1 [SECURITY] ([#1818](https://github.com/ScilifelabDataCentre/dds_web/pull/1818))
+    - Update dependency Authlib to v1.6.12 [SECURITY] ([#1844](https://github.com/ScilifelabDataCentre/dds_web/pull/1844))
+    - Update dependency idna to v3.15 [SECURITY] ([#1845](https://github.com/ScilifelabDataCentre/dds_web/pull/1845))
+    - Bump urllib3 from 2.6.3 to 2.7.0 ([#1849](https://github.com/ScilifelabDataCentre/dds_web/pull/1849))
+    - Bump fast-uri from 3.1.0 to 3.1.2 in /dds\_web/static ([#1848](https://github.com/ScilifelabDataCentre/dds_web/pull/1848))
+    - Bump mako from 1.3.11 to 1.3.12 ([#1847](https://github.com/ScilifelabDataCentre/dds_web/pull/1847))
+
+.. _2.14.3:
+
+2.14.3 - 2026-05-06
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - Fix(auth): roll back HOTP state when one-time-code email send fails ([#1838](https://github.com/ScilifelabDataCentre/dds_web/pull/1838))
+    - Correct the troubleshooting guide regarding TOTP reset/deactivation ([#1835](https://github.com/ScilifelabDataCentre/dds_web/pull/1835))
+    - Hms 2656 handle failed mail send ([#1834](https://github.com/ScilifelabDataCentre/dds_web/pull/1834))
+- 🛡️ Dependencies
+    - Update dependency Authlib to v1.6.11 [SECURITY] ([#1827](https://github.com/ScilifelabDataCentre/dds_web/pull/1827))
+    - Update dependency Mako to v1.3.11 [SECURITY] ([#1828](https://github.com/ScilifelabDataCentre/dds_web/pull/1828))
+    - Update dependency postcss to v8.5.10 [SECURITY] ([#1833](https://github.com/ScilifelabDataCentre/dds_web/pull/1833))
+    - Update dependency cryptography to v46.0.7 [SECURITY] ([#1824](https://github.com/ScilifelabDataCentre/dds_web/pull/1824))
+    - Bump minimatch and serve in /dds\_web/static ([#1831](https://github.com/ScilifelabDataCentre/dds_web/pull/1831))
+    - Bump pillow from 12.1.1 to 12.2.0 ([#1830](https://github.com/ScilifelabDataCentre/dds_web/pull/1830))
+    - Bump immutable from 5.1.4 to 5.1.5 in /dds\_web/static ([#1829](https://github.com/ScilifelabDataCentre/dds_web/pull/1829))
+
+.. _2.14.2:
+
+2.14.2 - 2026-04-07
+~~~~~~~~~~~~~~~~~~~~
+
+- 🛡️ Dependencies
+    - Update dependency requests to v2.33.0 [SECURITY] ([#1815](https://github.com/ScilifelabDataCentre/dds_web/pull/1815))
+    - Update dependency cryptography to v46.0.6 [SECURITY] ([#1816](https://github.com/ScilifelabDataCentre/dds_web/pull/1816))
+    - Bump flatted from 3.2.7 to 3.4.2 in /dds\_web/static ([#1817](https://github.com/ScilifelabDataCentre/dds_web/pull/1817))
+    - Bump authlib from 1.6.6 to 1.6.9 ([#1812](https://github.com/ScilifelabDataCentre/dds_web/pull/1812))
+    - Update dependency Flask to v3 [SECURITY] ([#1675](https://github.com/ScilifelabDataCentre/dds_web/pull/1675))
+- 📌 Other Changes
+    - Update actions/download-artifact action to v8 ([#1784](https://github.com/ScilifelabDataCentre/dds_web/pull/1784))
+    - Update aquasecurity/trivy-action action to v0.34.0 [SECURITY] ([#1807](https://github.com/ScilifelabDataCentre/dds_web/pull/1807))
+    - Update release-drafter/release-drafter action to v7 ([#1808](https://github.com/ScilifelabDataCentre/dds_web/pull/1808))
+    - Update actions/setup-python action to v6 ([#1738](https://github.com/ScilifelabDataCentre/dds_web/pull/1738))
+    - Update actions/setup-node action to v6 ([#1737](https://github.com/ScilifelabDataCentre/dds_web/pull/1737))
+
+.. _2.14.1:
+
+2.14.1 - 2026-03-11
+~~~~~~~~~~~~~~~~~~~~
+
+- 🐛 Bug Fixes
+    - HMS-2642 Contradicting flash messages when deactivated user tries to reset password ([#1786](https://github.com/ScilifelabDataCentre/dds_web/pull/1786))
+    - Handle deactivated users in password reset flow ([#1657](https://github.com/ScilifelabDataCentre/dds_web/pull/1657))
+- 🛡️ Dependencies
+    - Update dependency Werkzeug to v3.1.6 [SECURITY] ([#1673](https://github.com/ScilifelabDataCentre/dds_web/pull/1673))
+    - Bump cryptography from 44.0.1 to 46.0.5 ([#1670](https://github.com/ScilifelabDataCentre/dds_web/pull/1670))
+    - Address workzeug security alert ([#1669](https://github.com/ScilifelabDataCentre/dds_web/pull/1669))
+    - Update dependency autoprefixer to v10.4.27 ([#1677](https://github.com/ScilifelabDataCentre/dds_web/pull/1677))
+    - Update dependency marshmallow to v3.26.2 [SECURITY] ([#1674](https://github.com/ScilifelabDataCentre/dds_web/pull/1674))
+    - Update docker/login-action action to v4 ([#1793](https://github.com/ScilifelabDataCentre/dds_web/pull/1793))
+    - Update docker/metadata-action action to v6 ([#1795](https://github.com/ScilifelabDataCentre/dds_web/pull/1795))
+    - Bump pillow from 10.3.0 to 12.1.1 ([#1671](https://github.com/ScilifelabDataCentre/dds_web/pull/1671))
+
 .. _2.14.0:
 
 2.14.0 - 2026-02-09

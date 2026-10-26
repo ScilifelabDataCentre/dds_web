@@ -898,7 +898,7 @@ class DeleteUser(flask_restful.Resource):
     @staticmethod
     def delete_user(user):
         try:
-            parent_user = models.User.query.get(user.username)
+            parent_user = db.session.get(models.User, user.username)
             db.session.delete(parent_user)
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.OperationalError) as err:

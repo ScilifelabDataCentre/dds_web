@@ -8,7 +8,13 @@
 ---
 name: Black
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [dev, master]
+    paths: &python_files
+      - "**/*.py"
+  pull_request:
+    paths: *python_files
 
 env:
   INPUT_VERSION: 24.1.1
@@ -17,7 +23,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: psf/black@stable
         with:
           version: ${{ env.INPUT_VERSION }}

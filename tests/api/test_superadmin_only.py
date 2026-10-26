@@ -820,7 +820,7 @@ def test_anyprojectsbusy_no_token(client: flask.testing.FlaskClient) -> None:
     response = client.get(tests.DDSEndpoint.PROJECT_BUSY_ANY, headers=tests.DEFAULT_HEADER)
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     assert response.json.get("message")
-    assert "No token" in response.json.get("message")
+    assert "Missing or incorrect credentials" in response.json.get("message")
 
 
 def test_anyprojectsbusy_not_allowed(client: flask.testing.FlaskClient) -> None:

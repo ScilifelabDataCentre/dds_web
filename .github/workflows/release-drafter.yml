@@ -4,12 +4,9 @@
 name: Release Drafter
 
 on:
-  workflow_dispatch: # Allows manual triggering of the workflow
-  # Run on push to dev and master
   push:
-    branches:
-      - master
-      - dev
+    branches: [dev, master]
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 permissions:
   contents: read
@@ -25,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Drafts your next Release notes as Pull Requests are merged
-      - uses: release-drafter/release-drafter@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: release-drafter/release-drafter@v7
+        with:
+          config-name: release-drafter.yml # .github/release-drafter.yml
+          token: ${{ secrets.GITHUB_TOKEN }}

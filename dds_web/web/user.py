@@ -381,7 +381,7 @@ def login():
     form = forms.LoginForm()
     if form.validate_on_submit():
         # Get user from database
-        user = models.User.query.get(form.username.data)
+        user = db.session.get(models.User, form.username.data)
 
         # Unsuccessful login
         if not user or not user.verify_password(input_password=form.password.data):
@@ -397,9 +397,17 @@ def login():
 
         # Correct credentials still needs 2fa
         if not user.totp_enabled:
-            # Send 2fa token to user's email
-            if dds_web.security.auth.send_hotp_email(user):
-                flask.flash("One-Time Code has been sent to your primary email.")
+            # Send 2fa token to user's email. If the SMTP / DNS layer
+            # is having a transient hiccup we don't want to land the
+            # user on the "enter your code" page with no code en route,
+            # nor crash with a 500: flash a friendly message and keep
+            # them on /login so they can retry.
+            try:
+                if dds_web.security.auth.send_hotp_email(user):
+                    flask.flash("One-Time Code has been sent to your primary email.")
+            except ddserr.TwoFactorEmailError as exc:
+                flask.flash(exc.description or str(exc), "danger")
+                return flask.redirect(flask.url_for("auth_blueprint.login", next=next_target))
 
         # Generate signed token that indicates that the user has authenticated
         token_2fa_initiated = dds_web.security.tokens.jwt_token(
@@ -481,13 +489,14 @@ def request_reset_password():
                 flask.flash(
                     "Your account is deactivated. You cannot reset your password.", "warning"
                 )
+                return flask.redirect(flask.url_for("pages.home"))
 
         flask.flash(
             "If the specified email address is registered to a DDS account, "
             "you should receive an email with instructions on how to reset your password. "
             f"You specified the following email address: {form.email.data}"
         )
-        return flask.redirect(flask.url_for("auth_blueprint.login"))
+        return flask.redirect(flask.url_for("pages.home"))
 
     # Show form
     return flask.render_template("user/request_reset_password.html", form=form)
@@ -526,6 +535,9 @@ def reset_password(token):
 
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active. You cannot reset your password.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     # Get form for reseting password
@@ -567,8 +579,12 @@ def reset_password(token):
 def password_reset_completed():
     """Landing page after password reset"""
 
-    token = flask.session["reset_token"]
-    flask.session.pop("reset_token", None)
+    # Token is only in the session directly after a successful reset (consumed on first visit),
+    # so revisiting the page (refresh, back button, bookmark) should not crash
+    token = flask.session.pop("reset_token", None)
+    if not token:
+        return flask.redirect(flask.url_for("auth_blueprint.login"))
+
     try:
         user = dds_web.security.auth.verify_password_reset_token(token=token)
         if not user.is_active:
@@ -576,6 +592,9 @@ def password_reset_completed():
             return flask.redirect(flask.url_for("pages.home"))
     except ddserr.AuthenticationError:
         flask.flash("That is an invalid or expired token", "warning")
+        return flask.redirect(flask.url_for("pages.home"))
+    except ddserr.AccessDeniedError:
+        flask.flash("Your account is not active.", "warning")
         return flask.redirect(flask.url_for("pages.home"))
 
     units_to_contact = {}

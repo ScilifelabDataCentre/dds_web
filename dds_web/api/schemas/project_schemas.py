@@ -96,7 +96,9 @@ class CreateProjectSchema(marshmallow.Schema):
             "null": {"message": "A principal investigator is required."},
         },
     )
-    non_sensitive = marshmallow.fields.Boolean(required=False, default=False)
+    non_sensitive = marshmallow.fields.Boolean(
+        required=False, load_default=False, dump_default=False
+    )
     date_created = custom_fields.MyDateTimeField(required=False)
 
     @marshmallow.pre_load
@@ -180,6 +182,8 @@ class CreateProjectSchema(marshmallow.Schema):
                 )
             )
 
+            # Persist project before creating key rows so SA 2.0 can resolve FKs on flush.
+            db.session.add(new_project)
             generate_project_key_pair(current_user, new_project)
             db.session.flush()
 
@@ -202,7 +206,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
         unknown = marshmallow.EXCLUDE
 
     @marshmallow.validates("project")
-    def validate_project(self, value):
+    def validate_project(self, value, **kwargs):
         """Validate existing project and user access to it."""
 
         project = verify_project_exists(spec_proj=value)
@@ -225,8 +229,8 @@ class ProjectContentSchema(ProjectRequiredSchema):
     """ """
 
     requested_items = marshmallow.fields.List(marshmallow.fields.String, required=False)
-    url = marshmallow.fields.Boolean(required=False, default=False)
-    get_all = marshmallow.fields.Boolean(required=False, default=False)
+    url = marshmallow.fields.Boolean(required=False, load_default=False, dump_default=False)
+    get_all = marshmallow.fields.Boolean(required=False, load_default=False, dump_default=False)
 
     def find_contents(self, project, contents):
         # All contents

@@ -869,6 +869,7 @@ def test_list_lost_files_no_lost_files_in_project(
 
     # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
     project_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    project.date_created = current_time()
     db.session.commit()
 
     assert project_unit.sto4_start_time
@@ -906,6 +907,7 @@ def test_list_lost_files_no_lost_files_in_project(
     project_unit.sto4_name = "name"
     project_unit.sto4_access = "access"
     project_unit.sto4_secret = "secret"
+    project.date_created = current_time()
     db.session.commit()
 
     assert project_unit.sto4_start_time
@@ -1025,9 +1027,11 @@ def test_list_lost_files_no_lost_files_total(
     # ---------------------------------------------------------------------------------------
 
     # Use sto2 -- sto4_endpoint_added, project created after, but not all info is available --
+    now = current_time()
     for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
+        u.sto4_start_time = now - relativedelta(hours=1)
         for p in u.projects:
+            p.date_created = now
             assert p.date_created > u.sto4_start_time
     db.session.commit()
 
@@ -1052,9 +1056,11 @@ def test_list_lost_files_no_lost_files_total(
     # ---------------------------------------------------------------------------------------
 
     # Use sto4 -- sto4_endpoint_added, project created after, and all info is available -----
+    now = current_time()
     for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
+        u.sto4_start_time = now - relativedelta(hours=1)
         for p in u.projects:
+            p.date_created = now
             assert p.date_created > u.sto4_start_time
             u.sto4_endpoint = "endpoint"
             u.sto4_name = "name"
@@ -1084,9 +1090,11 @@ def test_list_lost_files_no_lost_files_total(
     # ---------------------------------------------------------------------------------------
 
     # Use sto4 for all but one --------------------------------------------------------------
+    now = current_time()
     for u in models.Unit.query.all():
-        u.sto4_start_time = current_time() - relativedelta(hours=1)
+        u.sto4_start_time = now - relativedelta(hours=1)
         for p in u.projects:
+            p.date_created = now
             assert p.date_created > u.sto4_start_time
             u.sto4_endpoint = "endpoint"
             u.sto4_name = "name"
@@ -1258,6 +1266,7 @@ def test_add_missing_bucket_not_missing(
     # Use sto2 -- sto4_start_time set, project created after, but not all vars set ----
     # Set start time
     project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    project.date_created = current_time()
     db.session.commit()
 
     # Verify
@@ -1396,6 +1405,7 @@ def test_delete_lost_files_deleted(client, cli_runner, boto3_session, capfd: Log
     # Use sto2 -- start_time set, project created after, but all vars not set
     # Set start_time
     project.responsible_unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    project.date_created = current_time()
     db.session.commit()
 
     # Verify
@@ -1969,10 +1979,10 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 
-    # Verify that there's now a reporting row
-    assert Reporting.query.count() == 1
-    row = Reporting.query.first()
-    verify_reporting_row(row=row, time_date=first_time)
+        # Verify that there's now a reporting row
+        assert Reporting.query.count() == 1
+        row = Reporting.query.first()
+        verify_reporting_row(row=row, time_date=first_time)
 
     # Check that an exception is raised if the command is run on the same day
     with freezegun.freeze_time(first_time):
@@ -1993,11 +2003,11 @@ def test_collect_stats(client, cli_runner, fs: FakeFilesystem):
             assert not result.exception, "Raised an unwanted exception."
             assert mock_mail_send.call_count == 0
 
-    # Verify that there's now a reporting row
-    assert Reporting.query.count() == 2
-    reporting_rows = Reporting.query.all()
-    for row in reporting_rows:
-        verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
+        # Verify that there's now a reporting row
+        assert Reporting.query.count() == 2
+        reporting_rows = Reporting.query.all()
+        for row in reporting_rows:
+            verify_reporting_row(row=row, time_date=first_time if row.id == 1 else second_time)
 
 
 def test_send_usage(client, cli_runner, capfd: LogCaptureFixture):

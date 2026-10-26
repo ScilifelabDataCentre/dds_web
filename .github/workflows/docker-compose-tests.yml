@@ -16,7 +16,11 @@ name: Pytest
 on:
   push:
     branches: [dev, master]
+    paths-ignore: &doc_files
+      - "**/*.md"
+      - "docs/**"
   pull_request:
+    paths-ignore: *doc_files
   workflow_dispatch:
 
 jobs:
@@ -24,11 +28,11 @@ jobs:
     concurrency:
       group: ${{ github.ref }}-pytest
       cancel-in-progress: true
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run tests against database container
         run: |
@@ -44,7 +48,7 @@ jobs:
           ## If no one connects after 5 minutes, shut down server.
           wait-timeout-minutes: 5
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/report.xml
