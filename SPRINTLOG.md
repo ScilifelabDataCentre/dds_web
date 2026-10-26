@@ -693,3 +693,12 @@ _Nothing merged during this sprint_
 - Fix 500 error when revisiting password reset completed page ([#1878]https://github.com/ScilifelabDataCentre/dds_web/pull/1878)
 - Update dependency urllib3 to v2.8.0 [SECURITY] ([#1875]https://github.com/ScilifelabDataCentre/dds_web/pull/1875)
 - Update dependency Werkzeug to v3.1.9 [SECURITY] ([#1877]https://github.com/ScilifelabDataCentre/dds_web/pull/1877)
+- Bump GitHub Actions used in CI workflows ([#1881]https://github.com/ScilifelabDataCentre/dds_web/pull/1881)
+- Make the test capfd wrapper return out/err like pytest’s CaptureResult ([#1882]https://github.com/ScilifelabDataCentre/dds_web/pull/1882)
+
+## 2026-10-26 - 2026-11-06
+
+- Update dependency Pillow to v13 [SECURITY] ([#1884]https://github.com/ScilifelabDataCentre/dds_web/pull/1884)
+- Update dependency certifi to v2026 [SECURITY] ([#1883]https://github.com/ScilifelabDataCentre/dds_web/pull/1883)
+- Bump shell-quote from 1.10.0 to 1.12.0 in /dds_web/static ([#1879]https://github.com/ScilifelabDataCentre/dds_web/pull/1879)
+- Bump source-map-js from 1.2.1 to 1.2.2 in /dds_web/static ([#1885]https://github.com/ScilifelabDataCentre/dds_web/pull/1885)
