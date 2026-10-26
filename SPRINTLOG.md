@@ -694,3 +694,4 @@ _Nothing merged during this sprint_
 - Update dependency urllib3 to v2.8.0 [SECURITY] ([#1875]https://github.com/ScilifelabDataCentre/dds_web/pull/1875)
 - Update dependency Werkzeug to v3.1.9 [SECURITY] ([#1877]https://github.com/ScilifelabDataCentre/dds_web/pull/1877)
 - Bump GitHub Actions used in CI workflows ([#1881]https://github.com/ScilifelabDataCentre/dds_web/pull/1881)
+- Make the test capfd wrapper return out/err like pytest’s CaptureResult ([#1882]https://github.com/ScilifelabDataCentre/dds_web/pull/1882)
