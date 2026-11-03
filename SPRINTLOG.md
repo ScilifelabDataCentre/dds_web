@@ -703,3 +703,4 @@ _Nothing merged during this sprint_
 - Bump shell-quote from 1.10.0 to 1.12.0 in /dds_web/static ([#1879]https://github.com/ScilifelabDataCentre/dds_web/pull/1879)
 - Bump source-map-js from 1.2.1 to 1.2.2 in /dds_web/static ([#1885]https://github.com/ScilifelabDataCentre/dds_web/pull/1885)
 - Update dependency Mako to v1.4.2 [SECURITY] ([#1880]https://github.com/ScilifelabDataCentre/dds_web/pull/1880)
+- Update dependency Authlib to v1.9.1 [SECURITY] ([#1886]https://github.com/ScilifelabDataCentre/dds_web/pull/1886)
