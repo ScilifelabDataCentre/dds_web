@@ -704,3 +704,4 @@ _Nothing merged during this sprint_
 - Bump source-map-js from 1.2.1 to 1.2.2 in /dds_web/static ([#1885]https://github.com/ScilifelabDataCentre/dds_web/pull/1885)
 - Update dependency Mako to v1.4.2 [SECURITY] ([#1880]https://github.com/ScilifelabDataCentre/dds_web/pull/1880)
 - Update dependency Authlib to v1.9.1 [SECURITY] ([#1886]https://github.com/ScilifelabDataCentre/dds_web/pull/1886)
+- Bump dnspython from 2.6.1 to 2.9.0 ([#1888]https://github.com/ScilifelabDataCentre/dds_web/pull/1888)
