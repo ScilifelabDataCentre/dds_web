@@ -96,47 +96,54 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
-  minio:
-    container_name: dds_minio
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    profiles:
-      - s3
-      - full-dev
-      - cli
-    command: server /data --console-address ":9001"
+  # Seaweedfs (weed mini)
+  # Commands: besides setting data dir and port, run commands to disable options that are
+  # enabled in weed mini by default:
+  # autoCreateBucket = automatically create a new bucket on upload if one does not exist
+  # master.telemetry = send anonymous telemetry to project server
+  # webdav = a protocol for mounting storage as a network drive
+  # iceberg and lance = catalog tools for analytics/machine learning
+  weedmini:
+    container_name: dds_weed_mini
+    image: chrislusf/seaweedfs:4.52
+    profiles: [s3, full-dev, cli]
+    command: >
+      mini -dir=/data -s3.port=9000
+      -s3.autoCreateBucket=false
+      -master.telemetry=false
+      -webdav=false -s3.port.iceberg=0 -s3.port.lance=0
     ports:
       - 127.0.0.1:9000:9000
-      - 127.0.0.1:9001:9001
     environment:
-      MINIO_ROOT_USER: minio # access key
-      MINIO_ROOT_PASSWORD: minioPassword # secret key
-      # NOTE: Uncomment if you want to keep your data.
-      #     Mounts a folder into the container to make uploaded data persistent.
-      # volumes:
-      #   - type: bind
-      #     source: ./minio-data
-      #     target: /data
+      AWS_ACCESS_KEY_ID: weedMini
+      AWS_SECRET_ACCESS_KEY: weedMiniPassword
+    # NOTE: Uncomment if you want to keep your data.
+    #     Mounts a folder into the container to make uploaded data persistent.
+    # volumes:
+    #   - type: bind
+    #     source: ./minio-data
+    #     target: /data
 
-  minio2: # Added in order to be able to test the new sto4 move
-    container_name: dds_minio_2
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    profiles:
-      - s3
-      - full-dev
-      - cli
-    command: server /data --console-address ":9003"
+  weedmini2:
+    container_name: dds_weed_mini_2
+    image: chrislusf/seaweedfs:4.52
+    profiles: [s3, full-dev, cli]
+    command: >
+      mini -dir=/data -s3.port=9000
+      -s3.autoCreateBucket=false
+      -master.telemetry=false
+      -webdav=false -s3.port.iceberg=0 -s3.port.lance=0
     ports:
       - 127.0.0.1:9002:9000
-      - 127.0.0.1:9003:9003
     environment:
-      MINIO_ROOT_USER: minio2 # access key
-      MINIO_ROOT_PASSWORD: minioPassword2 # secret key
-      # NOTE: Uncomment if you want to keep your data.
-      #     Mounts a folder into the container to make uploaded data persistent.
-      # volumes:
-      #   - type: bind
-      #     source: ./minio-data
-      #     target: /data
+      AWS_ACCESS_KEY_ID: weedMini2
+      AWS_SECRET_ACCESS_KEY: weedMiniPassword2
+    # NOTE: Uncomment if you want to keep your data.
+    #     Mounts a folder into the container to make uploaded data persistent.
+    # volumes:
+    #   - type: bind
+    #     source: ./minio-data
+    #     target: /data
 
   mailcatcher:
     container_name: dds_mailcatcher

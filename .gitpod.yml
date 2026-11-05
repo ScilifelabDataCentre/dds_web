@@ -28,10 +28,7 @@ ports:
     # open-browser is blocked by Chrome pop-up blocker
     onOpen: ignore
     visibility: public
-  - port: 9000 # minio
-    onOpen: ignore
-    visibility: public
-  - port: 9001 # minio
+  - port: 9000 # seaweedfs
     onOpen: ignore
     visibility: public
   - port: 3306 # db
