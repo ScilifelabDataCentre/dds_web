@@ -121,7 +121,7 @@ services:
     #     Mounts a folder into the container to make uploaded data persistent.
     # volumes:
     #   - type: bind
-    #     source: ./minio-data
+    #     source: ./weedmini-data
     #     target: /data
 
   weedmini2:
@@ -142,7 +142,7 @@ services:
     #     Mounts a folder into the container to make uploaded data persistent.
     # volumes:
     #   - type: bind
-    #     source: ./minio-data
+    #     source: ./weedmini2-data
     #     target: /data
 
   mailcatcher:
