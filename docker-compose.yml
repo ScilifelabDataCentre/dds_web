@@ -96,13 +96,13 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
-  # Seaweedfs (weed mini)
-  # Commands: besides setting data dir and port, run commands to disable options that are
-  # enabled in weed mini by default:
-  # autoCreateBucket = automatically create a new bucket on upload if one does not exist
-  # master.telemetry = send anonymous telemetry to project server
-  # webdav = a protocol for mounting storage as a network drive
-  # iceberg and lance = catalog tools for analytics/machine learning
+  # SeaweedFS (weed mini): all SeaweedFS components in one container, serving S3 on port 9000.
+  # S3 keys come from AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY; data in /data is lost unless a volume is mounted.
+  # Flags turn off weed mini defaults we don't need:
+  #   -s3.autoCreateBucket=false: uploading to a missing bucket fails instead of creating it
+  #   -master.telemetry=false:    no anonymous usage data sent to the SeaweedFS project
+  #   -webdav=false:              no WebDAV server (for mounting storage as a network drive)
+  #   -s3.port.iceberg/lance=0:   no Iceberg/Lance endpoints (data-catalog tools for analytics/ML)
   weedmini:
     container_name: dds_weed_mini
     image: chrislusf/seaweedfs:4.52
