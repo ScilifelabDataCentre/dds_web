@@ -1,4 +1,6 @@
-# Use --profile full-dev and uncomment RATELIMIT_STORAGE_URI to use redis
+# `docker compose up` starts everything needed for development.
+# Add `--profile s3-switch` to also start weedmini2 (only for testing a switch between two S3 storages).
+# Uncomment RATELIMIT_STORAGE_URI under backend to use redis for rate limiting.
 ---
 services:
   db:
@@ -106,7 +108,6 @@ services:
   weedmini:
     container_name: dds_weed_mini
     image: chrislusf/seaweedfs:4.52
-    profiles: [s3, full-dev, cli]
     command: >
       mini -dir=/data -s3.port=9000
       -s3.autoCreateBucket=false
@@ -124,10 +125,11 @@ services:
     #     source: ./weedmini-data
     #     target: /data
 
+  # Second S3 storage, only for testing a switch between storages (--profile s3-switch)
   weedmini2:
     container_name: dds_weed_mini_2
     image: chrislusf/seaweedfs:4.52
-    profiles: [s3, full-dev, cli]
+    profiles: [s3-switch]
     command: >
       mini -dir=/data -s3.port=9000
       -s3.autoCreateBucket=false
@@ -148,20 +150,12 @@ services:
   mailcatcher:
     container_name: dds_mailcatcher
     image: sj26/mailcatcher:latest
-    profiles:
-      - dev
-      - mail
-      - full-dev
-      - cli
     ports:
       - 127.0.0.1:1080:1080
 
   redis:
     container_name: dds_redis
     image: redis:latest
-    profiles:
-      - full-dev
-      - redis
 
   cli:
     container_name: dds_cli
@@ -170,9 +164,6 @@ services:
       dockerfile: Dockerfiles/cli.Dockerfile
       context: ./
       target: base
-    profiles:
-      - cli
-      - full-dev
     environment:
       - DDS_CLI_ENV=docker-dev
     volumes:

@@ -11,7 +11,7 @@ tasks:
     init: >
       chmod a+x /workspace/ &&
       docker compose build --pull
-    command: docker compose --profile cli up
+    command: docker compose up
   - name: Open dds cli
     openMode: split-right
     command: >
