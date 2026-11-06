@@ -91,13 +91,13 @@ docker-compose --profile dev up
 This will give you the above two containers, but also `mailcatcher` that will allow you to read
 any sent emails by going to `localhost:1080` in a web browser.
 
-#### Weed Mini (SeaweedFS) S3 Storage & Limiter: `full-dev`
+#### SeaweedFS (weed mini) S3 Storage & Limiter: `full-dev`
 
 ```bash
 docker-compose --profile full-dev up
 ```
 
-Will also activate weed mini (SeaweedFS) for s3 storage (clearly not functional with cli) and redis to enable a persistent limiter for the API.
+Will also activate SeaweedFS (weed mini) for s3 storage (clearly not functional with cli) and redis to enable a persistent limiter for the API.
 You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
 
 If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
@@ -109,7 +109,7 @@ If using this method, you can stop the web server with the command `docker-compo
 docker-compose --profile cli up
 ```
 
-Will start database, backend, seaweedFS, and mailcatcher. Will also start an extra container prepared for working with the CLI.
+Will start database, backend, SeaweedFS, and mailcatcher. Will also start an extra container prepared for working with the CLI.
 
 Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
 
