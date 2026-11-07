@@ -73,6 +73,8 @@ Then, fork this repository and clone to your local system.
 
 ### Running locally
 
+The development environment requires that [dds_cli](https://github.com/ScilifelabDataCentre/dds_cli) is checked out next to this repo, in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`). Without it, the `cli` container fails to start.
+
 In the root folder of the repo, start the development environment:
 
 ```bash
@@ -101,9 +103,7 @@ Also starts `weedmini2`, a second SeaweedFS S3 storage at `localhost:9002`. It i
 
 #### CLI development against local environment
 
-Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
-
-With the containers running, shell into the `dds_cli` container:
+The `cli` container runs your local checkout of dds_cli in `../dds_cli`. With the containers running, shell into the `dds_cli` container:
 
 ```bash
 docker exec -it dds_cli /bin/sh
