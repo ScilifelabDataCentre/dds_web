@@ -58,7 +58,7 @@
 ## Table of Contents
 
 - [Development Setup](#development-setup)
-  - [Profiles](#profiles)
+  - [Running locally](#running-locally)
   - [Debugging inside docker](#python-debugger-inside-docker)
   - [Config settings](#config-settings)
   - [Database changes](#database-changes)
@@ -70,55 +70,44 @@ When developing this software, we recommend that you run the web server locally 
 You can download Docker here: <https://docs.docker.com/get-docker/>
 
 Then, fork this repository and clone to your local system.
-In the root folder of the repo, run the server with one of the following profiles (_plain_, _dev_, _full-dev_, _cli_) depending on your needs.
 
-### Profiles
+### Running locally
 
-#### Application & Database: Plain
+The development environment requires that [dds_cli](https://github.com/ScilifelabDataCentre/dds_cli) is checked out next to this repo, in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`). Without it, the `cli` container fails to start.
 
-```bash
-docker-compose up
-```
-
-This command will orchestrate the building and running of two containers: one for the SQL database (`mariadb`) and one for the application.
-
-#### Mailcatcher: `dev`
+In the root folder of the repo, start the development environment:
 
 ```bash
-docker-compose --profile dev up
+docker compose up
 ```
 
-This will give you the above two containers, but also `mailcatcher` that will allow you to read
-any sent emails by going to `localhost:1080` in a web browser.
+This builds and starts all containers needed for development:
 
-#### Minio S3 Storage & Limiter: `full-dev`
+- `backend`: the web app and API, at `localhost:5000`
+- `db`: the MariaDB database
+- `redis`: the job queue. To also use it for API rate limiting, uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml`
+- `weedmini`: SeaweedFS (weed mini) S3 storage, at `localhost:9000`
+- `mailcatcher`: catches emails sent by the app; read them at `localhost:1080`
+- `cli`: for running the CLI against the local setup (see [below](#cli-development-against-local-environment))
+- `node_builder`: recompiles the CSS when SCSS files change
+
+Add `-d` to run in detached mode, and stop the containers with `docker compose down`.
+
+#### Second S3 storage: `s3-switch`
 
 ```bash
-docker-compose --profile full-dev up
+docker compose --profile s3-switch up
 ```
 
-Will also activate minio for s3 storage (clearly not functional with cli) and redis to enable a persistent limiter for the API.
-You also need to uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml` to enable redis.
+Also starts `weedmini2`, a second SeaweedFS S3 storage at `localhost:9002`. It is only needed for testing a switch between two S3 storages.
 
-If you prefer, you can run the web servers in 'detached' mode with the `-d` flag, which does not block your terminal.
-If using this method, you can stop the web server with the command `docker-compose down`.
+#### CLI development against local environment
 
-#### CLI development against local environment: `cli`
+The `cli` container runs your local checkout of dds_cli in `../dds_cli`. With the containers running, shell into the `dds_cli` container:
 
 ```bash
-docker-compose --profile cli up
+docker exec -it dds_cli /bin/sh
 ```
-
-Will start database, backend, minio, and mailcatcher. Will also start an extra container prepared for working with the CLI.
-
-Requires that dds_cli is checked out in `../dds_cli` (otherwise adapt the volume path in `docker-compose.yml`).
-
-1. Start docker-compose with the `cli` profile
-2. Inject into the `dds_cli` container:
-
-   ```bash
-   docker exec -it dds_cli /bin/sh
-   ```
 
 Then you can freely use the dds cli component against the local development setup in the active CLI.
 
@@ -184,7 +173,7 @@ For instructions on how to do this, see [the README in the migrations directory]
 Tests run on github actions on every pull request and push against master and dev. To run the tests locally, use this command:
 
 ```bash
-docker-compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend
+docker compose -f docker-compose.yml -f tests/docker-compose-test.yml up --build --exit-code-from backend backend
 ```
 
 This will create a test database in the mariadb container called `DeliverySystemTest` which will be populated before a test and emptied after a test has finished.
@@ -195,7 +184,7 @@ For example to only run the `test_x` inside the file `tests/test_y.py` you would
 To run interactively, use the following command:
 
 ```bash
-docker-compose -f docker-compose.yml -f tests/docker-compose-test-interactive.yml up --build --exit-code-from backend
+docker compose -f docker-compose.yml -f tests/docker-compose-test-interactive.yml up --build --exit-code-from backend backend
 ```
 
 Then in a new terminal, shell into the container and run pytest:
