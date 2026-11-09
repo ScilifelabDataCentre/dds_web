@@ -18,7 +18,7 @@ from dds_web.security.auth import send_hotp_email
 def test_verify_token_user_not_exists_after_deletion(client):
     """Log in, delete, log out. Should give exception."""
     # Check that user exists
-    current_user: models.UnitUser = models.User.query.get("unituser")
+    current_user: models.UnitUser = db.session.get(models.User, "unituser")
     assert current_user
 
     # Authenticate
@@ -35,7 +35,7 @@ def test_verify_token_user_not_exists_after_deletion(client):
     db.session.commit()
 
     # Check that user dot not exist
-    current_user: models.UnitUser = models.User.query.get("unituser")
+    current_user: models.UnitUser = db.session.get(models.User, "unituser")
     assert not current_user
 
     # Attempt run
@@ -69,7 +69,7 @@ def request_ctx_for_login(client):
 
 def _fresh_user_for_hotp() -> models.User:
     """Return a user whose hotp cooldown has expired so a send is attempted."""
-    user = models.User.query.get("researchuser")
+    user = db.session.get(models.User, "researchuser")
     user.hotp_issue_time = None
     db.session.commit()
     return user
@@ -95,7 +95,7 @@ def test_send_hotp_email_raises_TwoFactorEmailError_on_mail_failure(request_ctx_
 
 def test_send_hotp_email_does_not_raise_on_cooldown(request_ctx_for_login):
     """The cooldown / no-send branch must keep returning False, not raise."""
-    user = models.User.query.get("researchuser")
+    user = db.session.get(models.User, "researchuser")
     # Pretend a HOTP was just issued -- send_hotp_email should not call mail.send.
     import datetime
     import dds_web.utils

@@ -1,4 +1,4 @@
-# Check links in Markdown files
+# Lychee: Verify links in MD files
 ---
 name: Linkspector
 on:
@@ -10,20 +10,17 @@ on:
     paths: *markdown
   schedule:
     - cron: "0 1 * * *" # every day at 1am
+permissions:
+  pull-requests: write
 jobs:
   check-links:
-    name: runner / linkspector
-    runs-on: ubuntu-latest
+    name: runner / lychee
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
         with:
-          node-version: "20"
-      - name: Install markdown-link-check
-        run: npm install -g markdown-link-check
-      - name: Check links in Markdown files
-        run: |
-          find . -name "*.md" \
-            -not -path "./.git/*" \
-            -not -path "./node_modules/*" \
-            | xargs -I{} markdown-link-check --quiet {}
+          args: --verbose --no-progress --scheme https --scheme http --accept 401,403 '**/*.md'
+          fail: false
+          token: ${{ secrets.github_token }}

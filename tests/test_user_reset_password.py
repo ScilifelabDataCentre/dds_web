@@ -318,6 +318,18 @@ def test_password_reset_completed_deactivated_user(client):
         db.session.commit()
 
 
+def test_password_reset_completed_no_token_in_session(client):
+    """Revisiting the page after the token has been consumed should redirect, not 500."""
+    response = client.get(
+        tests.DDSEndpoint.PASSWORD_RESET_COMPLETED,
+        follow_redirects=True,
+        headers=tests.DEFAULT_HEADER,
+    )
+
+    assert response.status_code == http.HTTPStatus.OK
+    assert response.request.path == tests.DDSEndpoint.LOGIN
+
+
 def test_reset_password_researchuser_no_password_reset_row(client):
     user = models.User.query.filter_by(username="researchuser").first()
     nr_proj_user_keys_total_before = models.ProjectUserKeys.query.count()

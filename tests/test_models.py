@@ -701,6 +701,8 @@ def test_invite_custom_properties(client):
 
     project = models.Project.query.first()
     project_invite = models.ProjectInviteKeys(invite=invite, project=project, key="asd".encode())
+    db.session.add(project_invite)
+    db.session.commit()
     assert invite.projects == [project]
 
 
@@ -788,7 +790,7 @@ def test_delete_file(client):
     assert exists is not None
 
     for version_id in version_ids:
-        exists = models.Version.query.get(version_id)
+        exists = db.session.get(models.Version, version_id)
         assert exists is not None
 
 

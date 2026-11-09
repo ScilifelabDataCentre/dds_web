@@ -34,7 +34,7 @@ def test_list_proj_info_no_token(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
-    assert "No token" in response_json.get("message")
+    assert "Missing or incorrect credentials" in response_json.get("message")
 
 
 def test_list_proj_info_without_project(client):
@@ -139,7 +139,7 @@ def test_change_proj_info_no_token(client):
     assert response.status_code == http.HTTPStatus.UNAUTHORIZED
     response_json = response.json
     assert response_json.get("message")
-    assert "No token" in response_json.get("message")
+    assert "Missing or incorrect credentials" in response_json.get("message")
 
 
 def test_change_proj_info_without_project(client):

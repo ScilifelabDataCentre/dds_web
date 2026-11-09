@@ -299,7 +299,7 @@ def __verify_general_token(token):
 def __user_from_subject(subject):
     """Get user row from username."""
     if subject:
-        user = models.User.query.get(subject)
+        user = db.session.get(models.User, subject)
         if user:
             if not user.is_active:
                 flask.current_app.logger.warning(
@@ -459,7 +459,7 @@ def verify_token_signature(token):
 @basic_auth.verify_password
 def verify_password(username, password):
     """Verify that user exists and that password is correct."""
-    user = models.User.query.get(username)
+    user = db.session.get(models.User, username)
 
     if user and user.verify_password(input_password=password):
         if not user.is_active:

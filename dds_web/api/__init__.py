@@ -67,6 +67,9 @@ def add_resources(api):
     api.add_resource(project.ProjectAccess, "/proj/access", endpoint="project_access")
     api.add_resource(project.ProjectBusy, "/proj/busy", endpoint="project_busy")
     api.add_resource(project.ProjectInfo, "/proj/info", endpoint="project_info")
+    api.add_resource(
+        project.ProjectUploadComplete, "/proj/upload/complete", endpoint="project_upload_complete"
+    )
 
     # User management ################################################################ User management #
     api.add_resource(user.RetrieveUserInfo, "/user/info", endpoint="user_info")

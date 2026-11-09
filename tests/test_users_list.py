@@ -38,7 +38,7 @@ def test_list_unitusers_with_unit_personnel_and_admin_deactivated(client):
         # Get token
         token = get_token(username=users[u], client=client)
 
-        user = models.User.query.get(users[u])
+        user = db.session.get(models.User, users[u])
         user.active = False
         db.session.commit()
 
@@ -63,7 +63,7 @@ def test_list_unitusers_with_unit_personnel_and_admin_ok(client):
 
         assert keys_in_response
 
-        user_object = models.User.query.get(users[u])
+        user_object = db.session.get(models.User, users[u])
         assert user_object.unit.name == unit_in_response
 
         all_users = user_object.unit.users

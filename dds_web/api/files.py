@@ -87,10 +87,11 @@ class NewFile(flask_restful.Resource):
         # Verify that project has correct status for upload
         check_eligibility_for_upload(status=project.current_status)
 
-        # Create new files
+        # Create new files (new_file is not attached via project.files so add explicitly)
         new_file = file_schemas.NewFileSchema().load(
             {**flask.request.get_json(silent=True), "project": project.public_id}
         )
+        db.session.add(new_file)
 
         try:
             db.session.commit()
@@ -176,11 +177,11 @@ class NewFile(flask_restful.Resource):
                 size_stored=file_info.get("size_processed"),
                 time_uploaded=new_timestamp,
                 active_file=existing_file.id,
-                project_id=project,
             )
 
-            # Update foreign keys and relationships
-            project.file_versions.append(new_version)
+            # Set FK directly so we do not modify the project row (avoids UPDATE on projects
+            # and reduces lock contention during concurrent PUT /file/new).
+            new_version.project_id = project.id
             existing_file.versions.append(new_version)
 
             db.session.add(new_version)

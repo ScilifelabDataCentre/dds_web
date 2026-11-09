@@ -1109,7 +1109,14 @@ def test_calculate_version_period_usage_deleted_and_invoiced_version(
 
 def test_calculate_version_period_usage_new_version(client: flask.testing.FlaskClient):
     """Test that function returns correct value and sets time_invoiced."""
+    from dds_web.utils import current_time
+
     existing_version = models.Version.query.first()
+    # Pin upload time so the assertion stays valid on reused DBs whose seed is hours old.
+    existing_version.time_uploaded = current_time() - datetime.timedelta(minutes=30)
+    existing_version.time_invoiced = None
+    existing_version.time_deleted = None
+    db.session.commit()
 
     # Call function
     bytehours = utils.calculate_version_period_usage(version=existing_version)
@@ -1687,6 +1694,7 @@ def test_use_sto4_return_false(client: flask.testing.FlaskClient):
     # Return False if sto4_start_time is set, project created after,
     # but not all variables are set
     unit.sto4_start_time = current_time() - relativedelta(hours=1)
+    project.date_created = current_time()
     db.session.commit()
 
     # Verify
@@ -1719,6 +1727,7 @@ def test_use_sto4_return_true(client: flask.testing.FlaskClient):
     unit.sto4_name = "name"
     unit.sto4_access = "access"
     unit.sto4_secret = "secret"
+    project.date_created = current_time()
     db.session.commit()
 
     # Run function

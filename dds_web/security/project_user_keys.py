@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import flask
 import gc
 
+from dds_web import db
 from dds_web.database import models
 from dds_web.errors import (
     KeyNotFoundError,
@@ -130,11 +131,14 @@ def share_project_private_key(
 
 def __init_and_append_project_user_key(user, project, project_private_key):
     """Create a new row in ProjectUserKeys for specific user and project."""
+    # Bind via relationships (not raw PKs) so SA 2.0 can set FKs when the project
+    # is flushed and receives its id.
     project_user_key = models.ProjectUserKeys(
-        project_id=project.id,
-        user_id=user.username,
+        project=project,
+        user=user,
         key=__encrypt_project_private_key(user, project_private_key),
     )
+    db.session.add(project_user_key)
     user.project_user_keys.append(project_user_key)
     project.project_user_keys.append(project_user_key)
 
@@ -144,11 +148,12 @@ def __init_and_append_project_invite_key(
 ):
     """Save encrypted project private key to ProjectInviteKeys."""
     project_invite_key = models.ProjectInviteKeys(
-        project_id=project.id,
-        invite_id=invite.id,
+        project=project,
+        invite=invite,
         key=__encrypt_project_private_key(owner=invite, project_private_key=project_private_key),
         owner=is_project_owner,
     )
+    db.session.add(project_invite_key)
     invite.project_invite_keys.append(project_invite_key)
     project.project_invite_keys.append(project_invite_key)
 

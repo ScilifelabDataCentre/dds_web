@@ -6,6 +6,7 @@ import subprocess
 import uuid
 import requests
 import logging
+from collections import namedtuple
 
 # Installed
 import flask_migrate
@@ -573,6 +574,11 @@ def disable_requests_cache():
         yield
 
 
+# Same shape as pytest's CaptureResult (out/err + unpacking), without importing
+# private _pytest modules that can move between pytest releases.
+_CaptureResult = namedtuple("CaptureResult", "out err")
+
+
 @pytest.fixture
 def capfd(capfdbinary):
     """Capture fd output and include newly emitted log records in stderr text.
@@ -618,7 +624,7 @@ def capfd(capfdbinary):
                 log_text = "\n".join(new_logs)
                 err = f"{err}\n{log_text}" if err else log_text
 
-            return out, err
+            return _CaptureResult(out, err)
 
         def __getattr__(self, name):
             return getattr(capfdbinary, name)
