@@ -93,6 +93,14 @@ This builds and starts all containers needed for development:
 
 Add `-d` to run in detached mode, and stop the containers with `docker compose down`.
 
+If you are updating from an older setup (for example from before the switch from MinIO to SeaweedFS), remove the old containers before starting:
+
+```bash
+docker compose down --remove-orphans
+```
+
+Otherwise old containers that are no longer in `docker-compose.yml` can keep running and block ports, and the database keeps data that points to the old storage.
+
 #### Second S3 storage: `s3-switch`
 
 ```bash
@@ -100,6 +108,8 @@ docker compose --profile s3-switch up
 ```
 
 Also starts `weedmini2`, a second SeaweedFS S3 storage at `localhost:9002`. It is only needed for testing a switch between two S3 storages.
+
+Stop it with `docker compose --profile s3-switch down`, since a plain `docker compose down` may leave `weedmini2` running.
 
 #### CLI development against local environment
 
