@@ -946,7 +946,14 @@ class File(db.Model):
 
     # Table setup
     __tablename__ = "files"
-    __table_args__ = {"extend_existing": True}
+    #__table_args__ = {"extend_existing": True}
+
+    __table_args__ = (
+        db.UniqueConstraint('project_id', 'name', name='ix_files_project_id_name'),
+        {"extend_existing": True},
+    )
+
+
 
     # Columns
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
