@@ -1,4 +1,6 @@
-# Use --profile full-dev and uncomment RATELIMIT_STORAGE_URI to use redis
+# `docker compose up` starts everything needed for development.
+# Add `--profile s3-switch` to also start weedmini2 (only for testing a switch between two S3 storages).
+# Uncomment RATELIMIT_STORAGE_URI under backend to use redis for rate limiting.
 ---
 services:
   db:
@@ -96,65 +98,64 @@ services:
         source: $DDS_LOG_DIR
         target: /dds_web/logs
 
-  minio:
-    container_name: dds_minio
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    profiles:
-      - s3
-      - full-dev
-      - cli
-    command: server /data --console-address ":9001"
+  # SeaweedFS (weed mini): all SeaweedFS components in one container, serving S3 on port 9000.
+  # S3 keys come from AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY; data in /data is lost unless a volume is mounted.
+  # Flags turn off weed mini defaults we don't need:
+  #   -s3.autoCreateBucket=false: uploading to a missing bucket fails instead of creating it
+  #   -master.telemetry=false:    no anonymous usage data sent to the SeaweedFS project
+  #   -webdav=false:              no WebDAV server (for mounting storage as a network drive)
+  #   -s3.port.iceberg/lance=0:   no Iceberg/Lance endpoints (data-catalog tools for analytics/ML)
+  weedmini:
+    container_name: dds_weed_mini
+    image: chrislusf/seaweedfs:4.52
+    command: >
+      mini -dir=/data -s3.port=9000
+      -s3.autoCreateBucket=false
+      -master.telemetry=false
+      -webdav=false -s3.port.iceberg=0 -s3.port.lance=0
     ports:
       - 127.0.0.1:9000:9000
-      - 127.0.0.1:9001:9001
     environment:
-      MINIO_ROOT_USER: minio # access key
-      MINIO_ROOT_PASSWORD: minioPassword # secret key
-      # NOTE: Uncomment if you want to keep your data.
-      #     Mounts a folder into the container to make uploaded data persistent.
-      # volumes:
-      #   - type: bind
-      #     source: ./minio-data
-      #     target: /data
+      AWS_ACCESS_KEY_ID: weedMini
+      AWS_SECRET_ACCESS_KEY: weedMiniPassword
+    # NOTE: Uncomment if you want to keep your data.
+    #     Mounts a folder into the container to make uploaded data persistent.
+    # volumes:
+    #   - type: bind
+    #     source: ./weedmini-data
+    #     target: /data
 
-  minio2: # Added in order to be able to test the new sto4 move
-    container_name: dds_minio_2
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    profiles:
-      - s3
-      - full-dev
-      - cli
-    command: server /data --console-address ":9003"
+  # Second S3 storage, only for testing a switch between storages (--profile s3-switch)
+  weedmini2:
+    container_name: dds_weed_mini_2
+    image: chrislusf/seaweedfs:4.52
+    profiles: [s3-switch]
+    command: >
+      mini -dir=/data -s3.port=9000
+      -s3.autoCreateBucket=false
+      -master.telemetry=false
+      -webdav=false -s3.port.iceberg=0 -s3.port.lance=0
     ports:
       - 127.0.0.1:9002:9000
-      - 127.0.0.1:9003:9003
     environment:
-      MINIO_ROOT_USER: minio2 # access key
-      MINIO_ROOT_PASSWORD: minioPassword2 # secret key
-      # NOTE: Uncomment if you want to keep your data.
-      #     Mounts a folder into the container to make uploaded data persistent.
-      # volumes:
-      #   - type: bind
-      #     source: ./minio-data
-      #     target: /data
+      AWS_ACCESS_KEY_ID: weedMini2
+      AWS_SECRET_ACCESS_KEY: weedMiniPassword2
+    # NOTE: Uncomment if you want to keep your data.
+    #     Mounts a folder into the container to make uploaded data persistent.
+    # volumes:
+    #   - type: bind
+    #     source: ./weedmini2-data
+    #     target: /data
 
   mailcatcher:
     container_name: dds_mailcatcher
     image: sj26/mailcatcher:latest
-    profiles:
-      - dev
-      - mail
-      - full-dev
-      - cli
     ports:
       - 127.0.0.1:1080:1080
 
   redis:
     container_name: dds_redis
     image: redis:latest
-    profiles:
-      - full-dev
-      - redis
 
   cli:
     container_name: dds_cli
@@ -163,9 +164,6 @@ services:
       dockerfile: Dockerfiles/cli.Dockerfile
       context: ./
       target: base
-    profiles:
-      - cli
-      - full-dev
     environment:
       - DDS_CLI_ENV=docker-dev
     volumes:
