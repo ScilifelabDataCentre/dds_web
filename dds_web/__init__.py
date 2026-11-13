@@ -10,6 +10,7 @@ import pathlib
 import sys
 import os
 import multiprocessing
+import time
 
 # Installed
 import flask
@@ -23,6 +24,7 @@ import flask_login
 import flask_migrate
 import rq_dashboard
 from redis import Redis
+from redis.exceptions import RedisError
 from rq import Worker, Queue
 
 # import flask_qrcode
@@ -247,6 +249,60 @@ def setup_logging(app):
         logger.addFilter(FilterWebRQLogs)
 
 
+def _run_redis_worker(redis_url):
+    """Connect to Redis and run the RQ worker; this is the target of the worker process.
+
+    Redis is only used for background jobs, not for core request handling, so a Redis
+    outage should never block or crash the web app. This retries the Redis connection
+    with backoff whenever the worker isn't running - which covers both startup and any
+    later point where the worker loop exits.
+
+    That second case matters because rq's own `Worker.work()` swallows a lost Redis
+    connection internally (it logs and returns rather than raising), so without checking
+    for that here and looping back, a single mid-run Redis outage would silently and
+    permanently stop background job processing until the app was restarted.
+    """
+    # Configured by setup_logging() before this process is forked, so this picks up
+    # the same handlers/filters as app.logger without passing the logger itself across
+    # the process boundary.
+    logger = logging.getLogger("general")
+
+    delay = 1
+    max_delay = 60
+    while True:
+        try:
+            redis_connection = Redis.from_url(redis_url)
+            redis_connection.ping()
+            # Worker.__init__ also talks to Redis (e.g. CLIENT SETNAME); keep it in the
+            # same try so a blip between ping and construction retries instead of exiting.
+            worker = Worker(["default"], connection=redis_connection)
+            worker.log = logger
+        except RedisError:
+            logger.warning(
+                "Could not connect to Redis; retrying background job worker startup in %ss.",
+                delay,
+            )
+            time.sleep(delay)
+            delay = min(delay * 2, max_delay)
+            continue
+
+        delay = 1  # Reset after a successful connect so reconnects start from 1s again.
+        logger.info("Connected to Redis; starting background job worker.")
+        worker.work()
+
+        # rq sets this private flag on a deliberate shutdown (no public equivalent).
+        if worker._stop_requested:
+            logger.info("Background job worker received a stop request; exiting.")
+            return
+
+        # work() also returns (without raising) when it loses its Redis connection
+        # mid-run, so treat any other exit as unexpected and go back through the
+        # connection retry above.
+        logger.warning("Background job worker exited unexpectedly; reconnecting in %ss.", delay)
+        time.sleep(delay)
+        delay = min(delay * 2, max_delay)
+
+
 def create_app(testing=False, database_uri=None):
     try:
         """Construct the core application."""
@@ -414,15 +470,15 @@ def create_app(testing=False, database_uri=None):
 
             # Redis Worker needs to run as its own process, we initialize it here.
             redis_url = app.config.get("REDIS_URL")
-            redis_connection = Redis.from_url(redis_url)
 
             # Set the default timeout for the jobs
             Queue.DEFAULT_TIMEOUT = flask.current_app.config.get("RQ_JOBS_DEFAULT_TIMEOUT")
 
-            worker = Worker(["default"], connection=redis_connection)
-            worker.log = app.logger
-            p = multiprocessing.Process(target=worker.work, daemon=True)
-            p.start()
+            if not testing:
+                p = multiprocessing.Process(
+                    target=_run_redis_worker, args=(redis_url,), daemon=True
+                )
+                p.start()
 
             # base url for the api documentation
             SWAGGER_URL_1 = "/api/documentation/v1"
