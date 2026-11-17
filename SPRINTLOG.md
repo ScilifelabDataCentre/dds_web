@@ -710,3 +710,4 @@ _Nothing merged during this sprint_
 ## 2026-11-09 - 2026-11-20
 
 - Bump dnspython from 2.9.0 to 2.9.2 ([#1893]https://github.com/ScilifelabDataCentre/dds_web/pull/1893)
+- Fix missing host in email links in local dev after Werkzeug 3.1.7+ bump ([#1894]https://github.com/ScilifelabDataCentre/dds_web/pull/1894)
