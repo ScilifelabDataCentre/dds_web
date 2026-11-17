@@ -100,9 +100,9 @@ class NewFile(flask_restful.Resource):
                 sqlalchemy.exc.IntegrityError) as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
-            extra_message = ''
+            extra_message = ""
             if isinstance(err, sqlalchemy.exc.IntegrityError):
-                extra_message = ' - this file already uploaded to this project'
+                extra_message = " - this file already uploaded to this project"
             raise DatabaseError(
                 message=str(err),
                 alt_message="Failed to add new file to database"

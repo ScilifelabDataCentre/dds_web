@@ -949,7 +949,7 @@ class File(db.Model):
     #__table_args__ = {"extend_existing": True}
 
     __table_args__ = (
-        db.UniqueConstraint('project_id', 'name', name='ix_files_project_id_name'),
+        db.UniqueConstraint("project_id", "name", name="ix_files_project_id_name"),
         {"extend_existing": True},
     )
 
