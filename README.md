@@ -83,7 +83,7 @@ docker compose up
 
 This builds and starts all containers needed for development:
 
-- `backend`: the web app and API, at `localhost:5000`
+- `backend`: the web app and API, at `localhost:5000`. Use `localhost` rather than `127.0.0.1`: links in emails point to `localhost:5000`, and the login session doesn't carry over between the two hosts
 - `db`: the MariaDB database
 - `redis`: the job queue. To also use it for API rate limiting, uncomment `RATELIMIT_STORAGE_URI` in `docker-compose.yml`
 - `weedmini`: SeaweedFS (weed mini) S3 storage, at `localhost:9000`

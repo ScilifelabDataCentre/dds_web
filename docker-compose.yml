@@ -63,6 +63,12 @@ services:
       - FLASK_DEBUG=true
       - FLASK_APP=dds_web
       - FLASK_INSTANCE_NAME=LOCAL_DEVELOPMENT
+      # Local only: email url_for(_external=True) must not use Host "dds_backend:5000"
+      # (Werkzeug >= 3.1.7 rejects underscores → http:///…). Prod/test unset this.
+      # Must match the documented local URL (localhost:5000): the session cookie is
+      # host-only, so links to another host (e.g. 127.0.0.1) would appear logged out.
+      - FLASK_SERVER_NAME=localhost:5000
+      - FLASK_PREFERRED_URL_SCHEME=http
 
       - DB_TYPE=${DDS_DB_TYPE}
       # - RATELIMIT_STORAGE_URI=redis://dds_redis
