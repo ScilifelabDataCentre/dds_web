@@ -11,7 +11,7 @@ This document explains how to generate new database migration.
 Before making any changes to the database models, ensure the containers are running locally.
 
 ```bash
-docker compose up # See root README for information regarding the different profiles
+docker compose up # See the root README for details on the development environment
 ```
 
 ### 2. Modify the Database Models

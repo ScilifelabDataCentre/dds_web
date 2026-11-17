@@ -705,3 +705,9 @@ _Nothing merged during this sprint_
 - Update dependency Mako to v1.4.2 [SECURITY] ([#1880]https://github.com/ScilifelabDataCentre/dds_web/pull/1880)
 - Update dependency Authlib to v1.9.1 [SECURITY] ([#1886]https://github.com/ScilifelabDataCentre/dds_web/pull/1886)
 - Bump dnspython from 2.6.1 to 2.9.0 ([#1888]https://github.com/ScilifelabDataCentre/dds_web/pull/1888)
+- Replace MinIO with SeaweedFS (weed mini) as local S3 storage and make full dev setup the docker compose default ([#1889]https://github.com/ScilifelabDataCentre/dds_web/pull/1889)
+
+## 2026-11-09 - 2026-11-20
+
+- Bump dnspython from 2.9.0 to 2.9.2 ([#1893]https://github.com/ScilifelabDataCentre/dds_web/pull/1893)
+- Fix missing host in email links in local dev after Werkzeug 3.1.7+ bump ([#1894]https://github.com/ScilifelabDataCentre/dds_web/pull/1894)

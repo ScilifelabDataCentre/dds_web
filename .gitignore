@@ -35,3 +35,6 @@ dds_web/development/invoicing/*
 dds_variables.env
 cython_tools
 coverage/*
+# Local SeaweedFS (weed mini) data, if volumes are enabled in docker-compose.yml
+weedmini-data/
+weedmini2-data/
