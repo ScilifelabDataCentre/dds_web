@@ -66,6 +66,8 @@ def fill_db_wrapper(db_type):
 
         # The backend runs init-db on every start, so the db may already be filled,
         # e.g. after the backend container restarts. Filling again would fail on duplicates.
+        # Both fills commit everything in a single transaction at the end, so a unit only
+        # exists if the fill completed.
         if models.Unit.query.first() is not None:
             flask.current_app.logger.info("Development db already contains data, skipping init-db.")
             return

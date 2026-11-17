@@ -180,7 +180,10 @@ def fill_db():
     # Add unit to database - relationship will add the rest because of foreign key constraints
     db.session.add(unit_1)
 
-    db.session.commit()
+    # Flush, not commit: everything is committed in one transaction at the end. If the
+    # fill fails partway, nothing is saved, and init-db (which skips a db that has a unit)
+    # retries on the next start instead of treating a half-filled db as done.
+    db.session.flush()
 
     unituser_1_token = encrypted_jwt_token(
         username=unituser_1.username,
