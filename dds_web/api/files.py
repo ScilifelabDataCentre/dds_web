@@ -98,7 +98,7 @@ class NewFile(flask_restful.Resource):
         except (
             sqlalchemy.exc.SQLAlchemyError,
             sqlalchemy.exc.OperationalError,
-            sqlalchemy.exc.IntegrityError
+            sqlalchemy.exc.IntegrityError,
         ) as err:
             flask.current_app.logger.debug(err)
             db.session.rollback()
