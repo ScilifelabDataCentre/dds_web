@@ -75,7 +75,8 @@ def test_fill_db_wrapper_devsmall(client, runner, capfd: LogCaptureFixture) -> N
     _: click.testing.Result = runner.invoke(fill_db_wrapper, ["dev-small"])
     _, err = capfd.readouterr()
     assert "Initializing development db" in err
-    assert "DB filled" not in err  # DB already filled, duplicates.
+    assert "Development db already contains data, skipping init-db." in err
+    assert "DB filled" not in err
 
 
 # def test_fill_db_wrapper_devbig(client, runner) -> None:
