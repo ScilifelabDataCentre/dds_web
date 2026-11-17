@@ -63,6 +63,10 @@ services:
       - FLASK_DEBUG=true
       - FLASK_APP=dds_web
       - FLASK_INSTANCE_NAME=LOCAL_DEVELOPMENT
+      # Local only: email url_for(_external=True) must not use Host "dds_backend:5000"
+      # (Werkzeug >= 3.1.7 rejects underscores → http:///…). Prod/test unset this.
+      - FLASK_SERVER_NAME=127.0.0.1:5000
+      - FLASK_PREFERRED_URL_SCHEME=http
 
       - DB_TYPE=${DDS_DB_TYPE}
       # - RATELIMIT_STORAGE_URI=redis://dds_redis
