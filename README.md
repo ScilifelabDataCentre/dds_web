@@ -93,6 +93,15 @@ This builds and starts all containers needed for development:
 
 Add `-d` to run in detached mode, and stop the containers with `docker compose down`.
 
+The backend fills the database with development data the first time it starts (`DDS_DB_TYPE`, e.g. `dev-small`). Later starts against the same database skip this, for example after a backend restart or after changing the backend's settings in `docker-compose.yml`. To start over with a fresh database:
+
+```bash
+docker compose down -v
+docker compose up
+```
+
+`-v` also removes the containers' volumes, which is where the database data lives. There is no need to remove images: the cached images are reused, so this takes seconds rather than a full rebuild.
+
 If you are updating from an older setup (for example from before the switch from MinIO to SeaweedFS), remove the old containers before starting:
 
 ```bash
