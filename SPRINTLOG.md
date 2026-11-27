@@ -712,3 +712,4 @@ _Nothing merged during this sprint_
 - Bump dnspython from 2.9.0 to 2.9.2 ([#1893]https://github.com/ScilifelabDataCentre/dds_web/pull/1893)
 - Fix missing host in email links in local dev after Werkzeug 3.1.7+ bump ([#1894]https://github.com/ScilifelabDataCentre/dds_web/pull/1894)
 - HMS-2698: Skip init-db when development db is already filled ([#1895]https://github.com/ScilifelabDataCentre/dds_web/pull/1895)
+- HMS-2123: Point Swagger UI to the new testing URL ([#1896]https://github.com/ScilifelabDataCentre/dds_web/pull/1896)

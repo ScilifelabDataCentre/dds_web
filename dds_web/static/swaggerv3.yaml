@@ -34,7 +34,7 @@ security:
 servers:
   - url: https://delivery.scilifelab.se/api/v3
     description: Endpoint for the production server
-  - url: https://dds-dev.dckube3.scilifelab.se/api/v3
+  - url: https://testing.delivery.scilifelab.se/api/v3/
     description: Endpoint for the test server
   # Uncomment when local testing
 #  - url: http://localhost:5000/api/v3
