@@ -43,19 +43,6 @@ def verify_project_exists(spec_proj):
     return project
 
 
-def verify_project_access(project):
-    """Check users access to project."""
-
-    if project not in auth.current_user().projects:
-        raise ddserr.AccessDeniedError(
-            message="Project access denied.",
-            username=auth.current_user().username,
-            project=project.public_id,
-        )
-
-    return project
-
-
 ####################################################################################################
 # SCHEMAS ################################################################################ SCHEMAS #
 ####################################################################################################
@@ -210,7 +197,7 @@ class ProjectRequiredSchema(marshmallow.Schema):
         """Validate existing project and user access to it."""
 
         project = verify_project_exists(spec_proj=value)
-        verify_project_access(project=project)
+        dds_web.utils.verify_project_access(project=project)
 
     @marshmallow.validates_schema(skip_on_field_errors=True)
     def get_project_object(self, data, **kwargs):

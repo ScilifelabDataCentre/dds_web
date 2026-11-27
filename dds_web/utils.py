@@ -78,10 +78,24 @@ def get_required_item(req: str, obj: werkzeug.datastructures.ImmutableMultiDict 
 # Cannot have type hint for return due to models.Project giving circular import
 def verify_project_access(project) -> None:
     """Verify that current authenticated user has access to project."""
-    if project not in auth.current_user().projects:
+    current_user = auth.current_user()
+    if current_user.role in ["Unit Admin", "Unit Personnel"]:
+        # Unit users have access to all projects in their unit
+        has_access = project.unit_id == current_user.unit_id
+    elif current_user.role == "Researcher":
+        # Researchers have access to the projects they have been added to
+        project_user = models.ProjectUsers.query.filter_by(
+            project_id=project.id, user_id=current_user.username
+        ).one_or_none()
+        has_access = project_user is not None
+    else:
+        # Super Admins have access to all projects
+        has_access = current_user.role == "Super Admin"
+
+    if not has_access:
         raise AccessDeniedError(
             message="Project access denied.",
-            username=auth.current_user().username,
+            username=current_user.username,
             project=project.public_id,
         )
 
